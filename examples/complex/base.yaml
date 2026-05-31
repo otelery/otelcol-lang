@@ -58,18 +58,18 @@ receivers:
         regex: '^(?P<ts>\S+)\s+(?P<level>\w+)\s+(?P<msg>.*)$'
         timestamp:
           parse_from: attributes.ts
-          layout: '%Y-%m-%dT%H:%M:%S.%fZ'
+          layout: "%Y-%m-%dT%H:%M:%S.%fZ"
         severity:
           parse_from: attributes.level
 
   prometheus:
     config:
       scrape_configs:
-        - job_name: 'collector-self'
+        - job_name: "collector-self"
           scrape_interval: 30s
           static_configs:
-            - targets: ['0.0.0.0:8888']
-        - job_name: 'kubernetes-pods'
+            - targets: ["0.0.0.0:8888"]
+        - job_name: "kubernetes-pods"
           kubernetes_sd_configs:
             - role: pod
           relabel_configs:

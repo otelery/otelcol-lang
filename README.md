@@ -11,7 +11,7 @@ diagnostics, and embedded OTTL support.
 The JSON Schemas this extension uses for validation, hover and
 completion are produced by a separate project:
 
-  → [`otelcol-schemas`](https://github.com/otelery/otelcol-schemas)
+→ [`otelcol-schemas`](https://github.com/otelery/otelcol-schemas)
 
 They are bundled into the published `.vsix` at build time (see [Schema
 source](#schema-source) below). A future release will gain the ability
@@ -116,15 +116,15 @@ distribution-agnostic.
 
 ### Settings
 
-| key                                   | description                                                                                            |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `otelcol.distribution`                | Which distribution to validate against (default `otelcol-contrib`)                                     |
-| `otelcol.schemaSource`                | Reserved for future use (HTTPS URL or release tag for schemas). No effect in v0.1.0.                   |
-| `otelcol.contribPath`                 | Optional local contrib checkout for richer hover (rare)                                                |
-| `otelcol.ottlLspPath`                 | Path to `ottl-lsp`'s compiled `server.js` for embedded OTTL diagnostics                                |
-| `otelcol.configSets.autoDiscover`     | Discover config sets by walking the workspace for `service.pipelines` anchors (default `true`)         |
-| `otelcol.configSets.maxFilesScanned`  | Safety bound on the workspace walk (default `2000`)                                                    |
-| `otelcol.trace.server`                | LSP trace verbosity                                                                                    |
+| key                                  | description                                                                                    |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `otelcol.distribution`               | Which distribution to validate against (default `otelcol-contrib`)                             |
+| `otelcol.schemaSource`               | Reserved for future use (HTTPS URL or release tag for schemas). No effect in v0.1.0.           |
+| `otelcol.contribPath`                | Optional local contrib checkout for richer hover (rare)                                        |
+| `otelcol.ottlLspPath`                | Path to `ottl-lsp`'s compiled `server.js` for embedded OTTL diagnostics                        |
+| `otelcol.configSets.autoDiscover`    | Discover config sets by walking the workspace for `service.pipelines` anchors (default `true`) |
+| `otelcol.configSets.maxFilesScanned` | Safety bound on the workspace walk (default `2000`)                                            |
+| `otelcol.trace.server`               | LSP trace verbosity                                                                            |
 
 ## Cross-file references
 
@@ -177,10 +177,10 @@ flowchart LR
 
 ### What's wired today
 
-| Reference site                                           | Resolves to                       | Features                                  |
-| -------------------------------------------------------- | --------------------------------- | ----------------------------------------- |
+| Reference site                                             | Resolves to                                                 | Features                                     |
+| ---------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------- |
 | `service.pipelines.<sig>.{receivers,processors,exporters}` | `receivers` / `processors` / `exporters` / `connectors` map | hover, F12, find-refs, codelens, diagnostics |
-| `service.extensions`                                      | `extensions` map                  | hover, F12, find-refs, codelens, diagnostics |
+| `service.extensions`                                       | `extensions` map                                            | hover, F12, find-refs, codelens, diagnostics |
 
 Diagnostics include: undefined reference, ambiguous reference
 (duplicate id across files), defined-but-unused (greyed via

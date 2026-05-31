@@ -112,7 +112,10 @@ const CLASS_TO_BUCKET: Record<ComponentClass, string> = {
   extension: "extensions",
 };
 
-export function loadComponents(searchFrom: string, distribution = "otelcol-contrib"): ComponentsIndex {
+export function loadComponents(
+  searchFrom: string,
+  distribution = "otelcol-contrib",
+): ComponentsIndex {
   if (cache.has(distribution)) return cache.get(distribution)!;
   const base = resolveSchemasBase(searchFrom, "distributions");
   if (!base) {
@@ -212,6 +215,10 @@ export function splitComponentId(id: string): { type: string; name?: string } {
   return { type: id.slice(0, slash), name: id.slice(slash + 1) };
 }
 
-export function findComponent(idx: ComponentsIndex, cls: ComponentClass, type: string): Component | undefined {
+export function findComponent(
+  idx: ComponentsIndex,
+  cls: ComponentClass,
+  type: string,
+): Component | undefined {
   return idx.components[cls]?.find((c) => c.type === type);
 }

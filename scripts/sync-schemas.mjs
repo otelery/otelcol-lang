@@ -23,12 +23,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
 
 const candidates = [
-  process.env.OTELCOL_SCHEMAS_PATH ? resolve(process.cwd(), process.env.OTELCOL_SCHEMAS_PATH) : null,
+  process.env.OTELCOL_SCHEMAS_PATH
+    ? resolve(process.cwd(), process.env.OTELCOL_SCHEMAS_PATH)
+    : null,
   resolve(repoRoot, "..", "otelcol-schemas"),
   resolve(repoRoot, "..", "otelcol-schemas-release"),
 ].filter(Boolean);
 
-const source = candidates.find(p => existsSync(join(p, "schemas", "distributions")));
+const source = candidates.find((p) => existsSync(join(p, "schemas", "distributions")));
 
 if (!source) {
   console.error("sync-schemas: could not locate otelcol-schemas checkout.");
@@ -44,7 +46,9 @@ if (!source) {
 
 function syncDir(srcDir, dstDir, label) {
   if (!existsSync(srcDir)) {
-    console.error(`sync-schemas: ${label} missing in source (${srcDir}). Run build:all in otelcol-schemas first.`);
+    console.error(
+      `sync-schemas: ${label} missing in source (${srcDir}). Run build:all in otelcol-schemas first.`,
+    );
     process.exit(1);
   }
   if (existsSync(dstDir)) rmSync(dstDir, { recursive: true, force: true });

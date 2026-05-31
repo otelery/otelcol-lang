@@ -7,8 +7,7 @@ inline at the top of the anchor file (the one containing
 ```yaml
 # otelcol-configset: base.yaml exporters.yaml pipelines.yaml
 service:
-  pipelines:
-    ...
+  pipelines: ...
 ```
 
 Use this pattern when you want the config-set declaration to live with

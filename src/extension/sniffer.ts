@@ -5,7 +5,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-const OTELCOL_KEY_LINE = /^(service|receivers|exporters|processors|connectors|extensions):\s*(#.*)?$/gm;
+const OTELCOL_KEY_LINE =
+  /^(service|receivers|exporters|processors|connectors|extensions):\s*(#.*)?$/gm;
 const OTELCOL_ANCHOR = /^service:\s*(#.*)?\n(?:[ \t]+\S.*\n){0,200}?[ \t]+pipelines:/m;
 const DIRECTIVE_RE = /^#\s*otelcol-configset:\s*(.+)$/m;
 const SIDECAR_NAME = "otelcol-configset.yaml";

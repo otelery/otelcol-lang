@@ -47,14 +47,35 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
   for (const pipe of model.pipelines) {
     const signal = SIGNAL_MAP[pipe.signal];
     if (!signal) {
-      diags.push(emit(pipe.sourceUri, pipe.range, `unknown pipeline signal "${pipe.signal}" (expected traces, metrics, logs, or profiles)`, DiagnosticSeverity.Error));
+      diags.push(
+        emit(
+          pipe.sourceUri,
+          pipe.range,
+          `unknown pipeline signal "${pipe.signal}" (expected traces, metrics, logs, or profiles)`,
+          DiagnosticSeverity.Error,
+        ),
+      );
       continue;
     }
     if (pipe.receivers.length === 0) {
-      diags.push(emit(pipe.sourceUri, pipe.range, `pipeline ${pipe.id} has no receivers`, DiagnosticSeverity.Error));
+      diags.push(
+        emit(
+          pipe.sourceUri,
+          pipe.range,
+          `pipeline ${pipe.id} has no receivers`,
+          DiagnosticSeverity.Error,
+        ),
+      );
     }
     if (pipe.exporters.length === 0) {
-      diags.push(emit(pipe.sourceUri, pipe.range, `pipeline ${pipe.id} has no exporters`, DiagnosticSeverity.Error));
+      diags.push(
+        emit(
+          pipe.sourceUri,
+          pipe.range,
+          `pipeline ${pipe.id} has no exporters`,
+          DiagnosticSeverity.Error,
+        ),
+      );
     }
 
     for (const { bucket, cls } of BUCKETS) {
@@ -80,16 +101,29 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
         const inOwn = model.components[cls].has(ref.id);
         const inConn = model.components.connector.has(ref.id);
         if (!inOwn && !inConn) {
-          diags.push(emit(ref.sourceUri, ref.range, `${cls} "${ref.id}" is not defined`, DiagnosticSeverity.Error));
+          diags.push(
+            emit(
+              ref.sourceUri,
+              ref.range,
+              `${cls} "${ref.id}" is not defined`,
+              DiagnosticSeverity.Error,
+            ),
+          );
           continue;
         }
         if (inOwn) referenced[cls].add(ref.id);
         if (inConn) referenced.connector.add(ref.id);
 
-        const entry = inOwn ? model.components[cls].get(ref.id)! : model.components.connector.get(ref.id)!;
+        const entry = inOwn
+          ? model.components[cls].get(ref.id)!
+          : model.components.connector.get(ref.id)!;
         const resolvedCls = inOwn ? cls : "connector";
         const def = findComponent(idx, resolvedCls, entry.type);
-        if (def && def.signals.length && !signalMatches(def.signals, signal, bucket, resolvedCls === "connector")) {
+        if (
+          def &&
+          def.signals.length &&
+          !signalMatches(def.signals, signal, bucket, resolvedCls === "connector")
+        ) {
           diags.push(
             emit(
               ref.sourceUri,
@@ -166,7 +200,14 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
       continue;
     }
     if (!model.components.extension.has(ref.id)) {
-      diags.push(emit(ref.sourceUri, ref.range, `extension "${ref.id}" is not defined`, DiagnosticSeverity.Error));
+      diags.push(
+        emit(
+          ref.sourceUri,
+          ref.range,
+          `extension "${ref.id}" is not defined`,
+          DiagnosticSeverity.Error,
+        ),
+      );
       continue;
     }
     referenced.extension.add(ref.id);
@@ -190,13 +231,26 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
   }
 
   // Unknown component types and orphan definitions.
-  for (const cls of ["receiver", "processor", "exporter", "connector", "extension"] as ComponentClass[]) {
+  for (const cls of [
+    "receiver",
+    "processor",
+    "exporter",
+    "connector",
+    "extension",
+  ] as ComponentClass[]) {
     for (const [id, entry] of model.components[cls]) {
       // Skip duplicates here — we already errored on them above.
       if (isDuplicate(model, cls, id)) continue;
       const def = findComponent(idx, cls, entry.type);
       if (!def) {
-        diags.push(emit(entry.sourceUri, entry.idRange, `unknown ${cls} type "${entry.type}"`, DiagnosticSeverity.Warning));
+        diags.push(
+          emit(
+            entry.sourceUri,
+            entry.idRange,
+            `unknown ${cls} type "${entry.type}"`,
+            DiagnosticSeverity.Warning,
+          ),
+        );
       }
       if (cls !== "connector" && !referenced[cls].has(id)) {
         const where = cls === "extension" ? "service.extensions" : "any pipeline";
@@ -237,10 +291,16 @@ function shortName(uri: string): string {
 // connector is used as a receiver, the signal must match the *right* side
 // (`*_to_<signal>`); used as an exporter, the *left* side (`<signal>_to_*`).
 // Regular receivers/processors/exporters declare plain signal names.
-function signalMatches(declared: string[], signal: string, bucket: "receivers" | "processors" | "exporters", isConnector: boolean): boolean {
+function signalMatches(
+  declared: string[],
+  signal: string,
+  bucket: "receivers" | "processors" | "exporters",
+  isConnector: boolean,
+): boolean {
   if (declared.includes(signal)) return true;
   if (!isConnector) return false;
-  const needle = bucket === "receivers" ? `_to_${signal}` : bucket === "exporters" ? `${signal}_to_` : "";
+  const needle =
+    bucket === "receivers" ? `_to_${signal}` : bucket === "exporters" ? `${signal}_to_` : "";
   if (!needle) return false;
   return declared.some((s) => (bucket === "receivers" ? s.endsWith(needle) : s.startsWith(needle)));
 }

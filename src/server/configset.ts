@@ -44,7 +44,8 @@ const SCAN_HEAD_BYTES = 16 * 1024;
 
 // Matches `service:` at column 0 followed (within ~40 lines) by `<indent>pipelines:` at
 // the same indent depth. Tolerant — the YAML parser is invoked on hits to confirm.
-const SERVICE_PIPELINES_RE = /^service:\s*(#.*)?\n(?:[ \t]+\S.*\n){0,200}?[ \t]+pipelines:\s*(#.*)?(?:\n|$)/m;
+const SERVICE_PIPELINES_RE =
+  /^service:\s*(#.*)?\n(?:[ \t]+\S.*\n){0,200}?[ \t]+pipelines:\s*(#.*)?(?:\n|$)/m;
 const FRAGMENT_KEY_RE = /^(receivers|processors|exporters|connectors|extensions):\s*(#.*)?$/m;
 const DIRECTIVE_RE = /^#\s*otelcol-configset:\s*(.+)$/;
 
@@ -58,7 +59,9 @@ export class ConfigSetIndex {
   private setByMember = new Map<string, string /* anchorUri */>();
   private roots: string[] = [];
 
-  constructor(private opts: ConfigSetIndexOptions = { autoDiscover: true, maxFilesScanned: 2000 }) {}
+  constructor(
+    private opts: ConfigSetIndexOptions = { autoDiscover: true, maxFilesScanned: 2000 },
+  ) {}
 
   setOptions(opts: ConfigSetIndexOptions): void {
     this.opts = opts;
@@ -74,7 +77,7 @@ export class ConfigSetIndex {
 
   getSetForUri(uri: string): ConfigSet | null {
     const anchor = this.setByMember.get(uri);
-    return anchor ? this.setsByAnchor.get(anchor) ?? null : null;
+    return anchor ? (this.setsByAnchor.get(anchor) ?? null) : null;
   }
 
   allSets(): ConfigSet[] {
@@ -127,7 +130,11 @@ export class ConfigSetIndex {
     this.setsByAnchor.delete(anchor);
   }
 
-  private buildSetForAnchor(anchor: FileClass, all: FileClass[], anchorDirs: Set<string>): ConfigSet {
+  private buildSetForAnchor(
+    anchor: FileClass,
+    all: FileClass[],
+    anchorDirs: Set<string>,
+  ): ConfigSet {
     const explicit = this.resolveExplicit(anchor, all);
     if (explicit) return explicit;
 
@@ -225,7 +232,12 @@ function classifyFile(fsPath: string): FileClass {
     // Confirm with a real parse — regex can match indented service: inside a string etc.
     try {
       const parsed = parseYaml(head);
-      hasPipelines = !!(parsed && typeof parsed === "object" && parsed.service && parsed.service.pipelines);
+      hasPipelines = !!(
+        parsed &&
+        typeof parsed === "object" &&
+        parsed.service &&
+        parsed.service.pipelines
+      );
     } catch {
       hasPipelines = false;
     }
@@ -263,7 +275,11 @@ function isUnderDir(filePath: string, dir: string): boolean {
 
 // True if a file at `filePath` (inside `anchorDir`) belongs to a *different*
 // nested anchor — i.e. its nearest ancestor in `anchorDirs` is not `anchorDir`.
-function ownedByNestedAnchor(filePath: string, anchorDir: string, anchorDirs: Set<string>): boolean {
+function ownedByNestedAnchor(
+  filePath: string,
+  anchorDir: string,
+  anchorDirs: Set<string>,
+): boolean {
   let cur = path.dirname(filePath);
   while (cur.length >= anchorDir.length && cur !== path.dirname(cur)) {
     if (cur === anchorDir) return false;

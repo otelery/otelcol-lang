@@ -21,12 +21,12 @@ The extension picks the same files up via the
 
 ## Layout
 
-| file             | adds                                                               |
-| ---------------- | ------------------------------------------------------------------ |
-| `base.yaml`      | receivers (otlp, kafka, hostmetrics, filelog, prometheus); ext'ns. |
-| `processors.yaml`| memory_limiter, batch, transform (OTTL), filter (OTTL), attributes |
-| `exporters.yaml` | otlp, otlphttp, kafka, prometheus, debug                           |
-| `pipelines.yaml` | service.pipelines and the routing/spanmetrics/forward connectors   |
+| file              | adds                                                               |
+| ----------------- | ------------------------------------------------------------------ |
+| `base.yaml`       | receivers (otlp, kafka, hostmetrics, filelog, prometheus); ext'ns. |
+| `processors.yaml` | memory_limiter, batch, transform (OTTL), filter (OTTL), attributes |
+| `exporters.yaml`  | otlp, otlphttp, kafka, prometheus, debug                           |
+| `pipelines.yaml`  | service.pipelines and the routing/spanmetrics/forward connectors   |
 
 ## Things to look for
 

@@ -22,7 +22,9 @@ const idx = loadComponents(resolve(root, "out", "server"));
 
 const argv = process.argv.slice(2);
 if (argv.length === 0) {
-  console.error("usage: node scripts/smoke.mjs <config.yaml>\n       node scripts/smoke.mjs --set <dir>");
+  console.error(
+    "usage: node scripts/smoke.mjs <config.yaml>\n       node scripts/smoke.mjs --set <dir>",
+  );
   process.exit(1);
 }
 
@@ -48,7 +50,9 @@ if (argv[0] === "--set") {
     for (const d of diags) {
       const sev = ["", "error", "warning", "info", "hint"][d.diagnostic.severity];
       const short = d.sourceUri.slice(d.sourceUri.lastIndexOf("/") + 1);
-      console.log(`  [${sev}] ${short} L${d.diagnostic.range.start.line + 1}: ${d.diagnostic.message}`);
+      console.log(
+        `  [${sev}] ${short} L${d.diagnostic.range.start.line + 1}: ${d.diagnostic.message}`,
+      );
     }
   }
   process.exit(0);
@@ -61,13 +65,19 @@ const model = singletonSetModel(uri, text);
 summarize(model);
 const diags = [
   ...[...model.members.values()].flatMap((m) =>
-    m.diagnostics.map((d) => ({ sourceUri: m.sourceUri, diagnostic: { severity: 1, message: d.message, range: d.range } })),
+    m.diagnostics.map((d) => ({
+      sourceUri: m.sourceUri,
+      diagnostic: { severity: 1, message: d.message, range: d.range },
+    })),
   ),
   ...validatePipelines(model, idx),
 ];
 console.log(`\ndiagnostics: ${diags.length}`);
 for (const d of diags) {
-  const sev = typeof d.diagnostic.severity === "number" ? ["", "error", "warning", "info", "hint"][d.diagnostic.severity] : d.diagnostic.severity;
+  const sev =
+    typeof d.diagnostic.severity === "number"
+      ? ["", "error", "warning", "info", "hint"][d.diagnostic.severity]
+      : d.diagnostic.severity;
   console.log(`  [${sev}] L${d.diagnostic.range.start.line + 1}: ${d.diagnostic.message}`);
 }
 
@@ -78,7 +88,9 @@ function summarize(model) {
   );
   console.log(`pipelines: ${model.pipelines.length}`);
   for (const p of model.pipelines) {
-    console.log(`  ${p.id}: receivers=[${p.receivers.map((r) => r.id).join(", ")}] processors=[${p.processors.map((r) => r.id).join(", ")}] exporters=[${p.exporters.map((r) => r.id).join(", ")}]`);
+    console.log(
+      `  ${p.id}: receivers=[${p.receivers.map((r) => r.id).join(", ")}] processors=[${p.processors.map((r) => r.id).join(", ")}] exporters=[${p.exporters.map((r) => r.id).join(", ")}]`,
+    );
   }
   console.log(`ottl blocks: ${model.ottlBlocks.length}`);
 }

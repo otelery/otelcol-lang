@@ -28,7 +28,8 @@ function copyAllJson(srcDir, dstDir, label) {
   return copied;
 }
 
-const outDir = process.argv.find(a => a.startsWith("--outDir="))?.slice("--outDir=".length) ?? "out";
+const outDir =
+  process.argv.find((a) => a.startsWith("--outDir="))?.slice("--outDir=".length) ?? "out";
 
 const distros = copyAllJson(
   resolve(root, "schemas", "distributions"),

@@ -2,7 +2,17 @@
 // source. The model is intentionally narrow — only the structures the LSP
 // reasons about (component maps, pipelines, OTTL-bearing strings).
 
-import { parseDocument, YAMLMap, YAMLSeq, Scalar, Pair, isMap, isSeq, isScalar, isPair, Node } from "yaml";
+import {
+  parseDocument,
+  YAMLMap,
+  YAMLSeq,
+  Scalar,
+  isMap,
+  isSeq,
+  isScalar,
+  isPair,
+  Node,
+} from "yaml";
 import type { Position, Range } from "vscode-languageserver";
 import type { ComponentClass } from "./components";
 
@@ -89,7 +99,6 @@ export interface ParseDiagnostic {
   severity: "error" | "warning";
 }
 
-const CLASSES: ComponentClass[] = ["receiver", "processor", "exporter", "connector", "extension"];
 const CLASS_KEYS: Record<string, ComponentClass> = {
   receivers: "receiver",
   processors: "processor",
@@ -127,7 +136,13 @@ export function buildModel(text: string, sourceUri: string = ""): DocModel {
   const model: DocModel = {
     sourceUri,
     text,
-    components: { receiver: new Map(), processor: new Map(), exporter: new Map(), connector: new Map(), extension: new Map() },
+    components: {
+      receiver: new Map(),
+      processor: new Map(),
+      exporter: new Map(),
+      connector: new Map(),
+      extension: new Map(),
+    },
     pipelines: [],
     serviceExtensions: [],
     extensionRefs: [],
@@ -165,7 +180,13 @@ export function buildModel(text: string, sourceUri: string = ""): DocModel {
   return model;
 }
 
-function collectComponents(text: string, model: DocModel, cls: ComponentClass, map: YAMLMap, sourceUri: string) {
+function collectComponents(
+  text: string,
+  model: DocModel,
+  cls: ComponentClass,
+  map: YAMLMap,
+  sourceUri: string,
+) {
   for (const pair of map.items) {
     if (!isPair(pair) || !isScalar(pair.key)) continue;
     const id = String(pair.key.value);
@@ -188,7 +209,14 @@ function collectComponents(text: string, model: DocModel, cls: ComponentClass, m
       const basePath = `${pluralize(cls)}.${id}`;
       scrapeExtensionRefs(text, pair.value as Node, basePath, null, sourceUri, model.extensionRefs);
       if (cls === "connector") {
-        scrapeConnectorPipelineRefs(text, type, pair.value as Node, basePath, sourceUri, model.pipelineIdRefs);
+        scrapeConnectorPipelineRefs(
+          text,
+          type,
+          pair.value as Node,
+          basePath,
+          sourceUri,
+          model.pipelineIdRefs,
+        );
       }
     }
   }
@@ -222,12 +250,29 @@ function scrapeExtensionRefs(
       const val = pair.value as Node | null;
       const childPath = `${path}.${key}`;
       // auth.authenticator: <ext id>  (parent must be "auth", key must be "authenticator", value scalar).
-      if (parentKey === "auth" && key === "authenticator" && val && isScalar(val) && typeof (val as Scalar).value === "string") {
-        out.push({ id: String((val as Scalar).value), sourceUri, range: nodeRange(text, val), fieldPath: childPath, strict: true });
+      if (
+        parentKey === "auth" &&
+        key === "authenticator" &&
+        val &&
+        isScalar(val) &&
+        typeof (val as Scalar).value === "string"
+      ) {
+        out.push({
+          id: String((val as Scalar).value),
+          sourceUri,
+          range: nodeRange(text, val),
+          fieldPath: childPath,
+          strict: true,
+        });
         continue;
       }
       // Direct scalar extension refs.
-      if ((DIRECT_EXT_REF_STRICT.has(key) || DIRECT_EXT_REF_SOFT.has(key)) && val && isScalar(val) && typeof (val as Scalar).value === "string") {
+      if (
+        (DIRECT_EXT_REF_STRICT.has(key) || DIRECT_EXT_REF_SOFT.has(key)) &&
+        val &&
+        isScalar(val) &&
+        typeof (val as Scalar).value === "string"
+      ) {
         out.push({
           id: String((val as Scalar).value),
           sourceUri,
@@ -241,7 +286,13 @@ function scrapeExtensionRefs(
       if (SEQ_EXT_REF_STRICT.has(key) && val && isSeq(val)) {
         for (const item of (val as YAMLSeq).items) {
           if (isScalar(item) && typeof item.value === "string") {
-            out.push({ id: String(item.value), sourceUri, range: nodeRange(text, item as Node), fieldPath: `${childPath}[]`, strict: true });
+            out.push({
+              id: String(item.value),
+              sourceUri,
+              range: nodeRange(text, item as Node),
+              fieldPath: `${childPath}[]`,
+              strict: true,
+            });
           }
         }
         continue;
@@ -283,7 +334,13 @@ function scrapeConnectorPipelineRefs(
           for (const rp of row.items) {
             if (!isPair(rp) || !isScalar(rp.key)) continue;
             if (rp.key.value === "pipelines" && isSeq(rp.value)) {
-              pushSeq(text, rp.value as YAMLSeq, `${basePath}.table[${i}].pipelines`, sourceUri, out);
+              pushSeq(
+                text,
+                rp.value as YAMLSeq,
+                `${basePath}.table[${i}].pipelines`,
+                sourceUri,
+                out,
+              );
             }
           }
         }
@@ -305,10 +362,21 @@ function scrapeConnectorPipelineRefs(
   }
 }
 
-function pushSeq(text: string, seq: YAMLSeq, fieldPath: string, sourceUri: string, out: PipelineIdRef[]): void {
+function pushSeq(
+  text: string,
+  seq: YAMLSeq,
+  fieldPath: string,
+  sourceUri: string,
+  out: PipelineIdRef[],
+): void {
   for (const item of seq.items) {
     if (isScalar(item) && typeof item.value === "string") {
-      out.push({ id: String(item.value), sourceUri, range: nodeRange(text, item as Node), fieldPath });
+      out.push({
+        id: String(item.value),
+        sourceUri,
+        range: nodeRange(text, item as Node),
+        fieldPath,
+      });
     }
   }
 }
@@ -349,7 +417,13 @@ function collectService(text: string, model: DocModel, svc: YAMLMap, sourceUri: 
         if (!isPair(inner) || !isScalar(inner.key) || !isSeq(inner.value)) continue;
         const k = String(inner.key.value);
         const bucket: PipelineRef[] | undefined =
-          k === "receivers" ? entry.receivers : k === "processors" ? entry.processors : k === "exporters" ? entry.exporters : undefined;
+          k === "receivers"
+            ? entry.receivers
+            : k === "processors"
+              ? entry.processors
+              : k === "exporters"
+                ? entry.exporters
+                : undefined;
         if (!bucket) continue;
         for (const item of inner.value.items) {
           if (!isScalar(item)) continue;
@@ -405,7 +479,8 @@ function walkOttl(text: string, model: DocModel, node: Node | null, sourceUri: s
 }
 
 function nodeRange(text: string, node: Node | null): Range {
-  if (!node || !(node as any).range) return { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
+  if (!node || !(node as any).range)
+    return { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
   const [start, valueEnd] = (node as any).range as [number, number, number];
   return rangeFromOffsets(text, start, valueEnd);
 }

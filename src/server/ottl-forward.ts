@@ -10,7 +10,7 @@
 
 import { spawn, ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
-import { Diagnostic, DiagnosticSeverity, Position, Range } from "vscode-languageserver";
+import { Diagnostic, Position, Range } from "vscode-languageserver";
 import type { OttlBlock } from "./yaml-model";
 
 interface Pending {
@@ -30,7 +30,9 @@ export class OttlForwarder {
   start(): boolean {
     if (!this.ottlLspPath || !existsSync(this.ottlLspPath)) return false;
     try {
-      this.proc = spawn(process.execPath, [this.ottlLspPath, "--stdio"], { stdio: ["pipe", "pipe", "inherit"] });
+      this.proc = spawn(process.execPath, [this.ottlLspPath, "--stdio"], {
+        stdio: ["pipe", "pipe", "inherit"],
+      });
     } catch {
       return false;
     }
@@ -39,7 +41,12 @@ export class OttlForwarder {
       this.proc = null;
       this.ready = false;
     });
-    this.send({ jsonrpc: "2.0", id: this.nextId++, method: "initialize", params: { processId: process.pid, rootUri: null, capabilities: {} } });
+    this.send({
+      jsonrpc: "2.0",
+      id: this.nextId++,
+      method: "initialize",
+      params: { processId: process.pid, rootUri: null, capabilities: {} },
+    });
     this.send({ jsonrpc: "2.0", method: "initialized", params: {} });
     this.ready = true;
     return true;
@@ -51,7 +58,9 @@ export class OttlForwarder {
     this.ready = false;
   }
 
-  async diagnose(blocks: OttlBlock[]): Promise<Array<{ sourceUri: string; diagnostic: Diagnostic }>> {
+  async diagnose(
+    blocks: OttlBlock[],
+  ): Promise<Array<{ sourceUri: string; diagnostic: Diagnostic }>> {
     if (!this.ready || !this.proc) return [];
     const out: Array<{ sourceUri: string; diagnostic: Diagnostic }> = [];
     for (const block of blocks) {
@@ -81,7 +90,11 @@ export class OttlForwarder {
           this.pending.delete(uri);
           resolve([]);
         }
-        this.send({ jsonrpc: "2.0", method: "textDocument/didClose", params: { textDocument: { uri } } });
+        this.send({
+          jsonrpc: "2.0",
+          method: "textDocument/didClose",
+          params: { textDocument: { uri } },
+        });
       }, 300);
     });
   }

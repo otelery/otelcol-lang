@@ -9,12 +9,5 @@
   "env": {
     "node": true
   },
-  "ignorePatterns": [
-    "node_modules",
-    "dist",
-    "out",
-    "schemas",
-    "syntaxes",
-    "test/configsets"
-  ]
+  "ignorePatterns": ["node_modules", "dist", "out", "schemas", "syntaxes", "test/configsets"]
 }

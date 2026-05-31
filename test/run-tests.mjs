@@ -19,11 +19,12 @@ const { buildSetModel } = await import(resolve(root, "out/server/set-model.js"))
 const { ConfigSetIndex, fsToUri } = await import(resolve(root, "out/server/configset.js"));
 const { validatePipelines } = await import(resolve(root, "out/server/pipeline.js"));
 const { loadComponents } = await import(resolve(root, "out/server/components.js"));
-const { pipelineRefsTo, pipelinesUsing, pipelineIdRefsTo, pipelineIdContextsUsing } = await import(resolve(root, "out/server/usage.js"));
-const { looksLikeOtelcol } = await import(resolve(root, "out/extension/sniffer.js"));
-const { computeSemanticTokens, encodeSemanticTokens, SEMTOK_TYPES, SEMTOK_MODIFIERS } = await import(
-  resolve(root, "out/server/semantic-tokens.js"),
+const { pipelineRefsTo, pipelinesUsing, pipelineIdRefsTo, pipelineIdContextsUsing } = await import(
+  resolve(root, "out/server/usage.js")
 );
+const { looksLikeOtelcol } = await import(resolve(root, "out/extension/sniffer.js"));
+const { computeSemanticTokens, encodeSemanticTokens, SEMTOK_TYPES, SEMTOK_MODIFIERS } =
+  await import(resolve(root, "out/server/semantic-tokens.js"));
 
 const idx = loadComponents(resolve(root, "out", "server"));
 
@@ -41,10 +42,6 @@ function buildFor(set) {
     contents.set(uri, readFileSync(fsPath, "utf8"));
   }
   return buildSetModel(set, contents);
-}
-
-function diagsBy(model, sourceUri) {
-  return validatePipelines(model, idx).filter((d) => d.sourceUri === sourceUri);
 }
 
 function memberUri(set, basename) {
@@ -69,7 +66,8 @@ describe("ConfigSetIndex discovery", () => {
     for (const s of sets) {
       // Each set's members are all under its anchor's directory.
       const anchorDir = dirname(s.anchorUri);
-      for (const m of s.members) assert.ok(m.startsWith(anchorDir + "/"), `${m} not under ${anchorDir}`);
+      for (const m of s.members)
+        assert.ok(m.startsWith(anchorDir + "/"), `${m} not under ${anchorDir}`);
       assert.equal(s.members.length, 2);
     }
   });
@@ -116,7 +114,11 @@ describe("ConfigSetIndex discovery", () => {
     const set = discoverSets("test/configsets/directive").allSets()[0];
     const model = buildFor(set);
     const refs = pipelineRefsTo(model, "receiver", "otlp");
-    assert.equal(refs.length, 1, `expected 1 ref to otlp, got ${refs.length}: ${JSON.stringify(refs)}`);
+    assert.equal(
+      refs.length,
+      1,
+      `expected 1 ref to otlp, got ${refs.length}: ${JSON.stringify(refs)}`,
+    );
     assert.ok(refs[0].uri.endsWith("/pipelines.yaml"));
   });
 
@@ -193,9 +195,43 @@ describe("SetModel build + validatePipelines", () => {
     // Ambiguous ref attributed to pipelines.yaml; duplicates to the defining files.
     const ambig = diags.find((d) => /ambiguous/.test(d.diagnostic.message));
     assert.ok(ambig.sourceUri.endsWith("/pipelines.yaml"));
-    const dupSources = diags.filter((d) => /duplicate/.test(d.diagnostic.message)).map((d) => d.sourceUri);
+    const dupSources = diags
+      .filter((d) => /duplicate/.test(d.diagnostic.message))
+      .map((d) => d.sourceUri);
     assert.ok(dupSources.some((u) => u.endsWith("/base.yaml")));
     assert.ok(dupSources.some((u) => u.endsWith("/extras.yaml")));
+  });
+
+  it("duplicates: diagnostic ranges land on the offending token", () => {
+    const set = discoverSets("test/configsets/duplicates").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    for (const d of diags) {
+      const r = d.diagnostic.range;
+      assert.ok(r, "every diagnostic must carry a range");
+      assert.ok(
+        Number.isInteger(r.start.line) && r.start.line >= 0,
+        `bad start.line: ${r.start.line}`,
+      );
+      assert.ok(Number.isInteger(r.start.character) && r.start.character >= 0);
+      assert.ok(
+        r.end.line > r.start.line ||
+          (r.end.line === r.start.line && r.end.character > r.start.character),
+        `end must be after start, got ${JSON.stringify(r)}`,
+      );
+    }
+    // Duplicate "otlp" definition in extras.yaml is on line 1 (`  otlp:` at line index 1).
+    const extrasUri = memberUri(set, "extras.yaml");
+    const extrasText = readFileSync(extrasUri.replace(/^file:\/\//, ""), "utf8");
+    const dupInExtras = diags.find(
+      (d) => /duplicate receiver id/.test(d.diagnostic.message) && d.sourceUri === extrasUri,
+    );
+    assert.ok(dupInExtras, "expected the duplicate diag attributed to extras.yaml");
+    const lineText = extrasText.split("\n")[dupInExtras.diagnostic.range.start.line];
+    assert.match(
+      lineText,
+      /\botlp\b/,
+      `range points at line ${dupInExtras.diagnostic.range.start.line} = ${JSON.stringify(lineText)}; expected the line containing 'otlp'`,
+    );
   });
 
   it("unused: one Information diagnostic with DiagnosticTag.Unnecessary", () => {
@@ -209,12 +245,44 @@ describe("SetModel build + validatePipelines", () => {
     assert.ok(d.sourceUri.endsWith("/base.yaml"));
   });
 
+  it("unused: diagnostic range covers the otlp/unused identifier on its declaration line", () => {
+    const set = discoverSets("test/configsets/unused").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const [d] = diags;
+    const baseText = readFileSync(memberUri(set, "base.yaml").replace(/^file:\/\//, ""), "utf8");
+    const lineText = baseText.split("\n")[d.diagnostic.range.start.line];
+    assert.match(
+      lineText,
+      /otlp\/unused/,
+      `unused diag range points at line ${d.diagnostic.range.start.line} = ${JSON.stringify(lineText)}; expected the line containing 'otlp/unused'`,
+    );
+  });
+
   it("missing-ref: one undefined-receiver error attributed to pipelines.yaml", () => {
     const set = discoverSets("test/configsets/missing-ref").allSets()[0];
     const diags = validatePipelines(buildFor(set), idx);
     const err = diags.find((d) => /receiver "ghost" is not defined/.test(d.diagnostic.message));
     assert.ok(err, "expected an undefined-receiver error");
     assert.ok(err.sourceUri.endsWith("/pipelines.yaml"));
+  });
+
+  it("missing-ref: range points at the 'ghost' token in the receivers list", () => {
+    const set = discoverSets("test/configsets/missing-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) => /receiver "ghost"/.test(d.diagnostic.message));
+    const text = readFileSync(memberUri(set, "pipelines.yaml").replace(/^file:\/\//, ""), "utf8");
+    const lineText = text.split("\n")[err.diagnostic.range.start.line];
+    assert.match(
+      lineText,
+      /ghost/,
+      `range line = ${JSON.stringify(lineText)}; expected the line containing 'ghost'`,
+    );
+    // Range should cover the word 'ghost', not the whole sequence.
+    const span = lineText.substring(
+      err.diagnostic.range.start.character,
+      err.diagnostic.range.end.character,
+    );
+    assert.equal(span, "ghost", `range span = ${JSON.stringify(span)}; expected exactly 'ghost'`);
   });
 });
 
@@ -233,7 +301,10 @@ describe("usage helpers", () => {
     const set = discoverSets("test/complex").allSets()[0];
     const model = buildFor(set);
     const pipes = pipelinesUsing(model, "exporter", "otlp/primary");
-    assert.deepEqual(new Set(pipes), new Set(["traces/acme", "traces/canary", "traces/general", "metrics", "logs/sink"]));
+    assert.deepEqual(
+      new Set(pipes),
+      new Set(["traces/acme", "traces/canary", "traces/general", "metrics", "logs/sink"]),
+    );
   });
 
   it("test/complex: connector routing/by-tenant used as exporter AND receiver", () => {
@@ -328,7 +399,10 @@ describe("extensions: service.extensions references", () => {
     const set = discoverSets("test/configsets/ext-unused").allSets()[0];
     const diags = validatePipelines(buildFor(set), idx);
     const unused = diags.find((d) => /extension "pprof"/.test(d.diagnostic.message));
-    assert.ok(unused, `expected unused-extension diag; got ${JSON.stringify(diags.map((d) => d.diagnostic.message))}`);
+    assert.ok(
+      unused,
+      `expected unused-extension diag; got ${JSON.stringify(diags.map((d) => d.diagnostic.message))}`,
+    );
     assert.equal(unused.diagnostic.severity, 3 /* Information */);
     assert.deepEqual(unused.diagnostic.tags, [1] /* DiagnosticTag.Unnecessary */);
     assert.match(unused.diagnostic.message, /service\.extensions/);
@@ -388,12 +462,20 @@ describe("cross-config extension refs", () => {
     for (const uri of set.members) {
       const text = readFileSync(uri.replace(/^file:\/\//, ""), "utf8");
       // Strip the extensions: block so the ref dangles.
-      contents.set(uri, text.replace(/^extensions:[\s\S]*?(?=\n(?:receivers|exporters|service|connectors):)/m, ""));
+      contents.set(
+        uri,
+        text.replace(/^extensions:[\s\S]*?(?=\n(?:receivers|exporters|service|connectors):)/m, ""),
+      );
     }
     const model = buildSetModel(set, contents);
     const diags = validatePipelines(model, idx);
-    const err = diags.find((d) => /extension "oauth2client\/primary" is not defined/.test(d.diagnostic.message));
-    assert.ok(err, `expected undefined-extension diag from auth.authenticator; got ${JSON.stringify(diags.map((d) => d.diagnostic.message))}`);
+    const err = diags.find((d) =>
+      /extension "oauth2client\/primary" is not defined/.test(d.diagnostic.message),
+    );
+    assert.ok(
+      err,
+      `expected undefined-extension diag from auth.authenticator; got ${JSON.stringify(diags.map((d) => d.diagnostic.message))}`,
+    );
     assert.match(err.diagnostic.message, /auth\.authenticator/);
   });
 
@@ -472,7 +554,9 @@ describe("connector pipeline-id refs", () => {
     const set = discoverSets("test/configsets/ref-missing-pipeline").allSets()[0];
     const model = buildFor(set);
     const diags = validatePipelines(model, idx);
-    const err = diags.find((d) => /pipeline "traces\/ghost" is not defined/.test(d.diagnostic.message));
+    const err = diags.find((d) =>
+      /pipeline "traces\/ghost" is not defined/.test(d.diagnostic.message),
+    );
     assert.ok(err);
     assert.match(err.diagnostic.message, /default_pipelines/);
   });
@@ -570,7 +654,10 @@ describe("looksLikeOtelcol sniffer", () => {
   // (e) sibling directive names this file
   it("(e) sibling YAML names this file in its directive triggers true", () => {
     fresh();
-    mk("pipelines.yaml", "# otelcol-configset: base.yaml pipelines.yaml\nservice:\n  pipelines:\n    traces: { receivers: [otlp], exporters: [debug] }\n");
+    mk(
+      "pipelines.yaml",
+      "# otelcol-configset: base.yaml pipelines.yaml\nservice:\n  pipelines:\n    traces: { receivers: [otlp], exporters: [debug] }\n",
+    );
     const f = mk("base.yaml", "receivers:\n  otlp:\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
   });
@@ -584,7 +671,10 @@ describe("looksLikeOtelcol sniffer", () => {
   });
   it("(e) works for .yml extension as well as .yaml", () => {
     fresh();
-    mk("pipelines.yaml", "# otelcol-configset: base.yml pipelines.yaml\nservice:\n  pipelines: {}\n");
+    mk(
+      "pipelines.yaml",
+      "# otelcol-configset: base.yml pipelines.yaml\nservice:\n  pipelines: {}\n",
+    );
     const f = mk("base.yml", "receivers:\n  otlp:\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
   });
@@ -599,13 +689,19 @@ describe("looksLikeOtelcol sniffer", () => {
   // (f) sibling anchor (any pipelines-bearing file in the same dir)
   it("(f) single-key fragment next to a sibling pipelines file → true", () => {
     fresh();
-    mk("pipelines.yaml", "service:\n  pipelines:\n    traces: { receivers: [otlp], exporters: [debug] }\n");
+    mk(
+      "pipelines.yaml",
+      "service:\n  pipelines:\n    traces: { receivers: [otlp], exporters: [debug] }\n",
+    );
     const f = mk("base.yaml", "receivers:\n  otlp:\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
   });
   it("(f) works for a one-key exporters fragment too (matches `directive/exporters.yaml`)", () => {
     fresh();
-    mk("pipelines.yaml", "service:\n  pipelines:\n    traces: { receivers: [otlp], exporters: [debug] }\n");
+    mk(
+      "pipelines.yaml",
+      "service:\n  pipelines:\n    traces: { receivers: [otlp], exporters: [debug] }\n",
+    );
     const f = mk("exporters.yaml", "exporters:\n  debug:\n    verbosity: detailed\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
   });
@@ -640,7 +736,10 @@ describe("looksLikeOtelcol sniffer", () => {
 
   // fsPath plumbing
   it("fsPath=null: content-only rules still work (anchor)", () => {
-    assert.equal(looksLikeOtelcol("service:\n  pipelines:\n    traces: { receivers: [otlp] }\n", null), true);
+    assert.equal(
+      looksLikeOtelcol("service:\n  pipelines:\n    traces: { receivers: [otlp] }\n", null),
+      true,
+    );
   });
   it("fsPath=null: directory-based rules (d/e) are skipped (single-key fragment → false)", () => {
     assert.equal(looksLikeOtelcol("receivers:\n  otlp:\n", null), false);
@@ -650,7 +749,10 @@ describe("looksLikeOtelcol sniffer", () => {
   it("combo: anchor + sidecar + directive → true (independent rules don't interfere)", () => {
     fresh();
     mk("otelcol-configset.yaml", "members: [x.yaml]\n");
-    const f = mk("x.yaml", "# otelcol-configset: x.yaml\nservice:\n  pipelines:\n    traces: { receivers: [otlp] }\n");
+    const f = mk(
+      "x.yaml",
+      "# otelcol-configset: x.yaml\nservice:\n  pipelines:\n    traces: { receivers: [otlp] }\n",
+    );
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
   });
 
@@ -722,7 +824,11 @@ describe("semantic tokens", () => {
     assert.equal(toks.length, 1, `expected 1 token, got ${JSON.stringify(toks)}`);
     const [t] = toks;
     assert.equal(t.type, T_CLASS);
-    assert.equal(t.mods, M_DECLARATION, "referenced component should NOT carry the deprecated modifier");
+    assert.equal(
+      t.mods,
+      M_DECLARATION,
+      "referenced component should NOT carry the deprecated modifier",
+    );
     assert.equal(wordAt(textOf(set, "base.yaml"), t.line, t.char, t.len), "otlp");
   });
 
@@ -730,7 +836,10 @@ describe("semantic tokens", () => {
     const set = discoverSets("test/configsets/directive").allSets()[0];
     const toks = tokensFor(set, "exporters.yaml");
     assert.equal(toks.length, 1);
-    assert.equal(wordAt(textOf(set, "exporters.yaml"), toks[0].line, toks[0].char, toks[0].len), "debug");
+    assert.equal(
+      wordAt(textOf(set, "exporters.yaml"), toks[0].line, toks[0].char, toks[0].len),
+      "debug",
+    );
     assert.equal(toks[0].type, T_CLASS);
     assert.equal(toks[0].mods, M_DECLARATION);
   });
@@ -739,10 +848,16 @@ describe("semantic tokens", () => {
     const set = discoverSets("test/configsets/directive").allSets()[0];
     const text = textOf(set, "pipelines.yaml");
     const toks = tokensFor(set, "pipelines.yaml");
-    const words = toks.map((t) => ({ word: wordAt(text, t.line, t.char, t.len), type: t.type, mods: t.mods }));
+    const words = toks.map((t) => ({
+      word: wordAt(text, t.line, t.char, t.len),
+      type: t.type,
+      mods: t.mods,
+    }));
     // Pipeline declaration `traces` → namespace|declaration
-    assert.ok(words.some((w) => w.word === "traces" && w.type === T_NAMESPACE && w.mods === M_DECLARATION),
-      `expected namespace|declaration for "traces", got ${JSON.stringify(words)}`);
+    assert.ok(
+      words.some((w) => w.word === "traces" && w.type === T_NAMESPACE && w.mods === M_DECLARATION),
+      `expected namespace|declaration for "traces", got ${JSON.stringify(words)}`,
+    );
     // Component refs `otlp`, `debug` → class, no modifiers
     assert.ok(words.some((w) => w.word === "otlp" && w.type === T_CLASS && w.mods === 0));
     assert.ok(words.some((w) => w.word === "debug" && w.type === T_CLASS && w.mods === 0));
@@ -755,7 +870,11 @@ describe("semantic tokens", () => {
     const unused = toks.find((t) => wordAt(text, t.line, t.char, t.len).startsWith("otlp/unused"));
     assert.ok(unused, "expected a token for otlp/unused");
     assert.equal(unused.type, T_CLASS);
-    assert.equal(unused.mods & M_DEPRECATED, M_DEPRECATED, "unreferenced component must carry the deprecated modifier");
+    assert.equal(
+      unused.mods & M_DEPRECATED,
+      M_DEPRECATED,
+      "unreferenced component must carry the deprecated modifier",
+    );
     assert.equal(unused.mods & M_DECLARATION, M_DECLARATION);
   });
 
@@ -764,9 +883,12 @@ describe("semantic tokens", () => {
     for (const uri of set.members) {
       const toks = computeSemanticTokens(buildFor(set), uri);
       for (let i = 1; i < toks.length; i++) {
-        const a = toks[i - 1], b = toks[i];
-        assert.ok(a.line < b.line || (a.line === b.line && a.char < b.char),
-          `tokens not sorted at ${i}: ${JSON.stringify({ a, b })}`);
+        const a = toks[i - 1],
+          b = toks[i];
+        assert.ok(
+          a.line < b.line || (a.line === b.line && a.char < b.char),
+          `tokens not sorted at ${i}: ${JSON.stringify({ a, b })}`,
+        );
       }
     }
   });
@@ -790,7 +912,8 @@ describe("semantic tokens", () => {
       const dLine = wire[i * 5];
       const dChar = wire[i * 5 + 1];
       line += dLine;
-      if (dLine === 0) char += dChar; else char = dChar;
+      if (dLine === 0) char += dChar;
+      else char = dChar;
       assert.equal(line, toks[i].line);
       assert.equal(char, toks[i].char);
       assert.equal(wire[i * 5 + 2], toks[i].len);
@@ -808,10 +931,14 @@ describe("semantic tokens", () => {
     let declTokens = 0;
     for (const uri of set.members) {
       for (const t of computeSemanticTokens(model, uri)) {
-        if (t.type === T_CLASS && (t.mods & M_DECLARATION)) declTokens++;
+        if (t.type === T_CLASS && t.mods & M_DECLARATION) declTokens++;
       }
     }
-    assert.equal(declTokens, defCount, `expected ${defCount} class|declaration tokens across the set, got ${declTokens}`);
+    assert.equal(
+      declTokens,
+      defCount,
+      `expected ${defCount} class|declaration tokens across the set, got ${declTokens}`,
+    );
   });
 
   it("connector counts as referenced when used as exporter OR receiver", () => {
@@ -822,7 +949,7 @@ describe("semantic tokens", () => {
     for (const uri of set.members) {
       const text = readFileSync(uri.replace(/^file:\/\//, ""), "utf8");
       for (const t of computeSemanticTokens(model, uri)) {
-        if (wordAt(text, t.line, t.char, t.len) === "routing/by-tenant" && (t.mods & M_DECLARATION)) {
+        if (wordAt(text, t.line, t.char, t.len) === "routing/by-tenant" && t.mods & M_DECLARATION) {
           conn = t;
           break;
         }

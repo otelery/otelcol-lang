@@ -1,6 +1,24 @@
 import * as path from "node:path";
-import { commands, ExtensionContext, languages, Location, Position, Range, Selection, TextDocument, TextEditorRevealType, Uri, window, workspace } from "vscode";
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node";
+import {
+  commands,
+  ExtensionContext,
+  languages,
+  Location,
+  Position,
+  Range,
+  Selection,
+  TextDocument,
+  TextEditorRevealType,
+  Uri,
+  window,
+  workspace,
+} from "vscode";
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+  TransportKind,
+} from "vscode-languageclient/node";
 import { looksLikeOtelcol } from "./sniffer";
 
 let client: LanguageClient | undefined;
@@ -13,8 +31,14 @@ async function maybeRetagYaml(doc: TextDocument): Promise<void> {
   await languages.setTextDocumentLanguage(doc, "otelcol");
 }
 
-interface LspPosition { line: number; character: number }
-interface LspLocation { uri: string; range: { start: LspPosition; end: LspPosition } }
+interface LspPosition {
+  line: number;
+  character: number;
+}
+interface LspLocation {
+  uri: string;
+  range: { start: LspPosition; end: LspPosition };
+}
 
 // Convert LSP-style plain-JSON arguments coming from the server (via CodeLens
 // commands) into real vscode.* instances, then dispatch:
@@ -24,7 +48,11 @@ interface LspLocation { uri: string; range: { start: LspPosition; end: LspPositi
 //   - 2+          → standard references peek widget
 // Required because VS Code's built-in commands validate argument types
 // strictly and reject the raw JSON shapes the LSP wire delivers.
-async function showReferencesCmd(uri: string, position: LspPosition, locations: LspLocation[]): Promise<void> {
+async function showReferencesCmd(
+  uri: string,
+  position: LspPosition,
+  locations: LspLocation[],
+): Promise<void> {
   const vUri = Uri.parse(uri);
   const vPos = new Position(position.line, position.character);
   const vLocs = locations.map(

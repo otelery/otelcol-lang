@@ -35,7 +35,12 @@ import { OttlForwarder } from "./ottl-forward";
 import { ConfigSetIndex, fsToUri, uriToFs, type ConfigSet } from "./configset";
 import { buildSetModel, singletonSetModel, isDuplicate, type SetModel } from "./set-model";
 import { pipelineRefsTo, pipelineIdRefsTo } from "./usage";
-import { computeSemanticTokens, encodeSemanticTokens, SEMTOK_MODIFIERS, SEMTOK_TYPES } from "./semantic-tokens";
+import {
+  computeSemanticTokens,
+  encodeSemanticTokens,
+  SEMTOK_MODIFIERS,
+  SEMTOK_TYPES,
+} from "./semantic-tokens";
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
@@ -94,7 +99,10 @@ connection.onInitialized(async () => {
     // No client config — keep defaults.
   }
   configSetIndex.setRoots(workspaceRoots);
-  configSetIndex.setOptions({ autoDiscover: settings.autoDiscover, maxFilesScanned: settings.maxFilesScanned });
+  configSetIndex.setOptions({
+    autoDiscover: settings.autoDiscover,
+    maxFilesScanned: settings.maxFilesScanned,
+  });
   configSetIndex.rescan();
   connection.console.info(
     `otelcol-lsp: indexed ${countComponents()} components from ${componentsIndex.contribPath || "<bundled>"}; ` +
@@ -108,7 +116,10 @@ connection.onInitialized(async () => {
 connection.onDidChangeConfiguration(async (params) => {
   const cfg = params.settings?.otelcol ?? (await connection.workspace.getConfiguration("otelcol"));
   applySettings(cfg);
-  configSetIndex.setOptions({ autoDiscover: settings.autoDiscover, maxFilesScanned: settings.maxFilesScanned });
+  configSetIndex.setOptions({
+    autoDiscover: settings.autoDiscover,
+    maxFilesScanned: settings.maxFilesScanned,
+  });
   configSetIndex.rescan();
   setModelCache.clear();
   validateAllSets();
@@ -247,7 +258,9 @@ async function validateSet(set: ConfigSet): Promise<void> {
   for (const uri of model.members.keys()) allBuckets.set(uri, []);
   for (const [uri, dm] of model.members) {
     for (const d of dm.diagnostics) {
-      allBuckets.get(uri)!.push({ range: d.range, message: d.message, severity: 1, source: "otelcol" });
+      allBuckets
+        .get(uri)!
+        .push({ range: d.range, message: d.message, severity: 1, source: "otelcol" });
     }
   }
   for (const sd of validatePipelines(model, componentsIndex)) {
@@ -457,7 +470,8 @@ connection.onDefinition((params) => {
     for (const bucket of ["receivers", "processors", "exporters"] as const) {
       for (const ref of pipe[bucket]) {
         if (!inRange(ref.range, pos)) continue;
-        const cls = bucket === "receivers" ? "receiver" : bucket === "processors" ? "processor" : "exporter";
+        const cls =
+          bucket === "receivers" ? "receiver" : bucket === "processors" ? "processor" : "exporter";
 
         const dupOwn = isDuplicate(model, cls, ref.id);
         const dupConn = isDuplicate(model, "connector", ref.id);
@@ -589,7 +603,10 @@ connection.onReferences((params) => {
   const includeDecl = params.context?.includeDeclaration ?? true;
 
   // Resolve the (cls, id) under the cursor — either at a definition site or at a ref site.
-  let target: { cls: "receiver" | "processor" | "exporter" | "connector" | "extension"; id: string } | null = null;
+  let target: {
+    cls: "receiver" | "processor" | "exporter" | "connector" | "extension";
+    id: string;
+  } | null = null;
 
   for (const cls of ["receiver", "processor", "exporter", "connector", "extension"] as const) {
     for (const entry of member.components[cls].values()) {
@@ -605,9 +622,15 @@ connection.onReferences((params) => {
       for (const bucket of ["receivers", "processors", "exporters"] as const) {
         for (const ref of pipe[bucket]) {
           if (inRange(ref.range, pos)) {
-            const cls = bucket === "receivers" ? "receiver" : bucket === "processors" ? "processor" : "exporter";
+            const cls =
+              bucket === "receivers"
+                ? "receiver"
+                : bucket === "processors"
+                  ? "processor"
+                  : "exporter";
             // Disambiguate: connectors can appear in receivers/exporters lists.
-            const isConn = model.components.connector.has(ref.id) && !model.components[cls].has(ref.id);
+            const isConn =
+              model.components.connector.has(ref.id) && !model.components[cls].has(ref.id);
             target = { cls: isConn ? "connector" : cls, id: ref.id };
             break outer;
           }
@@ -667,7 +690,10 @@ connection.onReferences((params) => {
   return locations;
 });
 
-function inRange(r: { start: { line: number; character: number }; end: { line: number; character: number } }, p: { line: number; character: number }) {
+function inRange(
+  r: { start: { line: number; character: number }; end: { line: number; character: number } },
+  p: { line: number; character: number },
+) {
   if (p.line < r.start.line || p.line > r.end.line) return false;
   if (p.line === r.start.line && p.character < r.start.character) return false;
   if (p.line === r.end.line && p.character > r.end.character) return false;

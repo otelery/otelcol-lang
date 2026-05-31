@@ -8,7 +8,12 @@ import { pipelinesUsing } from "./usage";
 
 const CLASSES: ComponentClass[] = ["receiver", "processor", "exporter", "connector", "extension"];
 
-export function hover(model: SetModel, uri: string, idx: ComponentsIndex, pos: Position): Hover | null {
+export function hover(
+  model: SetModel,
+  uri: string,
+  idx: ComponentsIndex,
+  pos: Position,
+): Hover | null {
   const doc = model.members.get(uri);
   if (!doc) return null;
 
@@ -22,7 +27,7 @@ export function hover(model: SetModel, uri: string, idx: ComponentsIndex, pos: P
       const refRoot: JsonSchemaNode = {
         $defs: {
           ...(idx.defs as Record<string, JsonSchemaNode>),
-          ...(schema.$defs ?? {}),
+          ...schema.$defs,
         },
       };
       const keyHover = walkConfigForKey(doc.text, entry.configNode, schema, pos, refRoot);
@@ -45,7 +50,8 @@ export function hover(model: SetModel, uri: string, idx: ComponentsIndex, pos: P
     for (const bucket of ["receivers", "processors", "exporters"] as const) {
       for (const ref of pipe[bucket]) {
         if (!containsPos(ref.range, pos)) continue;
-        const cls: ComponentClass = bucket === "receivers" ? "receiver" : bucket === "processors" ? "processor" : "exporter";
+        const cls: ComponentClass =
+          bucket === "receivers" ? "receiver" : bucket === "processors" ? "processor" : "exporter";
         const entry = model.components[cls].get(ref.id) ?? model.components.connector.get(ref.id);
         if (!entry) return null;
         const realCls = model.components[cls].has(ref.id) ? cls : "connector";
@@ -127,16 +133,23 @@ function walkConfigForKey(
       }
     }
   } else if (isSeq(node)) {
-    const componentItem = componentSchema?.items ? resolveRef(componentSchema.items, refRoot) : null;
+    const componentItem = componentSchema?.items
+      ? resolveRef(componentSchema.items, refRoot)
+      : null;
     for (const item of node.items) {
       const r = nodeRange(text, item as Node);
-      if (containsPos(r, pos)) return walkConfigForKey(text, item as Node, componentItem, pos, refRoot);
+      if (containsPos(r, pos))
+        return walkConfigForKey(text, item as Node, componentItem, pos, refRoot);
     }
   }
   return null;
 }
 
-function lookupProperty(schema: JsonSchemaNode, key: string, root: JsonSchemaNode): JsonSchemaNode | null {
+function lookupProperty(
+  schema: JsonSchemaNode,
+  key: string,
+  root: JsonSchemaNode,
+): JsonSchemaNode | null {
   const resolved = resolveRef(schema, root);
   const direct = resolved.properties?.[key];
   if (direct) return resolveRef(direct, root);
@@ -186,8 +199,12 @@ function resolveRef(schema: JsonSchemaNode, root: JsonSchemaNode, depth = 0): Js
 function formatKeyHover(key: string, schema: JsonSchemaNode, range: Range): Hover {
   const resolved = schema;
   const lines: string[] = [];
-  const typeStr = Array.isArray(resolved.type) ? resolved.type.join(" \\| ") : resolved.type ?? "";
-  lines.push(`**\`${key}\`**${typeStr ? ` — *${typeStr}${resolved.format ? `, ${resolved.format}` : ""}*` : ""}`);
+  const typeStr = Array.isArray(resolved.type)
+    ? resolved.type.join(" \\| ")
+    : (resolved.type ?? "");
+  lines.push(
+    `**\`${key}\`**${typeStr ? ` — *${typeStr}${resolved.format ? `, ${resolved.format}` : ""}*` : ""}`,
+  );
   if (resolved.description) lines.push("", resolved.description);
   if (resolved.enum && resolved.enum.length) {
     lines.push("", `*Allowed*: ${resolved.enum.map((e) => `\`${String(e)}\``).join(", ")}`);
@@ -199,14 +216,21 @@ function formatKeyHover(key: string, schema: JsonSchemaNode, range: Range): Hove
 }
 
 function nodeRange(text: string, node: Node | null): Range {
-  if (!node || !(node as any).range) return { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
+  if (!node || !(node as any).range)
+    return { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
   const [start, valueEnd] = (node as any).range as [number, number, number];
   return rangeFromOffsets(text, start, valueEnd);
 }
 
 // --- component hover (unchanged) ---------------------------------------
 
-function formatComponentHover(cls: ComponentClass, type: string, comp: Component | undefined, range: Range, usedIn: string[] = []): Hover {
+function formatComponentHover(
+  cls: ComponentClass,
+  type: string,
+  comp: Component | undefined,
+  range: Range,
+  usedIn: string[] = [],
+): Hover {
   const lines: string[] = [];
   lines.push(`**${cls}**: \`${type}\`${comp ? ` — ${comp.displayName}` : ""}`);
   if (usedIn.length) {
@@ -236,12 +260,16 @@ function formatComponentHover(cls: ComponentClass, type: string, comp: Component
 
     const gates = comp.metadata?.feature_gates;
     if (gates && gates.length) {
-      const items = gates.map((g) => `- \`${g.id}\` (${g.stage ?? "?"}${g.from_version ? `, from ${g.from_version}` : ""})${g.description ? ` — ${g.description}` : ""}`);
+      const items = gates.map(
+        (g) =>
+          `- \`${g.id}\` (${g.stage ?? "?"}${g.from_version ? `, from ${g.from_version}` : ""})${g.description ? ` — ${g.description}` : ""}`,
+      );
       lines.push(`*Feature gates*:\n${items.join("\n")}`);
     }
 
     if (comp.description) lines.push("", comp.description);
-    if (comp.schemaSource === "static") lines.push("", "_Schema is locally maintained — not yet generated upstream._");
+    if (comp.schemaSource === "static")
+      lines.push("", "_Schema is locally maintained — not yet generated upstream._");
   } else {
     lines.push("", "_No metadata for this component in the bundled contrib index._");
   }

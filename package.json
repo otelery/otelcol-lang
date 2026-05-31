@@ -65,11 +65,21 @@
       {
         "language": "otelcol",
         "scopes": {
-          "class": ["entity.name.type.class"],
-          "class.declaration": ["entity.name.type.class.declaration"],
-          "class.declaration.deprecated": ["invalid.deprecated"],
-          "namespace": ["entity.name.namespace"],
-          "namespace.declaration": ["entity.name.namespace.declaration"]
+          "class": [
+            "entity.name.type.class"
+          ],
+          "class.declaration": [
+            "entity.name.type.class.declaration"
+          ],
+          "class.declaration.deprecated": [
+            "invalid.deprecated"
+          ],
+          "namespace": [
+            "entity.name.namespace"
+          ],
+          "namespace.declaration": [
+            "entity.name.namespace.declaration"
+          ]
         }
       }
     ],
@@ -80,11 +90,24 @@
       "editor.semanticTokenColorCustomizations": {
         "enabled": true,
         "rules": {
-          "class.declaration:otelcol": { "foreground": "#E5C07B", "bold": true },
-          "class:otelcol": { "foreground": "#E5C07B" },
-          "class.declaration.deprecated:otelcol": { "foreground": "#5C6370", "strikethrough": true },
-          "namespace.declaration:otelcol": { "foreground": "#C678DD", "bold": true },
-          "namespace:otelcol": { "foreground": "#C678DD" }
+          "class.declaration:otelcol": {
+            "foreground": "#E5C07B",
+            "bold": true
+          },
+          "class:otelcol": {
+            "foreground": "#E5C07B"
+          },
+          "class.declaration.deprecated:otelcol": {
+            "foreground": "#5C6370",
+            "strikethrough": true
+          },
+          "namespace.declaration:otelcol": {
+            "foreground": "#C678DD",
+            "bold": true
+          },
+          "namespace:otelcol": {
+            "foreground": "#C678DD"
+          }
         }
       }
     },

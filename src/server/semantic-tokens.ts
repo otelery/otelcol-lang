@@ -85,7 +85,13 @@ export function computeSemanticTokens(model: SetModel, memberUri: string): Seman
       // both sides of the graph by design, and validate-time logic skips them.
       const isUnused = cls !== "connector" && !referenced[cls].has(entry.id);
       const mods = M_DECLARATION | (isUnused ? M_DEPRECATED : 0);
-      toks.push({ line: entry.idRange.start.line, char: entry.idRange.start.character, len, type: T_CLASS, mods });
+      toks.push({
+        line: entry.idRange.start.line,
+        char: entry.idRange.start.character,
+        len,
+        type: T_CLASS,
+        mods,
+      });
     }
   }
 
@@ -93,7 +99,13 @@ export function computeSemanticTokens(model: SetModel, memberUri: string): Seman
   for (const pipe of member.pipelines) {
     const len = rangeLen(pipe.range);
     if (len <= 0) continue;
-    toks.push({ line: pipe.range.start.line, char: pipe.range.start.character, len, type: T_NAMESPACE, mods: M_DECLARATION });
+    toks.push({
+      line: pipe.range.start.line,
+      char: pipe.range.start.character,
+      len,
+      type: T_NAMESPACE,
+      mods: M_DECLARATION,
+    });
   }
 
   // Pipeline refs to components (in this member's pipelines).
@@ -102,7 +114,13 @@ export function computeSemanticTokens(model: SetModel, memberUri: string): Seman
       for (const r of pipe[bucket]) {
         const len = rangeLen(r.range);
         if (len <= 0) continue;
-        toks.push({ line: r.range.start.line, char: r.range.start.character, len, type: T_CLASS, mods: 0 });
+        toks.push({
+          line: r.range.start.line,
+          char: r.range.start.character,
+          len,
+          type: T_CLASS,
+          mods: 0,
+        });
       }
     }
   }
@@ -111,24 +129,42 @@ export function computeSemanticTokens(model: SetModel, memberUri: string): Seman
   for (const r of member.serviceExtensions) {
     const len = rangeLen(r.range);
     if (len <= 0) continue;
-    toks.push({ line: r.range.start.line, char: r.range.start.character, len, type: T_CLASS, mods: 0 });
+    toks.push({
+      line: r.range.start.line,
+      char: r.range.start.character,
+      len,
+      type: T_CLASS,
+      mods: 0,
+    });
   }
 
   // Cross-config extension refs (auth.authenticator, storage, observers, …).
   for (const r of member.extensionRefs) {
     const len = rangeLen(r.range);
     if (len <= 0) continue;
-    toks.push({ line: r.range.start.line, char: r.range.start.character, len, type: T_CLASS, mods: 0 });
+    toks.push({
+      line: r.range.start.line,
+      char: r.range.start.character,
+      len,
+      type: T_CLASS,
+      mods: 0,
+    });
   }
 
   // Pipeline-id refs inside routing/failover connector configs.
   for (const r of member.pipelineIdRefs) {
     const len = rangeLen(r.range);
     if (len <= 0) continue;
-    toks.push({ line: r.range.start.line, char: r.range.start.character, len, type: T_NAMESPACE, mods: 0 });
+    toks.push({
+      line: r.range.start.line,
+      char: r.range.start.character,
+      len,
+      type: T_NAMESPACE,
+      mods: 0,
+    });
   }
 
-  toks.sort((a, b) => (a.line - b.line) || (a.char - b.char));
+  toks.sort((a, b) => a.line - b.line || a.char - b.char);
   return toks;
 }
 

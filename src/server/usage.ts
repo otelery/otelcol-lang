@@ -49,7 +49,12 @@ export function pipelineRefsTo(model: SetModel, cls: ComponentClass, id: string)
       for (const ref of pipe[bucket]) {
         if (ref.id !== id) continue;
         if (cls !== "connector") {
-          const refCls: ComponentClass = bucket === "receivers" ? "receiver" : bucket === "processors" ? "processor" : "exporter";
+          const refCls: ComponentClass =
+            bucket === "receivers"
+              ? "receiver"
+              : bucket === "processors"
+                ? "processor"
+                : "exporter";
           if (refCls !== cls) continue;
         }
         out.push({ uri: ref.sourceUri, range: ref.range });
@@ -63,7 +68,12 @@ export function pipelineRefsTo(model: SetModel, cls: ComponentClass, id: string)
 // capped at `limit`. For pipeline-graph components this is the set of
 // pipeline ids; for extensions we list `service.extensions` plus the
 // fieldPath of any non-service ref (e.g. `exporters.otlp.auth.authenticator`).
-export function pipelinesUsing(model: SetModel, cls: ComponentClass, id: string, limit = 12): string[] {
+export function pipelinesUsing(
+  model: SetModel,
+  cls: ComponentClass,
+  id: string,
+  limit = 12,
+): string[] {
   if (cls === "extension") {
     const out = new Set<string>();
     if (model.serviceExtensions.some((r) => r.id === id)) out.add("service.extensions");
@@ -78,7 +88,12 @@ export function pipelinesUsing(model: SetModel, cls: ComponentClass, id: string,
       for (const ref of pipe[bucket]) {
         if (ref.id !== id) continue;
         if (cls !== "connector") {
-          const refCls: ComponentClass = bucket === "receivers" ? "receiver" : bucket === "processors" ? "processor" : "exporter";
+          const refCls: ComponentClass =
+            bucket === "receivers"
+              ? "receiver"
+              : bucket === "processors"
+                ? "processor"
+                : "exporter";
           if (refCls !== cls) continue;
         }
         seen.add(pipe.id);

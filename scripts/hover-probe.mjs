@@ -54,5 +54,7 @@ if (!h) {
 } else {
   console.log(`range: ${JSON.stringify(h.range)}`);
   console.log("---");
-  console.log(typeof h.contents === "object" && "value" in h.contents ? h.contents.value : h.contents);
+  console.log(
+    typeof h.contents === "object" && "value" in h.contents ? h.contents.value : h.contents,
+  );
 }
