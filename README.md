@@ -110,6 +110,45 @@ npm run build
 | `npm run smoke -- <file>` | parse a yaml, print model + diagnostics           |
 | `npm run test`            | full LSP fixture suite                            |
 
+## Publishing to the VS Code Marketplace
+
+The extension is published under the `otelery` publisher namespace.
+
+**One-time setup** — authenticate against the Marketplace. Either log
+in interactively (cached in your home dir):
+
+```sh
+npx vsce login otelery
+# pastes a Personal Access Token from Azure DevOps; see:
+# https://code.visualstudio.com/api/working-with-extensions/publishing-extension#get-a-personal-access-token
+```
+
+Or set the PAT as an environment variable per-publish (good for CI):
+
+```sh
+export VSCE_PAT=<token>
+```
+
+**Publish** — runs the full quality gate first, then `vsce publish`:
+
+```sh
+make publish              # current package.json version
+# or via npm directly, with optional version bump:
+npm run publish:vsix:patch  # 0.1.0 → 0.1.1
+npm run publish:vsix:minor  # 0.1.0 → 0.2.0
+npm run publish:vsix:major  # 0.1.0 → 1.0.0
+```
+
+`vsce publish` automatically runs `vscode:prepublish` (sync schemas
+→ esbuild --production → copy to dist/), then uploads the produced
+`.vsix`. The bump variants also commit and tag the version change.
+
+For a local-only artefact without uploading:
+
+```sh
+make package      # writes vscode-otelcol-<version>.vsix in the repo root
+```
+
 ## LSP
 
 The extension picks a distribution via the `otelcol.distribution`

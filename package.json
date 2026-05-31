@@ -33,7 +33,11 @@
     "package-check": "vsce ls",
     "check": "npm run lint && npm run format-check && npm run check-types && npm run audit && npm test && npm run test:integration && npm run package-check",
     "vscode:prepublish": "npm run package && node scripts/copy-schemas.mjs --outDir=dist",
-    "package:vsix": "vsce package"
+    "package:vsix": "vsce package",
+    "publish:vsix": "vsce publish",
+    "publish:vsix:patch": "vsce publish patch",
+    "publish:vsix:minor": "vsce publish minor",
+    "publish:vsix:major": "vsce publish major"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1",
