@@ -144,11 +144,11 @@ service:
     const lines = cfg.split("\n");
     const lineIdx = lines.findIndex((l) => l.includes("- x"));
     const items = complete(cfg, lineIdx, lines[lineIdx].indexOf("x"));
-    const labels = items.map((i) => i.label);
-    assert.ok(labels.includes("debug"));
-    assert.ok(labels.includes("otlp/primary"));
+    const labels = new Set(items.map((i) => i.label));
+    assert.ok(labels.has("debug"));
+    assert.ok(labels.has("otlp/primary"));
     assert.ok(
-      !labels.includes("otlp"),
+      !labels.has("otlp"),
       "receiver 'otlp' should not be suggested in exporters bucket",
     );
   });
