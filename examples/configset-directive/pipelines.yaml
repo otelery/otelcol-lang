@@ -1,0 +1,6 @@
+# otelcol-configset: base.yaml exporters.yaml pipelines.yaml
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug]

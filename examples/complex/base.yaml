@@ -1,0 +1,102 @@
+# Receivers + extensions. Loaded first.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+        max_recv_msg_size_mib: 16
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins: ["https://*.internal.example.com"]
+
+  kafka:
+    brokers: ["kafka-0:9092", "kafka-1:9092", "kafka-2:9092"]
+    protocol_version: "3.5.0"
+    group_id: otelcol
+    traces:
+      topics: [otlp_spans]
+      encoding: otlp_proto
+    logs:
+      topics: [otlp_logs]
+      encoding: otlp_proto
+    metrics:
+      topics: [otlp_metrics]
+      encoding: otlp_proto
+    auth:
+      sasl:
+        username: "${env:KAFKA_USER:-otelcol}"
+        password: "${env:KAFKA_PASS:-changeme}"
+        mechanism: SCRAM-SHA-512
+
+  host_metrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      load:
+      memory:
+      disk:
+      filesystem:
+        exclude_mount_points:
+          mount_points: ["/dev/*", "/proc/*", "/sys/*", "/var/lib/docker/*"]
+          match_type: regexp
+      network:
+      process:
+        mute_process_name_error: true
+
+  filelog:
+    include: [/var/log/app/*.log]
+    start_at: end
+    include_file_name: false
+    include_file_path: true
+    operators:
+      - type: regex_parser
+        regex: '^(?P<ts>\S+)\s+(?P<level>\w+)\s+(?P<msg>.*)$'
+        timestamp:
+          parse_from: attributes.ts
+          layout: '%Y-%m-%dT%H:%M:%S.%fZ'
+        severity:
+          parse_from: attributes.level
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'collector-self'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['0.0.0.0:8888']
+        - job_name: 'kubernetes-pods'
+          kubernetes_sd_configs:
+            - role: pod
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+              action: keep
+              regex: "true"
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 127.0.0.1:1777
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+# Service block is finalized in pipelines.yaml; this seeds the extensions list.
+service:
+  telemetry:
+    logs:
+      level: info
+      encoding: json
+    metrics:
+      level: detailed
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+  extensions: [health_check, pprof, zpages]

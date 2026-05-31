@@ -1,0 +1,57 @@
+# Exporters: primary OTLP backend, Kafka tee, Prom for metrics, debug.
+
+exporters:
+  otlp/primary:
+    endpoint: backend-primary.observability.svc.cluster.local:4317
+    tls:
+      ca_file: /etc/otel/certs/ca.crt
+      cert_file: /etc/otel/certs/tls.crt
+      key_file: /etc/otel/certs/tls.key
+    sending_queue:
+      enabled: true
+      num_consumers: 8
+      queue_size: 5000
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 5m
+
+  otlphttp/secondary:
+    endpoint: https://otlp.eu.example.com
+    headers:
+      x-tenant-id: ${env:TENANT_ID}
+    compression: zstd
+    encoding: proto
+
+  # Mirror everything to Kafka for replay / DR.
+  kafka/dr:
+    brokers: ["kafka-dr-0:9092", "kafka-dr-1:9092"]
+    protocol_version: "3.5.0"
+    traces:
+      topic: otlp_traces_mirror
+      encoding: otlp_proto
+    metrics:
+      topic: otlp_metrics_mirror
+      encoding: otlp_proto
+    logs:
+      topic: otlp_logs_mirror
+      encoding: otlp_proto
+    # NOTE: receiver schema uses `topics: [..]` (list); exporter uses `topic: ..`.
+    producer:
+      max_message_bytes: 10000000
+      compression: snappy
+
+  # Prometheus exposition for Prom scrape.
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: otel
+    send_timestamps: true
+    metric_expiration: 5m
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  debug:
+    verbosity: normal
+    sampling_initial: 2
+    sampling_thereafter: 200
