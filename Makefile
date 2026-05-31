@@ -1,5 +1,5 @@
 .PHONY: help install build bundle test test-unit test-integration lint lint-fix \
-        format format-check typecheck audit package-check check clean
+        format format-check typecheck audit package-check check clean distclean
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -45,5 +45,8 @@ package-check: bundle ## Dry-run VSIX packaging (vsce ls); catches missing files
 
 check: lint format-check typecheck audit test package-check ## Run all quality gates (CI entry-point)
 
-clean: ## Remove build artefacts
-	rm -rf node_modules dist out schemas .vscode-test
+clean: ## Remove build artefacts (dist/, out/, .vscode-test cache). Keeps node_modules and committed schemas.
+	rm -rf dist out .vscode-test
+
+distclean: clean ## Full reset: clean + remove node_modules (forces re-install on next build)
+	rm -rf node_modules
