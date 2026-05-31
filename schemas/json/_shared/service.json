@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/_shared/service.json",
+  "title": "OpenTelemetry Collector service section",
+  "description": "Shared definition for the top-level `service` block (extensions list, pipelines, telemetry).",
+  "definitions": {
+    "pipeline": {
+      "type": "object",
+      "properties": {
+        "receivers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "processors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exporters": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "pipelines": {
+      "type": "object",
+      "description": "Map of pipeline ID (`<signal>` or `<signal>/<name>`) to its component lists.",
+      "patternProperties": {
+        "^(traces|metrics|logs|profiles)(/.+)?$": {
+          "$ref": "#/definitions/pipeline"
+        }
+      },
+      "additionalProperties": false
+    },
+    "telemetry": {
+      "type": "object",
+      "properties": {
+        "logs": {
+          "type": "object"
+        },
+        "metrics": {
+          "type": "object"
+        },
+        "traces": {
+          "type": "object"
+        },
+        "resource": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pipelines": {
+          "$ref": "#/definitions/pipelines"
+        },
+        "telemetry": {
+          "$ref": "#/definitions/telemetry"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

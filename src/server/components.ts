@@ -79,15 +79,18 @@ export interface ComponentsIndex {
 
 const cache = new Map<string, ComponentsIndex>();
 
+// The build (`copy-schemas.mjs`) deposits schemas at a fixed location relative
+// to the bundled JS:
+//
+//   dist/server/server.js    runtime  →  ../schemas/<sub>   (i.e. dist/schemas/<sub>)
+//   out/server/<*.js>        tests    →  ../schemas/<sub>   (i.e. out/schemas/<sub>)
+//
+// One canonical path; no walking, no defensive fallbacks. If the schemas are
+// missing here the build hasn't run — surface a null and let the caller
+// degrade gracefully.
 function resolveSchemasBase(searchFrom: string, sub: string): string | null {
-  const candidates = [
-    path.join(searchFrom, "schemas", sub),
-    path.join(searchFrom, "..", "schemas", sub),
-    path.join(searchFrom, "..", "..", "schemas", sub),
-    path.join(searchFrom, "..", "..", "..", "schemas", sub),
-  ];
-  for (const c of candidates) if (fs.existsSync(c)) return c;
-  return null;
+  const candidate = path.join(searchFrom, "..", "schemas", sub);
+  return fs.existsSync(candidate) ? candidate : null;
 }
 
 export function listDistributions(searchFrom: string): { slug: string; version: string }[] {

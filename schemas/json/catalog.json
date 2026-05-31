@@ -1,0 +1,87 @@
+{
+  "schemas": [
+    {
+      "name": "otelcol config",
+      "description": "JSON schema for OpenTelemetry Collector configuration",
+      "fileMatch": [
+        "otelcol-config*.yaml",
+        "otelcol-config*.yml"
+      ],
+      "url": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-config-0.152.0.json",
+      "versions": {
+        "0.152.0": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-config-0.152.0.json"
+      }
+    },
+    {
+      "name": "otelcol-contrib config",
+      "description": "JSON schema for OpenTelemetry Collector Contrib configuration",
+      "fileMatch": [
+        "otelcol-contrib*.yaml",
+        "otelcol-contrib*.yml",
+        "otel-collector-contrib*.yaml"
+      ],
+      "url": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-contrib-config-0.152.0.json",
+      "versions": {
+        "0.152.0": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-contrib-config-0.152.0.json"
+      }
+    },
+    {
+      "name": "otelcol-k8s config",
+      "description": "JSON schema for OpenTelemetry Collector for Kubernetes configuration",
+      "fileMatch": [
+        "otelcol-k8s*.yaml",
+        "otelcol-k8s*.yml"
+      ],
+      "url": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-k8s-config-0.152.0.json",
+      "versions": {
+        "0.152.0": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-k8s-config-0.152.0.json"
+      }
+    },
+    {
+      "name": "otelcol-otlp config",
+      "description": "JSON schema for OpenTelemetry Collector OTLP-only configuration",
+      "fileMatch": [
+        "otelcol-otlp*.yaml"
+      ],
+      "url": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-otlp-config-0.152.0.json",
+      "versions": {
+        "0.152.0": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-otlp-config-0.152.0.json"
+      }
+    },
+    {
+      "name": "otelcol-ebpf-profiler config",
+      "description": "JSON schema for OpenTelemetry Collector for eBPF Profiling configuration",
+      "fileMatch": [
+        "otelcol-ebpf-profiler*.yaml"
+      ],
+      "url": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-ebpf-profiler-config-0.152.0.json",
+      "versions": {
+        "0.152.0": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-ebpf-profiler-config-0.152.0.json"
+      }
+    },
+    {
+      "name": "datadog-otelcol config",
+      "description": "JSON schema for Datadog Agent OpenTelemetry Collector configuration",
+      "fileMatch": [
+        "datadog-otelcol*.yaml",
+        "datadog-agent-otel*.yaml"
+      ],
+      "url": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/datadog-otelcol-config-0.152.0.json",
+      "versions": {
+        "0.152.0": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/datadog-otelcol-config-0.152.0.json"
+      }
+    },
+    {
+      "name": "elastic-otelcol config",
+      "description": "JSON schema for Elastic OpenTelemetry Collector Components configuration",
+      "fileMatch": [
+        "elastic-otelcol*.yaml",
+        "elastic-collector*.yaml"
+      ],
+      "url": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/elastic-otelcol-config-0.0.1.json",
+      "versions": {
+        "0.0.1": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/elastic-otelcol-config-0.0.1.json"
+      }
+    }
+  ]
+}

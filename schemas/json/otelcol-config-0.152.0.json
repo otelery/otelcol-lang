@@ -1,0 +1,3664 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-config-0.152.0.json",
+  "title": "OpenTelemetry Collector config (v0.152.0)",
+  "description": "Vanilla OSS OpenTelemetry Collector (core distribution). JSON Schema for the configuration of OpenTelemetry Collector version 0.152.0, generated from the distribution's manifest.yaml.",
+  "type": "object",
+  "properties": {
+    "receivers": {
+      "type": "object",
+      "patternProperties": {
+        "^nop(/.+)?$": {
+          "description": "Discards all data; useful for tests.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "^otlp(/.+)?$": {
+          "description": "Config defines configuration for the OTLP receiver — accepts OTLP data over gRPC and/or HTTP.",
+          "type": "object",
+          "properties": {
+            "protocols": {
+              "description": "One or both of `grpc` and `http`. At least one must be configured.",
+              "type": "object",
+              "properties": {
+                "grpc": {
+                  "description": "gRPC server config. Empty object enables defaults (listen on 0.0.0.0:4317).",
+                  "type": "object",
+                  "properties": {
+                    "endpoint": {
+                      "type": "string",
+                      "description": "Address to listen on. Default 0.0.0.0:4317."
+                    },
+                    "transport": {
+                      "type": "string",
+                      "enum": [
+                        "tcp",
+                        "udp",
+                        "unix"
+                      ],
+                      "description": "Transport. Default tcp."
+                    },
+                    "tls": {
+                      "type": "object",
+                      "description": "TLS server config (cert_file, key_file, ca_file, …)."
+                    },
+                    "keepalive": {
+                      "type": "object"
+                    },
+                    "max_recv_msg_size_mib": {
+                      "type": "integer",
+                      "description": "Maximum receive size in MiB. Default 4."
+                    },
+                    "max_concurrent_streams": {
+                      "type": "integer"
+                    },
+                    "read_buffer_size": {
+                      "type": "integer"
+                    },
+                    "write_buffer_size": {
+                      "type": "integer"
+                    },
+                    "auth": {
+                      "type": "object",
+                      "description": "Authenticator extension config."
+                    },
+                    "include_metadata": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "http": {
+                  "description": "HTTP server config. Empty object enables defaults (listen on 0.0.0.0:4318).",
+                  "type": "object",
+                  "properties": {
+                    "endpoint": {
+                      "type": "string",
+                      "description": "Address to listen on. Default 0.0.0.0:4318."
+                    },
+                    "tls": {
+                      "type": "object"
+                    },
+                    "cors": {
+                      "type": "object",
+                      "description": "CORS settings.",
+                      "properties": {
+                        "allowed_origins": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "allowed_headers": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "max_age": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "traces_url_path": {
+                      "type": "string",
+                      "description": "Override the OTLP traces path. Default /v1/traces."
+                    },
+                    "metrics_url_path": {
+                      "type": "string",
+                      "description": "Override the OTLP metrics path. Default /v1/metrics."
+                    },
+                    "logs_url_path": {
+                      "type": "string",
+                      "description": "Override the OTLP logs path. Default /v1/logs."
+                    },
+                    "max_request_body_size": {
+                      "type": "integer"
+                    },
+                    "include_metadata": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "^host_metrics(/.+)?$": {
+          "description": "Config defines configuration for HostMetrics receiver.",
+          "type": "object",
+          "properties": {
+            "metadata_collection_interval": {
+              "description": "Collection interval for metadata. Metadata of the particular entity is collected when the entity changes. In addition metadata of all entities is collected periodically even if no changes happen. Setting the duration to 0 will disable periodic collection (however will not impact metadata collection on changes).",
+              "type": "string",
+              "format": "duration"
+            },
+            "root_path": {
+              "description": "RootPath is the host's root directory (linux only).",
+              "type": "string"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/core__scraper_scraperhelper__controller_config"
+            }
+          ]
+        },
+        "^hostmetrics(/.+)?$": {
+          "description": "Config defines configuration for HostMetrics receiver.",
+          "type": "object",
+          "properties": {
+            "metadata_collection_interval": {
+              "description": "Collection interval for metadata. Metadata of the particular entity is collected when the entity changes. In addition metadata of all entities is collected periodically even if no changes happen. Setting the duration to 0 will disable periodic collection (however will not impact metadata collection on changes).",
+              "type": "string",
+              "format": "duration"
+            },
+            "root_path": {
+              "description": "RootPath is the host's root directory (linux only).",
+              "type": "string"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/core__scraper_scraperhelper__controller_config"
+            }
+          ]
+        },
+        "^jaeger(/.+)?$": {
+          "description": "Config defines configuration for Jaeger receiver.",
+          "$defs": {
+            "protocol_udp": {
+              "description": "ProtocolUDP is the configuration for a UDP protocol.",
+              "type": "object",
+              "properties": {
+                "endpoint": {
+                  "type": "string"
+                }
+              },
+              "allOf": [
+                {
+                  "$ref": "#/$defs/contrib__receiver_jaegerreceiver__server_config_udp"
+                }
+              ]
+            },
+            "protocols": {
+              "description": "Protocols is the configuration for the supported protocols.",
+              "type": "object",
+              "properties": {
+                "grpc": {
+                  "x-optional": true,
+                  "$ref": "#/$defs/core__config_configgrpc__server_config"
+                },
+                "thrift_binary": {
+                  "x-optional": true,
+                  "$ref": "#/$defs/contrib__receiver_jaegerreceiver__protocol_udp"
+                },
+                "thrift_compact": {
+                  "x-optional": true,
+                  "$ref": "#/$defs/contrib__receiver_jaegerreceiver__protocol_udp"
+                },
+                "thrift_http": {
+                  "x-optional": true,
+                  "$ref": "#/$defs/core__config_confighttp__server_config"
+                }
+              }
+            },
+            "remote_sampling_config": {
+              "description": "RemoteSamplingConfig defines config key for remote sampling fetch endpoint",
+              "type": "object",
+              "properties": {
+                "host_endpoint": {
+                  "type": "string"
+                },
+                "strategy_file": {
+                  "type": "string"
+                },
+                "strategy_file_reload_interval": {
+                  "type": "string",
+                  "format": "duration"
+                }
+              },
+              "allOf": [
+                {
+                  "$ref": "#/$defs/core__config_configgrpc__client_config"
+                }
+              ]
+            },
+            "server_config_udp": {
+              "description": "ServerConfigUDP is the server configuration for a UDP protocol.",
+              "type": "object",
+              "properties": {
+                "max_packet_size": {
+                  "type": "integer"
+                },
+                "queue_size": {
+                  "type": "integer"
+                },
+                "socket_buffer_size": {
+                  "type": "integer"
+                },
+                "workers": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "remote_sampling": {
+              "x-pointer": true,
+              "$ref": "#/$defs/contrib__receiver_jaegerreceiver__remote_sampling_config"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/contrib__receiver_jaegerreceiver__protocols"
+            }
+          ]
+        },
+        "^kafka(/.+)?$": {
+          "description": "Config defines configuration for Kafka receiver.",
+          "$defs": {
+            "header_extraction": {
+              "type": "object",
+              "properties": {
+                "extract_headers": {
+                  "type": "boolean"
+                },
+                "headers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "message_marking": {
+              "type": "object",
+              "properties": {
+                "after": {
+                  "description": "If true, the messages are marked after the pipeline execution",
+                  "type": "boolean"
+                },
+                "on_error": {
+                  "description": "If false, only the successfully processed messages are marked. This only applies to non-permanent errors. It has no impact if After is set to false. Note: this can block the entire partition in case a message processing returns a non-permanent error.",
+                  "type": "boolean"
+                },
+                "on_permanent_error": {
+                  "description": "If false, only the successfully processed messages are marked. This only applies to permanent errors. It has no impact if After is set to false. Default value inherits from OnError for backward compatibility. Note: this can block the entire partition in case a message processing returns a permanent error.",
+                  "type": "boolean"
+                }
+              }
+            },
+            "metric_config": {
+              "description": "MetricConfig provides common config for a particular metric.",
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "metrics_config": {
+              "description": "MetricsConfig provides config for optional receiver metrics.",
+              "type": "object",
+              "properties": {
+                "kafka_receiver_records_delay": {
+                  "description": "KafkaReceiverRecordsDelay controls whether the metric kafka_receiver_records_delay that measures the time in seconds between producing and receiving a batch of records will be reported or not. This metric is not reported by default because it may slow down high-volume consuming.",
+                  "$ref": "#/$defs/contrib__receiver_kafkareceiver__metric_config"
+                }
+              }
+            },
+            "telemetry_config": {
+              "type": "object",
+              "properties": {
+                "metrics": {
+                  "$ref": "#/$defs/contrib__receiver_kafkareceiver__metrics_config"
+                }
+              }
+            },
+            "topic_encoding_config": {
+              "description": "TopicEncodingConfig holds signal-specific topic and encoding configuration.",
+              "type": "object",
+              "properties": {
+                "encoding": {
+                  "description": "Encoding holds the expected encoding of messages for the signal type Defaults to \"otlp_proto\".",
+                  "type": "string"
+                },
+                "exclude_topics": {
+                  "description": "Optional exclude topics option, used only in regex mode.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "topics": {
+                  "description": "Topics holds the name of the Kafka topics from which messages of the signal type should be consumed. The default depends on the signal type: - \"otlp_spans\" for traces - \"otlp_metrics\" for metrics - \"otlp_logs\" for logs - \"otlp_profiles\" for profiles",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "error_backoff": {
+              "description": "ErrorBackoff controls backoff/retry behavior when the next consumer returns an error.",
+              "$ref": "#/$defs/core__config_configretry__back_off_config"
+            },
+            "header_extraction": {
+              "description": "HeaderExtraction controls extraction of headers from Kafka records.",
+              "$ref": "#/$defs/contrib__receiver_kafkareceiver__header_extraction"
+            },
+            "logs": {
+              "description": "Logs holds configuration about how logs should be consumed.",
+              "$ref": "#/$defs/contrib__receiver_kafkareceiver__topic_encoding_config"
+            },
+            "message_marking": {
+              "description": "MessageMarking controls the way the messages are marked as consumed.",
+              "$ref": "#/$defs/contrib__receiver_kafkareceiver__message_marking"
+            },
+            "metrics": {
+              "description": "Metrics holds configuration about how metrics should be consumed.",
+              "$ref": "#/$defs/contrib__receiver_kafkareceiver__topic_encoding_config"
+            },
+            "profiles": {
+              "description": "Profiles holds configuration about how profiles should be consumed.",
+              "$ref": "#/$defs/contrib__receiver_kafkareceiver__topic_encoding_config"
+            },
+            "telemetry": {
+              "description": "Telemetry controls optional telemetry configuration.",
+              "$ref": "#/$defs/contrib__receiver_kafkareceiver__telemetry_config"
+            },
+            "traces": {
+              "description": "Traces holds configuration about how traces should be consumed.",
+              "$ref": "#/$defs/contrib__receiver_kafkareceiver__topic_encoding_config"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/contrib__pkg_kafka_configkafka__client_config"
+            },
+            {
+              "$ref": "#/$defs/contrib__pkg_kafka_configkafka__consumer_config"
+            }
+          ]
+        },
+        "^prometheus(/.+)?$": {
+          "description": "Config defines configuration for Prometheus receiver.",
+          "$defs": {
+            "api_server": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "server_config": {
+                  "$ref": "#/$defs/core__config_confighttp__server_config"
+                }
+              }
+            },
+            "prom_config": {
+              "description": "PromConfig is a redeclaration of promconfig.Config because we need custom unmarshaling as prometheus \"config\" uses `yaml` tags.",
+              "x-customType": "github.com/prometheus/prometheus/config.config"
+            }
+          },
+          "type": "object",
+          "properties": {
+            "api_server": {
+              "description": "APIServer has the settings to enable the receiver to host the Prometheus API server in agent mode. This allows the user to call the endpoint to get the config, service discovery, and targets for debugging purposes.",
+              "$ref": "#/$defs/contrib__receiver_prometheusreceiver__api_server"
+            },
+            "config": {
+              "x-pointer": true,
+              "$ref": "#/$defs/contrib__receiver_prometheusreceiver__prom_config"
+            },
+            "target_allocator": {
+              "x-optional": true,
+              "$ref": "#/$defs/contrib__receiver_prometheusreceiver_internal_targetallocator__config"
+            },
+            "trim_metric_suffixes": {
+              "type": "boolean"
+            }
+          }
+        },
+        "^zipkin(/.+)?$": {
+          "description": "Config defines configuration for Zipkin receiver.",
+          "type": "object",
+          "properties": {
+            "parse_string_tags": {
+              "description": "If enabled the zipkin receiver will attempt to parse string tags/binary annotations into int/bool/float. Disabled by default",
+              "type": "boolean"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/core__config_confighttp__server_config"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "processors": {
+      "type": "object",
+      "patternProperties": {
+        "^batch(/.+)?$": {
+          "description": "Config defines configuration for the batch processor — groups items together before forwarding to the next consumer.",
+          "type": "object",
+          "properties": {
+            "send_batch_size": {
+              "description": "Number of spans, metric data points, or log records after which a batch is sent regardless of timeout. Default 8192. Should be lower than `send_batch_max_size`.",
+              "type": "integer",
+              "minimum": 0,
+              "default": 8192
+            },
+            "send_batch_max_size": {
+              "description": "Maximum allowed batch size. Items beyond this split into multiple batches. 0 = no upper bound. Must be greater than or equal to `send_batch_size`.",
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "timeout": {
+              "description": "Time after which the batch is sent regardless of size. 0 disables time-based batching. Default 200ms.",
+              "type": "string",
+              "format": "duration",
+              "default": "200ms"
+            },
+            "metadata_keys": {
+              "description": "Client metadata keys whose values, when set, isolate batches. Different values create different batches. Empty (default) means client metadata is ignored.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "metadata_cardinality_limit": {
+              "description": "Hard limit on the number of distinct combinations of `metadata_keys` values. Default 1000.",
+              "type": "integer",
+              "minimum": 1,
+              "default": 1000
+            }
+          }
+        },
+        "^memory_limiter(/.+)?$": {
+          "description": "Config defines configuration for the memory_limiter processor — refuses data and forces GC when memory limits are exceeded, protecting the collector from OOM.",
+          "type": "object",
+          "properties": {
+            "check_interval": {
+              "description": "Frequency of memory checks. Default 0 (disabled). Common values 1s–5s. Lower values increase responsiveness at the cost of CPU.",
+              "type": "string",
+              "format": "duration"
+            },
+            "limit_mib": {
+              "description": "Hard memory limit in MiB. When exceeded, the processor refuses data and force-runs GC. Mutually exclusive with `limit_percentage`. 0 = disabled.",
+              "type": "integer",
+              "minimum": 0
+            },
+            "spike_limit_mib": {
+              "description": "Spike allowance subtracted from `limit_mib` to derive the soft limit. Default 20% of `limit_mib`.",
+              "type": "integer",
+              "minimum": 0
+            },
+            "limit_percentage": {
+              "description": "Hard memory limit as a percentage of total system memory (0–100). Used in containerized environments. Mutually exclusive with `limit_mib`.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "spike_limit_percentage": {
+              "description": "Spike allowance as a percentage of total memory. Used with `limit_percentage`.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        },
+        "^attributes(/.+)?$": {
+          "description": "Config specifies the set of attributes to be inserted, updated, upserted and deleted and the properties to include/exclude a span from being processed. This processor handles all forms of modifications to attributes within a span, log, or metric. Prior to any actions being applied, each span is compared against the include properties and then the exclude properties if they are specified. This determines if a span is to be processed or not. The list of actions is applied in order specified in the configuration.",
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/$defs/contrib__internal_filter_filterconfig__match_config"
+            },
+            {
+              "$ref": "#/$defs/contrib__internal_coreinternal_attraction__settings"
+            }
+          ]
+        },
+        "^resource(/.+)?$": {
+          "description": "Config defines configuration for Resource processor.",
+          "type": "object",
+          "properties": {
+            "attributes": {
+              "description": "AttributesActions specifies the list of actions to be applied on resource attributes. The set of actions are {INSERT, UPDATE, UPSERT, DELETE, HASH, EXTRACT}.",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__internal_coreinternal_attraction__action_key_value"
+              }
+            }
+          }
+        },
+        "^span(/.+)?$": {
+          "description": "Config is the configuration for the span processor. Prior to any actions being applied, each span is compared against the include properties and then the exclude properties if they are specified. This determines if a span is to be processed or not.",
+          "$defs": {
+            "name": {
+              "description": "Name specifies the attributes to use to re-name a span.",
+              "type": "object",
+              "properties": {
+                "from_attributes": {
+                  "description": "FromAttributes represents the attribute keys to pull the values from to generate the new span name. All attribute keys are required in the span to re-name a span. If any attribute is missing from the span, no re-name will occur. Note: The new span name is constructed in order of the `from_attributes` specified in the configuration. This field is required and cannot be empty.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "separator": {
+                  "description": "Separator is the string used to separate attributes values in the new span name. If no value is set, no separator is used between attribute values. Used with FromAttributes only.",
+                  "type": "string"
+                },
+                "to_attributes": {
+                  "description": "ToAttributes specifies a configuration to extract attributes from span name.",
+                  "x-pointer": true,
+                  "$ref": "#/$defs/contrib__processor_spanprocessor__to_attributes"
+                }
+              }
+            },
+            "status": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "description": "Code is one of three values \"Ok\" or \"Error\" or \"Unset\". Please check: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status",
+                  "type": "string"
+                },
+                "description": {
+                  "description": "Description is an optional field documenting Error statuses.",
+                  "type": "string"
+                }
+              }
+            },
+            "to_attributes": {
+              "description": "ToAttributes specifies a configuration to extract attributes from span name.",
+              "type": "object",
+              "properties": {
+                "break_after_match": {
+                  "description": "BreakAfterMatch specifies if processing of rules should stop after the first match. If it is false rule processing will continue to be performed over the modified span name.",
+                  "type": "boolean"
+                },
+                "keep_original_name": {
+                  "description": "KeepOriginalName specifies if the original span name should be kept after processing the rules. If it is true the original span name will be kept, otherwise it will be replaced with the placeholders of the captured attributes.",
+                  "type": "boolean"
+                },
+                "rules": {
+                  "description": "Rules is a list of rules to extract attribute values from span name. The values in the span name are replaced by extracted attribute names. Each rule in the list is a regex pattern string. Span name is checked against the regex. If it matches then all named subexpressions of the regex are extracted as attributes and are added to the span. Each subexpression name becomes an attribute name and subexpression matched portion becomes the attribute value. The matched portion in the span name is replaced by extracted attribute name. If the attributes already exist in the span then they will be overwritten. The process is repeated for all rules in the order they are specified. Each subsequent rule works on the span name that is the output after processing the previous rule.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "Rename specifies the components required to re-name a span. The `from_attributes` field needs to be set for this processor to be properly configured. Note: The field name is `Rename` to avoid collision with the Name() method from config.NamedEntity",
+              "$ref": "#/$defs/contrib__processor_spanprocessor__name"
+            },
+            "status": {
+              "description": "SetStatus specifies status which should be set for this span.",
+              "x-pointer": true,
+              "$ref": "#/$defs/contrib__processor_spanprocessor__status"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/contrib__internal_filter_filterconfig__match_config"
+            }
+          ]
+        },
+        "^probabilistic_sampler(/.+)?$": {
+          "description": "Config has the configuration guiding the sampler processor.",
+          "$defs": {
+            "attribute_source": {
+              "type": "string"
+            },
+            "sampler_mode": {
+              "description": "SamplerMode determines which of several modes is used for the sampling decision.",
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "properties": {
+            "fail_closed": {
+              "description": "FailClosed indicates to not sample data (the processor will fail \"closed\") in case of error, such as failure to parse the tracestate field or missing the randomness attribute. By default, failure cases are sampled (the processor is fails \"open\").  Sampling priority-based decisions are made after FailClosed is processed, making it possible to sample despite errors using priority.",
+              "type": "boolean"
+            },
+            "from_attribute": {
+              "description": "FromAttribute (logs only) The optional name of a log record attribute used for sampling purposes, such as a unique log record ID. The value of the attribute is only used if the trace ID is absent or if `attribute_source` is set to `record`.",
+              "type": "string"
+            },
+            "hash_seed": {
+              "description": "HashSeed allows one to configure the hashing seed. This is important in scenarios where multiple layers of collectors have different sampling rates: if they use the same seed all passing one layer may pass the other even if they have different sampling rates, configuring different seeds avoids that.",
+              "type": "integer",
+              "x-customType": "uint32"
+            },
+            "mode": {
+              "description": "Mode selects the sampling behavior. Supported values: - \"hash_seed\": the legacy behavior of this processor. Using an FNV hash combined with the HashSeed value, this sampler performs a non-consistent probabilistic downsampling.  The number of spans output is expected to equal SamplingPercentage (as a ratio) times the number of spans inpout, assuming good behavior from FNV and good entropy in the hashed attributes or TraceID. - \"equalizing\": Using an OTel-specified consistent sampling mechanism, this sampler selectively reduces the effective sampling probability of arriving spans.  This can be useful to select a small fraction of complete traces from a stream with mixed sampling rates.  The rate of spans passing through depends on how much sampling has already been applied.  If an arriving span was head sampled at the same probability it passes through.  If the span arrives with lower probability, a warning is logged because it means this sampler is configured with too large a sampling probability to ensure complete traces. - \"proportional\": Using an OTel-specified consistent sampling mechanism, this sampler reduces the effective sampling probability of each span by `SamplingProbability`.",
+              "$ref": "#/$defs/contrib__processor_probabilisticsamplerprocessor__sampler_mode"
+            },
+            "sampling_percentage": {
+              "description": "SamplingPercentage is the percentage rate at which traces or logs are going to be sampled. Defaults to zero, i.e.: no sample. Values greater or equal 100 are treated as \"sample all traces/logs\".",
+              "type": "number",
+              "x-customType": "float32"
+            },
+            "sampling_precision": {
+              "description": "SamplingPrecision is how many hex digits of sampling threshold will be encoded, from 1 up to 14.  Default is 4. 0 is treated as full precision.",
+              "type": "integer"
+            },
+            "sampling_priority": {
+              "description": "SamplingPriority (logs only) enables using a log record attribute as the sampling priority of the log record.",
+              "type": "string"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/contrib__processor_probabilisticsamplerprocessor__attribute_source"
+            }
+          ]
+        },
+        "^filter(/.+)?$": {
+          "description": "Config defines configuration for Resource processor.",
+          "$defs": {
+            "log_filters": {
+              "description": "LogFilters filters by Log properties.",
+              "type": "object",
+              "properties": {
+                "exclude": {
+                  "description": "Exclude match properties describe logs that should be excluded from the Collector Service pipeline, all other logs should be included. If both Include and Exclude are specified, Include filtering occurs first.",
+                  "x-pointer": true,
+                  "$ref": "#/$defs/contrib__processor_filterprocessor__log_match_properties"
+                },
+                "include": {
+                  "description": "Include match properties describe logs that should be included in the Collector Service pipeline, all other logs should be dropped from further processing. If both Include and Exclude are specified, Include filtering occurs first.",
+                  "x-pointer": true,
+                  "$ref": "#/$defs/contrib__processor_filterprocessor__log_match_properties"
+                },
+                "log_record": {
+                  "description": "LogConditions is a list of OTTL conditions for an ottllog context. If any condition resolves to true, the log event will be dropped. Supports `and`, `or`, and `()`",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "resource": {
+                  "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "log_match_properties": {
+              "description": "LogMatchProperties specifies the set of properties in a log to match against and the type of string pattern matching to use.",
+              "type": "object",
+              "properties": {
+                "bodies": {
+                  "description": "LogBodies is a list of strings that the LogRecord's body field must match against.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "match_type": {
+                  "description": "LogMatchType specifies the type of matching desired",
+                  "$ref": "#/$defs/contrib__processor_filterprocessor__log_match_type"
+                },
+                "record_attributes": {
+                  "description": "RecordAttributes defines a list of possible record attributes to match logs against. A match occurs if any record attribute matches at least one expression in this given list.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__internal_filter_filterconfig__attribute"
+                  }
+                },
+                "resource_attributes": {
+                  "description": "ResourceAttributes defines a list of possible resource attributes to match logs against. A match occurs if any resource attribute matches all expressions in this given list.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__internal_filter_filterconfig__attribute"
+                  }
+                },
+                "severity_number": {
+                  "description": "SeverityNumberProperties defines how to match against a log record's SeverityNumber, if defined.",
+                  "x-pointer": true,
+                  "$ref": "#/$defs/contrib__processor_filterprocessor__log_severity_number_match_properties"
+                },
+                "severity_texts": {
+                  "description": "SeverityTexts is a list of strings that the LogRecord's severity text field must match against.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "log_match_type": {
+              "description": "LogMatchType specifies the strategy for matching against `plog.Log`s.",
+              "type": "string"
+            },
+            "log_severity_number_match_properties": {
+              "type": "object",
+              "properties": {
+                "match_undefined": {
+                  "description": "MatchUndefined lets logs records with \"unknown\" severity match. If MinSeverity is not set, this field is ignored, as fields are not matched based on severity.",
+                  "type": "boolean"
+                },
+                "min": {
+                  "description": "Min is the minimum severity needed for the log record to match. This corresponds to the short names specified here: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#displaying-severity this field is case-insensitive (\"INFO\" == \"info\")",
+                  "type": "string"
+                }
+              }
+            },
+            "metric_filters": {
+              "description": "MetricFilters filters by Metric properties.",
+              "type": "object",
+              "properties": {
+                "datapoint": {
+                  "description": "DataPointConditions is a list of OTTL conditions for an ottldatapoint context. If any condition resolves to true, the datapoint will be dropped. Supports `and`, `or`, and `()`",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "exclude": {
+                  "description": "Exclude match properties describe metrics that should be excluded from the Collector Service pipeline, all other metrics should be included. If both Include and Exclude are specified, Include filtering occurs first.",
+                  "x-pointer": true,
+                  "$ref": "#/$defs/contrib__internal_filter_filterconfig__metric_match_properties"
+                },
+                "include": {
+                  "description": "Include match properties describe metrics that should be included in the Collector Service pipeline, all other metrics should be dropped from further processing. If both Include and Exclude are specified, Include filtering occurs first.",
+                  "x-pointer": true,
+                  "$ref": "#/$defs/contrib__internal_filter_filterconfig__metric_match_properties"
+                },
+                "metric": {
+                  "description": "MetricConditions is a list of OTTL conditions for an ottlmetric context. If any condition resolves to true, the metric will be dropped. Supports `and`, `or`, and `()`",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "regexp": {
+                  "description": "RegexpConfig specifies options for the regexp match type",
+                  "x-pointer": true,
+                  "$ref": "#/$defs/contrib__internal_filter_filterset_regexp__config"
+                },
+                "resource": {
+                  "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "profile_filters": {
+              "description": "ProfileFilters filters by OTTL conditions",
+              "type": "object",
+              "properties": {
+                "profile": {
+                  "description": "ProfileConditions is a list of OTTL conditions for an ottlprofile context. If any condition resolves to true, the profile will be dropped. Supports `and`, `or`, and `()`",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "resource": {
+                  "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "trace_filters": {
+              "description": "TraceFilters filters by OTTL conditions",
+              "type": "object",
+              "properties": {
+                "resource": {
+                  "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "span": {
+                  "description": "SpanConditions is a list of OTTL conditions for an ottlspan context. If any condition resolves to true, the span will be dropped. Supports `and`, `or`, and `()`",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "spanevent": {
+                  "description": "SpanEventConditions is a list of OTTL conditions for an ottlspanevent context. If any condition resolves to true, the span event will be dropped. Supports `and`, `or`, and `()`",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "error_mode": {
+              "description": "ErrorMode determines how the processor reacts to errors that occur while processing an OTTL condition. Valid values are `ignore` and `propagate`. `ignore` means the processor ignores errors returned by conditions and continues on to the next condition. This is the recommended mode. `propagate` means the processor returns the error up the pipeline.  This will result in the payload being dropped from the collector. The default value is `propagate`. It will change to `ignore` when the `processor.filter.defaultErrorModeIgnore` feature gate is stable.",
+              "$ref": "#/$defs/contrib__pkg_ottl__error_mode"
+            },
+            "log_conditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__processor_filterprocessor_internal_condition__context_conditions"
+              }
+            },
+            "logs": {
+              "description": "Deprecated: use LogConditions instead.",
+              "$ref": "#/$defs/contrib__processor_filterprocessor__log_filters"
+            },
+            "metric_conditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__processor_filterprocessor_internal_condition__context_conditions"
+              }
+            },
+            "metrics": {
+              "description": "Deprecated: use MetricConditions instead.",
+              "$ref": "#/$defs/contrib__processor_filterprocessor__metric_filters"
+            },
+            "profile_conditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__processor_filterprocessor_internal_condition__context_conditions"
+              }
+            },
+            "profiles": {
+              "description": "Deprecated: use ProfileConditions instead.",
+              "$ref": "#/$defs/contrib__processor_filterprocessor__profile_filters"
+            },
+            "spans": {
+              "description": "Deprecated: use TraceConditions instead.",
+              "$ref": "#/$defs/contrib__internal_filter_filterconfig__match_config"
+            },
+            "trace_conditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__processor_filterprocessor_internal_condition__context_conditions"
+              }
+            },
+            "traces": {
+              "description": "Deprecated: use TraceConditions instead.",
+              "$ref": "#/$defs/contrib__processor_filterprocessor__trace_filters"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "exporters": {
+      "type": "object",
+      "patternProperties": {
+        "^debug(/.+)?$": {
+          "description": "Config defines configuration for the debug exporter — writes telemetry to the collector's own log. Replaces the deprecated logging exporter.",
+          "type": "object",
+          "properties": {
+            "verbosity": {
+              "description": "How verbose the output is. `basic` prints counts only, `normal` prints summary lines, `detailed` prints every record.",
+              "type": "string",
+              "enum": [
+                "basic",
+                "normal",
+                "detailed"
+              ],
+              "default": "basic"
+            },
+            "sampling_initial": {
+              "description": "Number of records logged at the start of each second before sampling kicks in. Default 2.",
+              "type": "integer",
+              "minimum": 0,
+              "default": 2
+            },
+            "sampling_thereafter": {
+              "description": "After `sampling_initial`, log 1 of every N records. Default 1 (log everything).",
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "use_internal_logger": {
+              "description": "If true, route output through the collector's own zap logger (default). If false, write directly to stdout.",
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "^nop(/.+)?$": {
+          "description": "Discards data; useful for performance testing.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "^otlp(/.+)?$": {
+          "description": "Config defines configuration for the OTLP gRPC exporter.",
+          "$defs": {
+            "tls_client": {
+              "description": "TLS client config. Fields are shared with go.opentelemetry.io/collector/config/configtls.ClientConfig.",
+              "type": "object",
+              "properties": {
+                "insecure": {
+                  "description": "Disable TLS entirely. The connection is sent in plaintext. Default false. Mutually exclusive with the cert/ca settings.",
+                  "type": "boolean",
+                  "default": false
+                },
+                "insecure_skip_verify": {
+                  "description": "Skip certificate verification. The TLS connection is still encrypted but vulnerable to MITM. Default false. Set true only in dev.",
+                  "type": "boolean",
+                  "default": false
+                },
+                "server_name_override": {
+                  "description": "Override the server name used in TLS handshake. Useful when connecting via IP or when the cert CN doesn't match the endpoint host.",
+                  "type": "string"
+                },
+                "ca_file": {
+                  "description": "Path to the CA bundle used to verify the server certificate. If unset, system roots are used.",
+                  "type": "string"
+                },
+                "ca_pem": {
+                  "description": "PEM-encoded CA bundle inlined directly. Alternative to `ca_file`.",
+                  "type": "string"
+                },
+                "cert_file": {
+                  "description": "Path to the client certificate (for mTLS).",
+                  "type": "string"
+                },
+                "cert_pem": {
+                  "description": "PEM-encoded client certificate inlined directly.",
+                  "type": "string"
+                },
+                "key_file": {
+                  "description": "Path to the client private key (for mTLS).",
+                  "type": "string"
+                },
+                "key_pem": {
+                  "description": "PEM-encoded client private key inlined directly.",
+                  "type": "string"
+                },
+                "min_version": {
+                  "description": "Minimum accepted TLS version. e.g. \"1.2\", \"1.3\". Default \"1.2\".",
+                  "type": "string"
+                },
+                "max_version": {
+                  "description": "Maximum accepted TLS version.",
+                  "type": "string"
+                },
+                "reload_interval": {
+                  "description": "How often to reload cert files from disk. 0 disables reloading.",
+                  "type": "string",
+                  "format": "duration"
+                },
+                "include_system_ca_certs_pool": {
+                  "description": "When using `ca_file`/`ca_pem`, also include the system roots. Default false.",
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "required": [
+            "endpoint"
+          ],
+          "properties": {
+            "endpoint": {
+              "description": "gRPC endpoint of the OTLP backend (host:port, with optional scheme).",
+              "type": "string"
+            },
+            "tls": {
+              "$ref": "#/$defs/tls_client"
+            },
+            "compression": {
+              "description": "Compression to apply. Defaults to gzip.",
+              "type": "string",
+              "enum": [
+                "",
+                "none",
+                "gzip",
+                "snappy",
+                "zstd",
+                "deflate",
+                "lz4"
+              ]
+            },
+            "headers": {
+              "description": "Static gRPC metadata sent on every request.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "description": "Per-request timeout. Default 5s.",
+              "type": "string",
+              "format": "duration"
+            },
+            "keepalive": {
+              "type": "object"
+            },
+            "balancer_name": {
+              "description": "gRPC load-balancing policy. e.g. \"round_robin\", \"pick_first\".",
+              "type": "string"
+            },
+            "sending_queue": {
+              "description": "Standard exporterhelper send-queue config.",
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "num_consumers": {
+                  "type": "integer"
+                },
+                "queue_size": {
+                  "type": "integer"
+                },
+                "storage": {
+                  "type": "string",
+                  "description": "ID of a storage extension to persist the queue."
+                }
+              }
+            },
+            "retry_on_failure": {
+              "description": "Standard exporterhelper retry config.",
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "initial_interval": {
+                  "type": "string",
+                  "format": "duration"
+                },
+                "randomization_factor": {
+                  "type": "number"
+                },
+                "multiplier": {
+                  "type": "number"
+                },
+                "max_interval": {
+                  "type": "string",
+                  "format": "duration"
+                },
+                "max_elapsed_time": {
+                  "type": "string",
+                  "format": "duration"
+                }
+              }
+            },
+            "auth": {
+              "description": "Authenticator extension config.",
+              "type": "object"
+            }
+          }
+        },
+        "^otlphttp(/.+)?$": {
+          "description": "Config defines configuration for the OTLP HTTP exporter.",
+          "type": "object",
+          "properties": {
+            "endpoint": {
+              "description": "Base URL of the OTLP HTTP backend. If set, default per-signal paths are appended.",
+              "type": "string"
+            },
+            "traces_endpoint": {
+              "description": "Override the full URL for traces (no path is appended).",
+              "type": "string"
+            },
+            "metrics_endpoint": {
+              "description": "Override the full URL for metrics.",
+              "type": "string"
+            },
+            "logs_endpoint": {
+              "description": "Override the full URL for logs.",
+              "type": "string"
+            },
+            "tls": {
+              "type": "object"
+            },
+            "compression": {
+              "type": "string",
+              "enum": [
+                "",
+                "none",
+                "gzip",
+                "snappy",
+                "zstd",
+                "deflate",
+                "lz4"
+              ]
+            },
+            "encoding": {
+              "description": "Wire format. Default `proto`.",
+              "type": "string",
+              "enum": [
+                "proto",
+                "json"
+              ]
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "type": "string",
+              "format": "duration"
+            },
+            "sending_queue": {
+              "type": "object"
+            },
+            "retry_on_failure": {
+              "type": "object"
+            },
+            "auth": {
+              "type": "object"
+            }
+          }
+        },
+        "^file(/.+)?$": {
+          "description": "Config defines configuration for file exporter.",
+          "$defs": {
+            "group_by": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "description": "Enables group_by. Default is false.",
+                  "type": "boolean"
+                },
+                "max_open_files": {
+                  "description": "MaxOpenFiles specifies the maximum number of open file descriptors for the output files. The default is 100.",
+                  "type": "integer"
+                },
+                "resource_attribute": {
+                  "description": "ResourceAttribute specifies the name of the resource attribute that contains the path segment of the file to write to. The final path will be the Path config value, with the * replaced with the value of this resource attribute. Default is \"fileexporter.path_segment\".",
+                  "type": "string"
+                }
+              }
+            },
+            "rotation": {
+              "description": "Rotation an option to rolling log files",
+              "type": "object",
+              "properties": {
+                "localtime": {
+                  "description": "LocalTime determines if the time used for formatting the timestamps in backup files is the computer's local time.  The default is to use UTC time.",
+                  "type": "boolean"
+                },
+                "max_backups": {
+                  "description": "MaxBackups is the maximum number of old log files to retain. The default is to 100 files.",
+                  "type": "integer"
+                },
+                "max_days": {
+                  "description": "MaxDays is the maximum number of days to retain old log files based on the timestamp encoded in their filename.  Note that a day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc. The default is not to remove old log files based on age.",
+                  "type": "integer"
+                },
+                "max_megabytes": {
+                  "description": "MaxMegabytes is the maximum size in megabytes of the file before it gets rotated. It defaults to 100 megabytes.",
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "append": {
+              "description": "Mode defines whether the exporter should append to the file. Options: - false[default]:  truncates the file - true:  appends to the file.",
+              "type": "boolean"
+            },
+            "compression": {
+              "description": "Compression Codec used to export telemetry data Supported compression algorithms:`zstd`",
+              "type": "string"
+            },
+            "create_directory": {
+              "description": "CreateDirectory specifies that the parent directory of the output file should be created automatically on start.",
+              "type": "boolean"
+            },
+            "directory_permissions": {
+              "description": "DirectoryPermissions specifies permissions used when creating directories (minus process umask). Value must be an octal string like \"0755\".",
+              "type": "string"
+            },
+            "encoding": {
+              "description": "Encoding defines the encoding of the telemetry data. If specified, it overrides `FormatType` and applies an encoding extension.",
+              "x-pointer": true,
+              "type": "string",
+              "x-customType": "go.opentelemetry.io/collector/component.ID"
+            },
+            "flush_interval": {
+              "description": "FlushInterval is the duration between flushes. See time.ParseDuration for valid values.",
+              "type": "string",
+              "format": "duration"
+            },
+            "format": {
+              "description": "FormatType define the data format of encoded telemetry data Options: - json[default]:  OTLP json bytes. - proto:  OTLP binary protobuf bytes.",
+              "type": "string"
+            },
+            "group_by": {
+              "description": "GroupBy enables writing to separate files based on a resource attribute.",
+              "x-pointer": true,
+              "$ref": "#/$defs/contrib__exporter_fileexporter__group_by"
+            },
+            "path": {
+              "description": "Path of the file to write to. Path is relative to current directory.",
+              "type": "string"
+            },
+            "rotation": {
+              "description": "Rotation defines an option about rotation of telemetry files.",
+              "x-pointer": true,
+              "$ref": "#/$defs/contrib__exporter_fileexporter__rotation"
+            }
+          }
+        },
+        "^kafka(/.+)?$": {
+          "description": "Config defines configuration for Kafka exporter.",
+          "$defs": {
+            "record_partitioner_config": {
+              "description": "RecordPartitionerConfig configures the strategy used to assign Kafka records to partitions. At most one field should be set.",
+              "type": "object",
+              "properties": {
+                "extension": {
+                  "description": "Extension is the component ID of an extension implementing RecordPartitionerExtension. Setting this field delegates partition assignment to that extension.",
+                  "x-pointer": true,
+                  "type": "string",
+                  "x-customType": "go.opentelemetry.io/collector/component.ID"
+                },
+                "least_backup": {
+                  "description": "LeastBackup routes each record to the partition with the fewest buffered records.",
+                  "x-pointer": true,
+                  "type": "object"
+                },
+                "round_robin": {
+                  "description": "RoundRobin distributes records evenly across all available partitions in round-robin order.",
+                  "x-pointer": true,
+                  "type": "object"
+                },
+                "sticky_key": {
+                  "description": "StickyKey uses StickyKeyPartitioner. When a record key is set, the partition is derived from the key hash.",
+                  "x-pointer": true,
+                  "$ref": "#/$defs/contrib__exporter_kafkaexporter__sticky_key_partitioner_config"
+                }
+              }
+            },
+            "signal_config": {
+              "description": "SignalConfig holds signal-specific configuration for the Kafka exporter.",
+              "type": "object",
+              "properties": {
+                "encoding": {
+                  "description": "Encoding holds the encoding of messages for the signal type. Defaults to \"otlp_proto\".",
+                  "type": "string"
+                },
+                "topic": {
+                  "description": "Topic holds the name of the Kafka topic to which messages of the signal type should be produced. The default depends on the signal type: - \"otlp_spans\" for traces - \"otlp_metrics\" for metrics - \"otlp_logs\" for logs - \"otlp_profiles\" for profiles",
+                  "type": "string"
+                },
+                "topic_from_metadata_key": {
+                  "description": "TopicFromMetadataKey holds the name of the metadata key to use as the topic name for this signal type. If this is set, it takes precedence over the topic name set in the topic field.",
+                  "type": "string"
+                }
+              }
+            },
+            "sticky_key_partitioner_config": {
+              "description": "StickyKeyPartitionerConfig configures the StickyKeyPartitioner.",
+              "type": "object",
+              "properties": {
+                "hasher": {
+                  "description": "Hasher is the hash algorithm used for key-based partition assignment. Valid values: \"sarama_compat\" (default). - \"sarama_compat\": Sarama-compatible FNV-1a hashing (SaramaCompatHasher). - \"murmur2\": Murmur2 hashing.",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "include_metadata_keys": {
+              "description": "IncludeMetadataKeys indicates the receiver's client metadata keys to propagate as Kafka message headers.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "logs": {
+              "description": "Logs holds configuration about how logs should be sent to Kafka.",
+              "$ref": "#/$defs/contrib__exporter_kafkaexporter__signal_config"
+            },
+            "metrics": {
+              "description": "Metrics holds configuration about how metrics should be sent to Kafka.",
+              "$ref": "#/$defs/contrib__exporter_kafkaexporter__signal_config"
+            },
+            "partition_logs_by_resource_attributes": {
+              "description": "PartitionLogsByResourceAttributes controls the partitioning of logs messages by resource. If this is true, then the message key will be set to a hash of the resource's identifying attributes.",
+              "type": "boolean"
+            },
+            "partition_logs_by_trace_id": {
+              "description": "PartitionLogsByTraceID controls partitioning of log messages by trace ID only. When enabled, the exporter splits incoming logs per TraceID (using SplitLogs) and sets the Kafka message key to the 16-byte hex string of that TraceID. If a LogRecord has an empty TraceID, the key may be empty and partition selection falls back to the Kafka client’s default strategy. Resource attributes are not used for the key when this option is enabled.",
+              "type": "boolean"
+            },
+            "partition_metrics_by_resource_attributes": {
+              "description": "PartitionMetricsByResourceAttributes controls the partitioning of metrics messages by resource. If this is true, then the message key will be set to a hash of the resource's identifying attributes.",
+              "type": "boolean"
+            },
+            "partition_traces_by_id": {
+              "description": "PartitionTracesByID sets the message key of outgoing trace messages to the trace ID. NOTE: this does not have any effect for Jaeger encodings. Jaeger encodings always use use the trace ID for the message key.",
+              "type": "boolean"
+            },
+            "producer": {
+              "$ref": "#/$defs/contrib__pkg_kafka_configkafka__producer_config"
+            },
+            "profiles": {
+              "description": "Profiles holds configuration about how profiles should be sent to Kafka.",
+              "$ref": "#/$defs/contrib__exporter_kafkaexporter__signal_config"
+            },
+            "record_headers": {
+              "description": "RecordHeaders sets static headers on every outgoing Kafka record.",
+              "$ref": "#/$defs/core__config_configopaque__map_list"
+            },
+            "record_partitioner": {
+              "description": "RecordPartitioner configures how Kafka records are assigned to partitions. The default (\"sarama_compatible\") retains the legacy Sarama-compatible hashing behavior. Set to \"sticky\", \"round_robin\", or \"least_backup\" to use one of the built-in franz-go partitioners, or \"extension\" to delegate to a custom extension.",
+              "$ref": "#/$defs/contrib__exporter_kafkaexporter__record_partitioner_config"
+            },
+            "sending_queue": {
+              "x-optional": true,
+              "$ref": "#/$defs/core__exporter_exporterhelper__queue_batch_config"
+            },
+            "topic_from_attribute": {
+              "description": "TopicFromAttribute is the name of the attribute to use as the topic name.",
+              "type": "string"
+            },
+            "traces": {
+              "description": "Traces holds configuration about how traces should be sent to Kafka.",
+              "$ref": "#/$defs/contrib__exporter_kafkaexporter__signal_config"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/core__exporter_exporterhelper__timeout_config"
+            },
+            {
+              "$ref": "#/$defs/core__config_configretry__back_off_config"
+            },
+            {
+              "$ref": "#/$defs/contrib__pkg_kafka_configkafka__client_config"
+            }
+          ]
+        },
+        "^prometheus(/.+)?$": {
+          "description": "Config defines configuration for Prometheus exporter.",
+          "type": "object",
+          "properties": {
+            "add_metric_suffixes": {
+              "description": "AddMetricSuffixes controls whether suffixes are added to metric names. Defaults to true. Deprecated: Use TranslationStrategy instead. This setting is ignored when TranslationStrategy is explicitly set.",
+              "type": "boolean"
+            },
+            "const_labels": {
+              "description": "ConstLabels are values that are applied for every exported metric.",
+              "x-customType": "github.com/prometheus/client_golang/prometheus.labels"
+            },
+            "enable_open_metrics": {
+              "description": "EnableOpenMetrics enables the use of the OpenMetrics encoding option for the prometheus exporter.",
+              "type": "boolean"
+            },
+            "metric_expiration": {
+              "description": "MetricExpiration defines how long metrics are kept without updates",
+              "type": "string",
+              "format": "duration"
+            },
+            "namespace": {
+              "description": "Namespace if set, exports metrics under the provided value.",
+              "type": "string"
+            },
+            "resource_to_telemetry_conversion": {
+              "description": "ResourceToTelemetrySettings defines configuration for converting resource attributes to metric labels.",
+              "$ref": "#/$defs/contrib__pkg_resourcetotelemetry__settings"
+            },
+            "send_timestamps": {
+              "description": "SendTimestamps will send the underlying scrape timestamp with the export",
+              "type": "boolean"
+            },
+            "sending_queue": {
+              "description": "QueueBatchConfig defines the queue configuration.",
+              "x-optional": true,
+              "$ref": "#/$defs/core__exporter_exporterhelper__queue_batch_config"
+            },
+            "translation_strategy": {
+              "description": "TranslationStrategy controls how OTLP metric and attribute names are translated into Prometheus metric and label names. When set, this takes precedence over AddMetricSuffixes.",
+              "type": "string"
+            },
+            "without_scope_info": {
+              "description": "WithoutScopeInfo controls the addition of labels for the instrumentation scope.",
+              "type": "boolean"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/core__config_confighttp__server_config"
+            }
+          ]
+        },
+        "^prometheusremotewrite(/.+)?$": {
+          "description": "Config defines configuration for Remote Write exporter.",
+          "$defs": {
+            "remote_write_queue": {
+              "description": "RemoteWriteQueue allows to configure the remote write queue.",
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "description": "Enabled if false the queue is not enabled, the export requests are executed synchronously.",
+                  "type": "boolean"
+                },
+                "num_consumers": {
+                  "description": "NumWorkers configures the number of workers used by the collector to fan out remote write requests.",
+                  "type": "integer"
+                },
+                "queue_size": {
+                  "description": "QueueSize is the maximum number of OTLP metric batches allowed in the queue at a given time. Ignored if Enabled is false.",
+                  "type": "integer"
+                }
+              }
+            },
+            "target_info": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "description": "Enabled if false the target_info metric is not generated by the exporter",
+                  "type": "boolean"
+                }
+              }
+            },
+            "wal_config": {
+              "type": "object",
+              "properties": {
+                "buffer_size": {
+                  "type": "integer"
+                },
+                "directory": {
+                  "type": "string"
+                },
+                "lag_record_frequency": {
+                  "type": "string",
+                  "format": "duration"
+                },
+                "truncate_frequency": {
+                  "type": "string",
+                  "format": "duration"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "add_metric_suffixes": {
+              "description": "AddMetricSuffixes controls whether unit and type suffixes are added to metrics on export",
+              "type": "boolean"
+            },
+            "disable_scope_info": {
+              "description": "DisableScopeInfo allows disabling the export of the scope info labels",
+              "type": "boolean"
+            },
+            "external_labels": {
+              "description": "ExternalLabels defines a map of label keys and values that are allowed to start with reserved prefix \"__\"",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "max_batch_request_parallelism": {
+              "description": "maximum amount of parallel requests to do when handling large batch request",
+              "x-pointer": true,
+              "type": "integer"
+            },
+            "max_batch_size_bytes": {
+              "description": "maximum size in bytes of time series batch sent to remote storage",
+              "type": "integer"
+            },
+            "namespace": {
+              "description": "prefix attached to each exported metric name See: https://prometheus.io/docs/practices/naming/#metric-names",
+              "type": "string"
+            },
+            "protobuf_message": {
+              "description": "RemoteWriteProtoMsg controls whether prometheus remote write v1 or v2 is sent.",
+              "x-customType": "github.com/prometheus/client_golang/exp/api/remote.write_message_type"
+            },
+            "remote_write_queue": {
+              "description": "QueueConfig allows users to fine tune the queues that handle outgoing requests.",
+              "$ref": "#/$defs/contrib__exporter_prometheusremotewriteexporter__remote_write_queue"
+            },
+            "resource_to_telemetry_conversion": {
+              "description": "ResourceToTelemetrySettings is the option for converting resource attributes to telemetry attributes. \"Enabled\" - A boolean field to enable/disable this option. Default is `false`. If enabled, all the resource attributes will be converted to metric labels by default. \"ExcludeServiceAttributes\" - If set to `true`, the `service.name`, `service.instance.id` and `service.namespace` resource attributes, which are already converted to `job` and `instance` labels respectively, will be excluded from the final metrics.",
+              "$ref": "#/$defs/contrib__pkg_resourcetotelemetry__settings"
+            },
+            "send_metadata": {
+              "description": "SendMetadata controls whether prometheus metadata will be generated and sent, this option is ignored when using PRW 2.0, which always includes metadata.",
+              "type": "boolean"
+            },
+            "target_info": {
+              "description": "TargetInfo allows customizing the target_info metric",
+              "$ref": "#/$defs/contrib__exporter_prometheusremotewriteexporter__target_info"
+            },
+            "wal": {
+              "description": "WAL enables persisting metrics to a write-ahead-log before sending to the remote storage.",
+              "x-optional": true,
+              "$ref": "#/$defs/contrib__exporter_prometheusremotewriteexporter__wal_config"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/core__exporter_exporterhelper__timeout_config"
+            },
+            {
+              "$ref": "#/$defs/core__config_configretry__back_off_config"
+            },
+            {
+              "$ref": "#/$defs/core__config_confighttp__client_config"
+            }
+          ]
+        },
+        "^zipkin(/.+)?$": {
+          "description": "Config defines configuration settings for the Zipkin exporter.",
+          "type": "object",
+          "properties": {
+            "default_service_name": {
+              "type": "string"
+            },
+            "format": {
+              "type": "string"
+            },
+            "sending_queue": {
+              "x-optional": true,
+              "$ref": "#/$defs/core__exporter_exporterhelper__queue_batch_config"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/core__config_configretry__back_off_config"
+            },
+            {
+              "$ref": "#/$defs/core__config_confighttp__client_config"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "connectors": {
+      "type": "object",
+      "patternProperties": {
+        "^forward(/.+)?$": {
+          "description": "Forwards data unchanged from one pipeline to another of the same signal type.",
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "patternProperties": {
+        "^zpages(/.+)?$": {
+          "description": "Exposes /debug/tracez and similar zPages diagnostic endpoints.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "^health_check(/.+)?$": {
+          "description": "Config wraps the shared healthcheck.Config to add extension-specific validation.",
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/$defs/contrib__internal_healthcheck__config"
+            }
+          ]
+        },
+        "^pprof(/.+)?$": {
+          "description": "Config has the configuration for the extension enabling the golang net/http/pprof (Performance Profiler) extension.",
+          "type": "object",
+          "properties": {
+            "block_profile_fraction": {
+              "description": "Fraction of blocking events that are profiled. A value <= 0 disables profiling. See https://golang.org/pkg/runtime/#SetBlockProfileRate for details.",
+              "type": "integer"
+            },
+            "mutex_profile_fraction": {
+              "description": "Fraction of mutex contention events that are profiled. A value <= 0 disables profiling. See https://golang.org/pkg/runtime/#SetMutexProfileFraction for details.",
+              "type": "integer"
+            },
+            "save_to_file": {
+              "description": "Optional file name to save the CPU profile to. The profiling starts when the Collector starts and is saved to the file when the Collector is terminated.",
+              "type": "string"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/core__config_confignet__tcp_addr_config"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "service": {
+      "$ref": "_shared/service.json#/definitions/service"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "core__scraper_scraperhelper__controller_config": {
+      "description": "ControllerConfig defines common settings for a scraper controller configuration. Scraper controller receivers can embed this struct, instead of receiver.Settings, and extend it with more fields if needed.",
+      "type": "object",
+      "properties": {
+        "collection_interval": {
+          "description": "CollectionInterval sets how frequently the scraper should be called and used as the context timeout to ensure that scrapers don't exceed the interval.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "initial_delay": {
+          "description": "InitialDelay sets the initial start delay for the scraper, any non positive value is assumed to be immediately.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "timeout": {
+          "description": "Timeout is an optional value used to set scraper's context deadline.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        }
+      }
+    },
+    "contrib__receiver_jaegerreceiver__server_config_udp": {
+      "description": "ServerConfigUDP is the server configuration for a UDP protocol.",
+      "type": "object",
+      "properties": {
+        "max_packet_size": {
+          "type": "integer"
+        },
+        "queue_size": {
+          "type": "integer"
+        },
+        "socket_buffer_size": {
+          "type": "integer"
+        },
+        "workers": {
+          "type": "integer"
+        }
+      }
+    },
+    "core__config_configgrpc__server_config": {
+      "description": "ServerConfig defines common settings for a gRPC server configuration.",
+      "type": "object",
+      "properties": {
+        "auth": {
+          "description": "Auth for this receiver",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configauth__config"
+        },
+        "include_metadata": {
+          "description": "Include propagates the incoming connection's metadata to downstream consumers.",
+          "type": "boolean"
+        },
+        "keepalive": {
+          "description": "Keepalive anchor for all the settings related to keepalive.",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configgrpc__keepalive_server_config"
+        },
+        "max_concurrent_streams": {
+          "description": "MaxConcurrentStreams sets the limit on the number of concurrent streams to each ServerTransport. It has effect only for streaming RPCs.",
+          "type": "integer",
+          "x-customType": "uint32"
+        },
+        "max_recv_msg_size_mib": {
+          "description": "MaxRecvMsgSizeMiB sets the maximum size (in MiB) of messages accepted by the server.",
+          "type": "integer"
+        },
+        "middlewares": {
+          "description": "Middlewares for the gRPC server.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/core__config_configmiddleware__config"
+          }
+        },
+        "read_buffer_size": {
+          "description": "ReadBufferSize for gRPC server. See grpc.ReadBufferSize. (https://godoc.org/google.golang.org/grpc#ReadBufferSize).",
+          "type": "integer"
+        },
+        "tls": {
+          "description": "Configures the protocol to use TLS. The default value is nil, which will cause the protocol to not use TLS.",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configtls__server_config"
+        },
+        "write_buffer_size": {
+          "description": "WriteBufferSize for gRPC server. See grpc.WriteBufferSize. (https://godoc.org/google.golang.org/grpc#WriteBufferSize).",
+          "type": "integer"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/core__config_confignet__addr_config"
+        }
+      ]
+    },
+    "contrib__receiver_jaegerreceiver__protocol_udp": {
+      "description": "ProtocolUDP is the configuration for a UDP protocol.",
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/contrib__receiver_jaegerreceiver__server_config_udp"
+        }
+      ]
+    },
+    "core__config_confighttp__server_config": {
+      "description": "ServerConfig defines settings for creating an HTTP server.",
+      "type": "object",
+      "properties": {
+        "auth": {
+          "description": "Auth for this receiver",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_confighttp__auth_config"
+        },
+        "compression_algorithms": {
+          "description": "CompressionAlgorithms configures the list of compression algorithms the server can accept. Default: [\"\", \"gzip\", \"zstd\", \"zlib\", \"snappy\", \"deflate\"]",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cors": {
+          "description": "CORS configures the server for HTTP cross-origin resource sharing (CORS).",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_confighttp__cors_config"
+        },
+        "endpoint": {
+          "description": "Endpoint configures the listening address for the server.",
+          "type": "string"
+        },
+        "idle_timeout": {
+          "description": "IdleTimeout is the maximum amount of time to wait for the next request when keep-alives are enabled. If IdleTimeout is zero, the value of ReadTimeout is used. If both are zero, there is no timeout.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "include_metadata": {
+          "description": "IncludeMetadata propagates the client metadata from the incoming requests to the downstream consumers",
+          "type": "boolean"
+        },
+        "keep_alives_enabled": {
+          "description": "KeepAlivesEnabled controls whether HTTP keep-alives are enabled. By default, keep-alives are always enabled. Only very resource-constrained environments should disable them.",
+          "type": "boolean"
+        },
+        "max_request_body_size": {
+          "description": "MaxRequestBodySize sets the maximum request body size in bytes. Default: 20MiB.",
+          "type": "integer",
+          "x-customType": "int64"
+        },
+        "middlewares": {
+          "description": "Middlewares are used to add custom functionality to the HTTP server. Middleware handlers are called in the order they appear in this list, with the first middleware becoming the outermost handler.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/core__config_configmiddleware__config"
+          }
+        },
+        "read_header_timeout": {
+          "description": "ReadHeaderTimeout is the amount of time allowed to read request headers. The connection's read deadline is reset after reading the headers and the Handler can decide what is considered too slow for the body. If ReadHeaderTimeout is zero, the value of ReadTimeout is used. If both are zero, there is no timeout.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "read_timeout": {
+          "description": "ReadTimeout is the maximum duration for reading the entire request, including the body. A zero or negative value means there will be no timeout. Because ReadTimeout does not let Handlers make per-request decisions on each request body's acceptable deadline or upload rate, most users will prefer to use ReadHeaderTimeout. It is valid to use them both.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "response_headers": {
+          "description": "Additional headers attached to each HTTP response sent to the client. Header values are opaque since they may be sensitive.",
+          "$ref": "#/$defs/core__config_configopaque__map_list"
+        },
+        "tls": {
+          "description": "TLS struct exposes TLS client configuration.",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configtls__server_config"
+        },
+        "write_timeout": {
+          "description": "WriteTimeout is the maximum duration before timing out writes of the response. It is reset whenever a new request's header is read. Like ReadTimeout, it does not let Handlers make decisions on a per-request basis. A zero or negative value means there will be no timeout.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        }
+      }
+    },
+    "core__config_configgrpc__client_config": {
+      "description": "ClientConfig defines common settings for a gRPC client configuration.",
+      "type": "object",
+      "properties": {
+        "auth": {
+          "description": "Auth configuration for outgoing RPCs.",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configauth__config"
+        },
+        "authority": {
+          "description": "WithAuthority parameter configures client to rewrite \":authority\" header (godoc.org/google.golang.org/grpc#WithAuthority)",
+          "type": "string"
+        },
+        "balancer_name": {
+          "description": "Sets the balancer in grpclb_policy to discover the servers. Default is pick_first. https://github.com/grpc/grpc-go/blob/master/examples/features/load_balancing/README.md",
+          "type": "string"
+        },
+        "compression": {
+          "description": "The compression key for supported compression types within collector.",
+          "$ref": "#/$defs/core__config_configcompression__type"
+        },
+        "endpoint": {
+          "description": "The target to which the exporter is going to send traces or metrics, using the gRPC protocol. The valid syntax is described at https://github.com/grpc/grpc/blob/master/doc/naming.md.",
+          "type": "string"
+        },
+        "headers": {
+          "description": "The headers associated with gRPC requests.",
+          "$ref": "#/$defs/core__config_configopaque__map_list"
+        },
+        "keepalive": {
+          "description": "The keepalive parameters for gRPC client. See grpc.WithKeepaliveParams. (https://godoc.org/google.golang.org/grpc#WithKeepaliveParams).",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configgrpc__keepalive_client_config"
+        },
+        "middlewares": {
+          "description": "Middlewares for the gRPC client.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/core__config_configmiddleware__config"
+          }
+        },
+        "read_buffer_size": {
+          "description": "ReadBufferSize for gRPC client. See grpc.WithReadBufferSize. (https://godoc.org/google.golang.org/grpc#WithReadBufferSize).",
+          "type": "integer"
+        },
+        "tls": {
+          "description": "TLS struct exposes TLS client configuration.",
+          "$ref": "#/$defs/core__config_configtls__client_config"
+        },
+        "wait_for_ready": {
+          "description": "WaitForReady parameter configures client to wait for ready state before sending data. (https://github.com/grpc/grpc/blob/master/doc/wait-for-ready.md)",
+          "type": "boolean"
+        },
+        "write_buffer_size": {
+          "description": "WriteBufferSize for gRPC gRPC. See grpc.WithWriteBufferSize. (https://godoc.org/google.golang.org/grpc#WithWriteBufferSize).",
+          "type": "integer"
+        }
+      }
+    },
+    "contrib__receiver_jaegerreceiver__remote_sampling_config": {
+      "description": "RemoteSamplingConfig defines config key for remote sampling fetch endpoint",
+      "type": "object",
+      "properties": {
+        "host_endpoint": {
+          "type": "string"
+        },
+        "strategy_file": {
+          "type": "string"
+        },
+        "strategy_file_reload_interval": {
+          "type": "string",
+          "format": "duration"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/core__config_configgrpc__client_config"
+        }
+      ]
+    },
+    "contrib__receiver_jaegerreceiver__protocols": {
+      "description": "Protocols is the configuration for the supported protocols.",
+      "type": "object",
+      "properties": {
+        "grpc": {
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configgrpc__server_config"
+        },
+        "thrift_binary": {
+          "x-optional": true,
+          "$ref": "#/$defs/contrib__receiver_jaegerreceiver__protocol_udp"
+        },
+        "thrift_compact": {
+          "x-optional": true,
+          "$ref": "#/$defs/contrib__receiver_jaegerreceiver__protocol_udp"
+        },
+        "thrift_http": {
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_confighttp__server_config"
+        }
+      }
+    },
+    "contrib__receiver_kafkareceiver__metric_config": {
+      "description": "MetricConfig provides common config for a particular metric.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "contrib__receiver_kafkareceiver__metrics_config": {
+      "description": "MetricsConfig provides config for optional receiver metrics.",
+      "type": "object",
+      "properties": {
+        "kafka_receiver_records_delay": {
+          "description": "KafkaReceiverRecordsDelay controls whether the metric kafka_receiver_records_delay that measures the time in seconds between producing and receiving a batch of records will be reported or not. This metric is not reported by default because it may slow down high-volume consuming.",
+          "$ref": "#/$defs/contrib__receiver_kafkareceiver__metric_config"
+        }
+      }
+    },
+    "core__config_configretry__back_off_config": {
+      "description": "BackOffConfig defines configuration for retrying batches in case of export failure. The current supported strategy is exponential backoff.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Enabled indicates whether to not retry sending batches in case of export failure.",
+          "type": "boolean"
+        },
+        "initial_interval": {
+          "description": "InitialInterval the time to wait after the first failure before retrying.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "max_elapsed_time": {
+          "description": "MaxElapsedTime is the maximum amount of time (including retries) spent trying to send a request/batch. Once this value is reached, the data is discarded. If set to 0, the retries are never stopped.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "max_interval": {
+          "description": "MaxInterval is the upper bound on backoff interval. Once this value is reached the delay between consecutive retries will always be `MaxInterval`.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "multiplier": {
+          "description": "Multiplier is the value multiplied by the backoff interval bounds",
+          "type": "number",
+          "x-customType": "float64"
+        },
+        "randomization_factor": {
+          "description": "RandomizationFactor is a random factor used to calculate next backoffs Randomized interval = RetryInterval * (1 ± RandomizationFactor)",
+          "type": "number",
+          "x-customType": "float64"
+        }
+      }
+    },
+    "contrib__receiver_kafkareceiver__header_extraction": {
+      "type": "object",
+      "properties": {
+        "extract_headers": {
+          "type": "boolean"
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contrib__receiver_kafkareceiver__topic_encoding_config": {
+      "description": "TopicEncodingConfig holds signal-specific topic and encoding configuration.",
+      "type": "object",
+      "properties": {
+        "encoding": {
+          "description": "Encoding holds the expected encoding of messages for the signal type Defaults to \"otlp_proto\".",
+          "type": "string"
+        },
+        "exclude_topics": {
+          "description": "Optional exclude topics option, used only in regex mode.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "topics": {
+          "description": "Topics holds the name of the Kafka topics from which messages of the signal type should be consumed. The default depends on the signal type: - \"otlp_spans\" for traces - \"otlp_metrics\" for metrics - \"otlp_logs\" for logs - \"otlp_profiles\" for profiles",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contrib__receiver_kafkareceiver__message_marking": {
+      "type": "object",
+      "properties": {
+        "after": {
+          "description": "If true, the messages are marked after the pipeline execution",
+          "type": "boolean"
+        },
+        "on_error": {
+          "description": "If false, only the successfully processed messages are marked. This only applies to non-permanent errors. It has no impact if After is set to false. Note: this can block the entire partition in case a message processing returns a non-permanent error.",
+          "type": "boolean"
+        },
+        "on_permanent_error": {
+          "description": "If false, only the successfully processed messages are marked. This only applies to permanent errors. It has no impact if After is set to false. Default value inherits from OnError for backward compatibility. Note: this can block the entire partition in case a message processing returns a permanent error.",
+          "type": "boolean"
+        }
+      }
+    },
+    "contrib__receiver_kafkareceiver__telemetry_config": {
+      "type": "object",
+      "properties": {
+        "metrics": {
+          "$ref": "#/$defs/contrib__receiver_kafkareceiver__metrics_config"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__client_config": {
+      "type": "object",
+      "properties": {
+        "auth": {
+          "description": "Authentication holds Kafka authentication details.",
+          "$ref": "#/$defs/contrib__pkg_kafka_configkafka__authentication_config"
+        },
+        "brokers": {
+          "description": "Brokers holds the list of Kafka bootstrap servers (default localhost:9092).",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "client_id": {
+          "description": "ClientID holds the client ID advertised to Kafka, which can be used for enforcing ACLs, throttling quotas, and more (default \"otel-collector\")",
+          "type": "string"
+        },
+        "conn_idle_timeout": {
+          "description": "ConnIdleTimeout specifies the time after which idle connections are not reused and may be closed.",
+          "type": "string",
+          "format": "duration"
+        },
+        "metadata": {
+          "description": "Metadata holds metadata-related configuration for producers and consumers.",
+          "$ref": "#/$defs/contrib__pkg_kafka_configkafka__metadata_config"
+        },
+        "protocol_version": {
+          "description": "ProtocolVersion defines the Kafka protocol version that the client will assume it is running against.",
+          "type": "string"
+        },
+        "rack_id": {
+          "description": "RackID provides the rack identifier for this client to enable rack-aware replica selection when supported by the brokers. This maps to Kafka's standard \"client.rack\" setting. By default, this is empty.",
+          "type": "string"
+        },
+        "resolve_canonical_bootstrap_servers_only": {
+          "description": "ResolveCanonicalBootstrapServersOnly configures the Kafka client to perform a DNS lookup on each of the provided brokers, and then perform a reverse lookup on the resulting IPs to obtain the canonical hostnames to use as the bootstrap servers. This can be required in SASL environments.",
+          "type": "boolean"
+        },
+        "tls": {
+          "description": "TLS holds TLS-related configuration for connecting to Kafka brokers. By default the client will use an insecure connection unless SASL/AWS_MSK_IAM_OAUTHBEARER auth is configured.",
+          "x-pointer": true,
+          "$ref": "#/$defs/core__config_configtls__client_config"
+        },
+        "use_leader_epoch": {
+          "description": "When enabled, the consumer uses the leader epoch returned by brokers (KIP-320) to detect log truncation. Setting this to false clears the leader epoch from fetch offsets, disabling KIP-320. Disabling can improve compatibility with brokers that don’t fully support leader epochs (e.g., Azure Event Hubs), at the cost of losing automatic log-truncation safety. NOTE: this is experimental and may be removed in a future release.",
+          "type": "boolean"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__consumer_config": {
+      "type": "object",
+      "properties": {
+        "autocommit": {
+          "description": "AutoCommit controls the auto-commit functionality of the consumer.",
+          "$ref": "#/$defs/contrib__pkg_kafka_configkafka__auto_commit_config"
+        },
+        "group_id": {
+          "description": "GroupID specifies the ID of the consumer group that will be consuming messages from (default \"otel-collector\").",
+          "type": "string"
+        },
+        "group_instance_id": {
+          "description": "GroupInstanceID specifies the ID of the consumer",
+          "type": "string"
+        },
+        "group_rebalance_strategy": {
+          "description": "GroupRebalanceStrategy specifies the strategy to use for partition assignment. Possible values are \"range\", \"roundrobin\", \"sticky\", and \"cooperative-sticky\". Defaults to \"cooperative-sticky\"",
+          "$ref": "#/$defs/contrib__pkg_kafka_configkafka__group_rebalance_strategy"
+        },
+        "heartbeat_interval": {
+          "description": "HeartbeatInterval controls the Kafka consumer group coordination heartbeat interval. Heartbeats ensure the consumer's session remains active.",
+          "type": "string",
+          "format": "duration"
+        },
+        "initial_offset": {
+          "description": "InitialOffset specifies the initial offset to use if no offset was previously committed. Must be `latest` or `earliest` (default \"latest\").",
+          "type": "string"
+        },
+        "max_fetch_size": {
+          "description": "The maximum bytes per fetch from Kafka (default \"1048576\")",
+          "type": "integer",
+          "x-customType": "int32"
+        },
+        "max_fetch_wait": {
+          "description": "The maximum amount of time to wait for MinFetchSize bytes to be available before the broker returns a response (default 250ms)",
+          "type": "string",
+          "format": "duration"
+        },
+        "max_partition_fetch_size": {
+          "description": "MaxPartitionFetchSize defines the maximum number of bytes to fetch per partition (default \"1048576\")",
+          "type": "integer",
+          "x-customType": "int32"
+        },
+        "min_fetch_size": {
+          "description": "The minimum bytes per fetch from Kafka (default \"1\")",
+          "type": "integer",
+          "x-customType": "int32"
+        },
+        "session_timeout": {
+          "description": "SessionTimeout controls the Kafka consumer group session timeout. The session timeout is used to detect the consumer's liveness.",
+          "type": "string",
+          "format": "duration"
+        }
+      }
+    },
+    "contrib__receiver_prometheusreceiver__api_server": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "server_config": {
+          "$ref": "#/$defs/core__config_confighttp__server_config"
+        }
+      }
+    },
+    "contrib__receiver_prometheusreceiver__prom_config": {
+      "description": "PromConfig is a redeclaration of promconfig.Config because we need custom unmarshaling as prometheus \"config\" uses `yaml` tags.",
+      "x-customType": "github.com/prometheus/prometheus/config.config"
+    },
+    "contrib__receiver_prometheusreceiver_internal_targetallocator__config": {
+      "type": "object",
+      "properties": {
+        "collector_id": {
+          "type": "string"
+        },
+        "http_scrape_config": {
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__receiver_prometheusreceiver_internal_targetallocator__prom_http_client_config"
+        },
+        "http_sd_config": {
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__receiver_prometheusreceiver_internal_targetallocator__prom_httpsd_config"
+        },
+        "interval": {
+          "type": "string",
+          "format": "duration"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/core__config_confighttp__client_config"
+        }
+      ]
+    },
+    "contrib__internal_filter_filterconfig__match_config": {
+      "description": "MatchConfig has two optional MatchProperties one to define what is processed by the processor, captured under the 'include' and the second, exclude, to define what is excluded from the processor.",
+      "type": "object",
+      "properties": {
+        "exclude": {
+          "description": "Exclude specifies when this processor will not be applied to the input data which match the specified properties. Note: The `exclude` properties are checked after the `include` properties, if they exist, are checked. If `include` isn't specified, the `exclude` properties are checked against all input data. This is an optional field. If neither `include` and `exclude` are set, all input data is processed. If `exclude` is set and `include` isn't set, then all the input data that does not match the properties in this structure are processed.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__internal_filter_filterconfig__match_properties"
+        },
+        "include": {
+          "description": "Include specifies the set of input data properties that must be present in order for this processor to apply to it. Note: If `exclude` is specified, the input data is compared against those properties after the `include` properties. This is an optional field. If neither `include` and `exclude` are set, all input data are processed. If `include` is set and `exclude` isn't set, then all input data matching the properties in this structure are processed.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__internal_filter_filterconfig__match_properties"
+        }
+      }
+    },
+    "contrib__internal_coreinternal_attraction__settings": {
+      "description": "Settings specifies the processor settings.",
+      "type": "object",
+      "properties": {
+        "actions": {
+          "description": "Actions specifies the list of attributes to act on. The set of actions are {INSERT, UPDATE, UPSERT, DELETE, HASH, EXTRACT, CONVERT}. This is a required field.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__internal_coreinternal_attraction__action_key_value"
+          }
+        }
+      }
+    },
+    "contrib__internal_coreinternal_attraction__action_key_value": {
+      "description": "ActionKeyValue specifies the attribute key to act upon.",
+      "type": "object",
+      "properties": {
+        "action": {
+          "description": "Action specifies the type of action to perform. The set of values are {INSERT, UPDATE, UPSERT, DELETE, HASH}. Both lower case and upper case are supported. INSERT -  Inserts the key/value to attributes when the key does not exist. No action is applied to attributes where the key already exists. Either Value, FromAttribute or FromContext must be set. UPDATE -  Updates an existing key with a value. No action is applied to attributes where the key does not exist. Either Value, FromAttribute or FromContext must be set. UPSERT -  Performs insert or update action depending on the attributes containing the key. The key/value is inserted to attributes that did not originally have the key. The key/value is updated for attributes where the key already existed. Either Value, FromAttribute or FromContext must be set. DELETE  - Deletes the attribute. If the key doesn't exist, no action is performed. HASH    - Calculates the SHA-1 hash of an existing value and overwrites the value with its SHA-1 hash result. If the feature gate `coreinternal.attraction.hash.sha256` is enabled, it uses SHA2-256 instead. EXTRACT - Extracts values using a regular expression rule from the input 'key' to target keys specified in the 'rule'. If a target key already exists, it will be overridden. CONVERT  - converts the type of an existing attribute, if convertable This is a required field.",
+          "$ref": "#/$defs/contrib__internal_coreinternal_attraction__action"
+        },
+        "converted_type": {
+          "description": "ConvertedType specifies the target type of an attribute to be converted If the key doesn't exist, no action is performed. If the value cannot be converted, the original value will be left as-is",
+          "type": "string"
+        },
+        "default_value": {
+          "description": "DefaultValue specifies the value to use if Value/FromAttribute/FromContext doesn't provide a value (e.g., environment variable not set, attribute doesn't exist). Only used with INSERT, UPDATE, and UPSERT actions.",
+          "x-customType": "any"
+        },
+        "from_attribute": {
+          "description": "FromAttribute specifies the attribute to use to populate the value. If the attribute doesn't exist, no action is performed.",
+          "type": "string"
+        },
+        "from_context": {
+          "description": "FromContext specifies the context value to use to populate the value. The values would be searched in client.Info.Metadata. If the key doesn't exist, no action is performed. If the key has multiple values the values will be joined with `;` separator.",
+          "type": "string"
+        },
+        "key": {
+          "description": "Key specifies the attribute to act upon. This is a required field.",
+          "type": "string"
+        },
+        "pattern": {
+          "description": "A regex pattern must be specified for the action EXTRACT. It uses the attribute specified by `key' to extract values from The target keys are inferred based on the names of the matcher groups provided and the names will be inferred based on the values of the matcher group. Note: All subexpressions must have a name. Note: The value type of the source key must be a string. If it isn't, no extraction will occur.",
+          "type": "string"
+        },
+        "value": {
+          "description": "Value specifies the value to populate for the key. The type of the value is inferred from the configuration.",
+          "x-customType": "any"
+        }
+      }
+    },
+    "contrib__processor_spanprocessor__to_attributes": {
+      "description": "ToAttributes specifies a configuration to extract attributes from span name.",
+      "type": "object",
+      "properties": {
+        "break_after_match": {
+          "description": "BreakAfterMatch specifies if processing of rules should stop after the first match. If it is false rule processing will continue to be performed over the modified span name.",
+          "type": "boolean"
+        },
+        "keep_original_name": {
+          "description": "KeepOriginalName specifies if the original span name should be kept after processing the rules. If it is true the original span name will be kept, otherwise it will be replaced with the placeholders of the captured attributes.",
+          "type": "boolean"
+        },
+        "rules": {
+          "description": "Rules is a list of rules to extract attribute values from span name. The values in the span name are replaced by extracted attribute names. Each rule in the list is a regex pattern string. Span name is checked against the regex. If it matches then all named subexpressions of the regex are extracted as attributes and are added to the span. Each subexpression name becomes an attribute name and subexpression matched portion becomes the attribute value. The matched portion in the span name is replaced by extracted attribute name. If the attributes already exist in the span then they will be overwritten. The process is repeated for all rules in the order they are specified. Each subsequent rule works on the span name that is the output after processing the previous rule.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contrib__processor_spanprocessor__name": {
+      "description": "Name specifies the attributes to use to re-name a span.",
+      "type": "object",
+      "properties": {
+        "from_attributes": {
+          "description": "FromAttributes represents the attribute keys to pull the values from to generate the new span name. All attribute keys are required in the span to re-name a span. If any attribute is missing from the span, no re-name will occur. Note: The new span name is constructed in order of the `from_attributes` specified in the configuration. This field is required and cannot be empty.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "separator": {
+          "description": "Separator is the string used to separate attributes values in the new span name. If no value is set, no separator is used between attribute values. Used with FromAttributes only.",
+          "type": "string"
+        },
+        "to_attributes": {
+          "description": "ToAttributes specifies a configuration to extract attributes from span name.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__processor_spanprocessor__to_attributes"
+        }
+      }
+    },
+    "contrib__processor_spanprocessor__status": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "description": "Code is one of three values \"Ok\" or \"Error\" or \"Unset\". Please check: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description is an optional field documenting Error statuses.",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__processor_probabilisticsamplerprocessor__sampler_mode": {
+      "description": "SamplerMode determines which of several modes is used for the sampling decision.",
+      "type": "string"
+    },
+    "contrib__processor_probabilisticsamplerprocessor__attribute_source": {
+      "type": "string"
+    },
+    "contrib__processor_filterprocessor__log_match_properties": {
+      "description": "LogMatchProperties specifies the set of properties in a log to match against and the type of string pattern matching to use.",
+      "type": "object",
+      "properties": {
+        "bodies": {
+          "description": "LogBodies is a list of strings that the LogRecord's body field must match against.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "match_type": {
+          "description": "LogMatchType specifies the type of matching desired",
+          "$ref": "#/$defs/contrib__processor_filterprocessor__log_match_type"
+        },
+        "record_attributes": {
+          "description": "RecordAttributes defines a list of possible record attributes to match logs against. A match occurs if any record attribute matches at least one expression in this given list.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__internal_filter_filterconfig__attribute"
+          }
+        },
+        "resource_attributes": {
+          "description": "ResourceAttributes defines a list of possible resource attributes to match logs against. A match occurs if any resource attribute matches all expressions in this given list.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__internal_filter_filterconfig__attribute"
+          }
+        },
+        "severity_number": {
+          "description": "SeverityNumberProperties defines how to match against a log record's SeverityNumber, if defined.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__processor_filterprocessor__log_severity_number_match_properties"
+        },
+        "severity_texts": {
+          "description": "SeverityTexts is a list of strings that the LogRecord's severity text field must match against.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contrib__processor_filterprocessor__log_match_type": {
+      "description": "LogMatchType specifies the strategy for matching against `plog.Log`s.",
+      "type": "string"
+    },
+    "contrib__internal_filter_filterconfig__attribute": {
+      "description": "Attribute specifies the attribute key and optional value to match against.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "description": "Key specifies the attribute key.",
+          "type": "string"
+        },
+        "value": {
+          "description": "Values specifies the value to match against. If it is not set, any value will match.",
+          "x-customType": "any"
+        }
+      }
+    },
+    "contrib__processor_filterprocessor__log_severity_number_match_properties": {
+      "type": "object",
+      "properties": {
+        "match_undefined": {
+          "description": "MatchUndefined lets logs records with \"unknown\" severity match. If MinSeverity is not set, this field is ignored, as fields are not matched based on severity.",
+          "type": "boolean"
+        },
+        "min": {
+          "description": "Min is the minimum severity needed for the log record to match. This corresponds to the short names specified here: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#displaying-severity this field is case-insensitive (\"INFO\" == \"info\")",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__internal_filter_filterconfig__metric_match_properties": {
+      "description": "MetricMatchProperties specifies the set of properties in a metric to match against and the type of string pattern matching to use.",
+      "type": "object",
+      "properties": {
+        "expressions": {
+          "description": "Expressions specifies the list of expr expressions to match metrics against. A match occurs if any datapoint in a metric matches at least one expression in this list.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "match_type": {
+          "description": "MatchType specifies the type of matching desired",
+          "$ref": "#/$defs/contrib__internal_filter_filterconfig__metric_match_type"
+        },
+        "metric_names": {
+          "description": "MetricNames specifies the list of string patterns to match metric names against. A match occurs if the metric name matches at least one string pattern in this list.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "regexp": {
+          "description": "RegexpConfig specifies options for the MetricRegexp match type",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__internal_filter_filterset_regexp__config"
+        },
+        "resource_attributes": {
+          "description": "ResourceAttributes defines a list of possible resource attributes to match metrics against. A match occurs if any resource attribute matches all expressions in this given list.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__internal_filter_filterconfig__attribute"
+          }
+        }
+      }
+    },
+    "contrib__internal_filter_filterset_regexp__config": {
+      "description": "Config represents the options for a NewFilterSet.",
+      "type": "object",
+      "properties": {
+        "cacheenabled": {
+          "description": "CacheEnabled determines whether match results are LRU cached to make subsequent matches faster. Cache size is unlimited unless CacheMaxNumEntries is also specified.",
+          "type": "boolean"
+        },
+        "cachemaxnumentries": {
+          "description": "CacheMaxNumEntries is the max number of entries of the LRU cache that stores match results. CacheMaxNumEntries is ignored if CacheEnabled is false.",
+          "type": "integer"
+        }
+      }
+    },
+    "contrib__pkg_ottl__error_mode": {
+      "description": "ErrorMode is the way OTTL should handle errors.",
+      "type": "string"
+    },
+    "contrib__processor_filterprocessor_internal_condition__context_conditions": {
+      "description": "Unresolved reference: contrib__processor_filterprocessor_internal_condition__context_conditions",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_filterprocessor__log_filters": {
+      "description": "LogFilters filters by Log properties.",
+      "type": "object",
+      "properties": {
+        "exclude": {
+          "description": "Exclude match properties describe logs that should be excluded from the Collector Service pipeline, all other logs should be included. If both Include and Exclude are specified, Include filtering occurs first.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__processor_filterprocessor__log_match_properties"
+        },
+        "include": {
+          "description": "Include match properties describe logs that should be included in the Collector Service pipeline, all other logs should be dropped from further processing. If both Include and Exclude are specified, Include filtering occurs first.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__processor_filterprocessor__log_match_properties"
+        },
+        "log_record": {
+          "description": "LogConditions is a list of OTTL conditions for an ottllog context. If any condition resolves to true, the log event will be dropped. Supports `and`, `or`, and `()`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resource": {
+          "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contrib__processor_filterprocessor__metric_filters": {
+      "description": "MetricFilters filters by Metric properties.",
+      "type": "object",
+      "properties": {
+        "datapoint": {
+          "description": "DataPointConditions is a list of OTTL conditions for an ottldatapoint context. If any condition resolves to true, the datapoint will be dropped. Supports `and`, `or`, and `()`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exclude": {
+          "description": "Exclude match properties describe metrics that should be excluded from the Collector Service pipeline, all other metrics should be included. If both Include and Exclude are specified, Include filtering occurs first.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__internal_filter_filterconfig__metric_match_properties"
+        },
+        "include": {
+          "description": "Include match properties describe metrics that should be included in the Collector Service pipeline, all other metrics should be dropped from further processing. If both Include and Exclude are specified, Include filtering occurs first.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__internal_filter_filterconfig__metric_match_properties"
+        },
+        "metric": {
+          "description": "MetricConditions is a list of OTTL conditions for an ottlmetric context. If any condition resolves to true, the metric will be dropped. Supports `and`, `or`, and `()`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "regexp": {
+          "description": "RegexpConfig specifies options for the regexp match type",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__internal_filter_filterset_regexp__config"
+        },
+        "resource": {
+          "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contrib__processor_filterprocessor__profile_filters": {
+      "description": "ProfileFilters filters by OTTL conditions",
+      "type": "object",
+      "properties": {
+        "profile": {
+          "description": "ProfileConditions is a list of OTTL conditions for an ottlprofile context. If any condition resolves to true, the profile will be dropped. Supports `and`, `or`, and `()`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resource": {
+          "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contrib__processor_filterprocessor__trace_filters": {
+      "description": "TraceFilters filters by OTTL conditions",
+      "type": "object",
+      "properties": {
+        "resource": {
+          "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "span": {
+          "description": "SpanConditions is a list of OTTL conditions for an ottlspan context. If any condition resolves to true, the span will be dropped. Supports `and`, `or`, and `()`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "spanevent": {
+          "description": "SpanEventConditions is a list of OTTL conditions for an ottlspanevent context. If any condition resolves to true, the span event will be dropped. Supports `and`, `or`, and `()`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tls_client": {
+      "description": "Unresolved reference: tls_client",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__exporter_fileexporter__group_by": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Enables group_by. Default is false.",
+          "type": "boolean"
+        },
+        "max_open_files": {
+          "description": "MaxOpenFiles specifies the maximum number of open file descriptors for the output files. The default is 100.",
+          "type": "integer"
+        },
+        "resource_attribute": {
+          "description": "ResourceAttribute specifies the name of the resource attribute that contains the path segment of the file to write to. The final path will be the Path config value, with the * replaced with the value of this resource attribute. Default is \"fileexporter.path_segment\".",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__exporter_fileexporter__rotation": {
+      "description": "Rotation an option to rolling log files",
+      "type": "object",
+      "properties": {
+        "localtime": {
+          "description": "LocalTime determines if the time used for formatting the timestamps in backup files is the computer's local time.  The default is to use UTC time.",
+          "type": "boolean"
+        },
+        "max_backups": {
+          "description": "MaxBackups is the maximum number of old log files to retain. The default is to 100 files.",
+          "type": "integer"
+        },
+        "max_days": {
+          "description": "MaxDays is the maximum number of days to retain old log files based on the timestamp encoded in their filename.  Note that a day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc. The default is not to remove old log files based on age.",
+          "type": "integer"
+        },
+        "max_megabytes": {
+          "description": "MaxMegabytes is the maximum size in megabytes of the file before it gets rotated. It defaults to 100 megabytes.",
+          "type": "integer"
+        }
+      }
+    },
+    "contrib__exporter_kafkaexporter__sticky_key_partitioner_config": {
+      "description": "StickyKeyPartitionerConfig configures the StickyKeyPartitioner.",
+      "type": "object",
+      "properties": {
+        "hasher": {
+          "description": "Hasher is the hash algorithm used for key-based partition assignment. Valid values: \"sarama_compat\" (default). - \"sarama_compat\": Sarama-compatible FNV-1a hashing (SaramaCompatHasher). - \"murmur2\": Murmur2 hashing.",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__exporter_kafkaexporter__signal_config": {
+      "description": "SignalConfig holds signal-specific configuration for the Kafka exporter.",
+      "type": "object",
+      "properties": {
+        "encoding": {
+          "description": "Encoding holds the encoding of messages for the signal type. Defaults to \"otlp_proto\".",
+          "type": "string"
+        },
+        "topic": {
+          "description": "Topic holds the name of the Kafka topic to which messages of the signal type should be produced. The default depends on the signal type: - \"otlp_spans\" for traces - \"otlp_metrics\" for metrics - \"otlp_logs\" for logs - \"otlp_profiles\" for profiles",
+          "type": "string"
+        },
+        "topic_from_metadata_key": {
+          "description": "TopicFromMetadataKey holds the name of the metadata key to use as the topic name for this signal type. If this is set, it takes precedence over the topic name set in the topic field.",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__producer_config": {
+      "type": "object",
+      "properties": {
+        "allow_auto_topic_creation": {
+          "description": "Whether or not to allow automatic topic creation. (default enabled).",
+          "type": "boolean"
+        },
+        "compression": {
+          "description": "Compression Codec used to produce messages https://pkg.go.dev/github.com/twmb/franz-go/pkg/kgo#CompressionCodec The options are: 'none' (default), 'gzip', 'snappy', 'lz4', and 'zstd'",
+          "type": "string"
+        },
+        "compression_params": {
+          "description": "CompressionParams defines compression parameters for the producer.",
+          "$ref": "#/$defs/core__config_configcompression__compression_params"
+        },
+        "flush_max_messages": {
+          "description": "The maximum number of messages the producer will send in a single broker request. Defaults to 10000 (franz-go default). Similar to `queue.buffering.max.messages` in the JVM producer.",
+          "type": "integer"
+        },
+        "linger": {
+          "description": "Linger controls the linger time for the producer. (default 10ms).",
+          "type": "string",
+          "format": "duration"
+        },
+        "max_message_bytes": {
+          "description": "Maximum message bytes the producer will accept to produce (default 1000000)",
+          "type": "integer"
+        },
+        "required_acks": {
+          "description": "RequiredAcks holds the number acknowledgements required before producing returns successfully. See: https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#acks Acceptable values are: 0 (NoResponse)   Does not wait for any acknowledgements. 1 (WaitForLocal) Waits for only the leader to write the record to its local log, but does not wait for followers to acknowledge. (default) -1 (WaitForAll)   Waits for all in-sync replicas to acknowledge. In YAML configuration, \"all\" is accepted as an alias for -1.",
+          "$ref": "#/$defs/contrib__pkg_kafka_configkafka__required_acks"
+        }
+      }
+    },
+    "core__config_configopaque__map_list": {
+      "description": "MapList is a replacement for map[string]configopaque.String with a similar API, which can also be unmarshalled from (and is stored as) a list of name/value pairs. Pairs are assumed to have distinct names. This is checked during config validation.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/core__config_configopaque__pair"
+      }
+    },
+    "contrib__exporter_kafkaexporter__record_partitioner_config": {
+      "description": "RecordPartitionerConfig configures the strategy used to assign Kafka records to partitions. At most one field should be set.",
+      "type": "object",
+      "properties": {
+        "extension": {
+          "description": "Extension is the component ID of an extension implementing RecordPartitionerExtension. Setting this field delegates partition assignment to that extension.",
+          "x-pointer": true,
+          "type": "string",
+          "x-customType": "go.opentelemetry.io/collector/component.ID"
+        },
+        "least_backup": {
+          "description": "LeastBackup routes each record to the partition with the fewest buffered records.",
+          "x-pointer": true,
+          "type": "object"
+        },
+        "round_robin": {
+          "description": "RoundRobin distributes records evenly across all available partitions in round-robin order.",
+          "x-pointer": true,
+          "type": "object"
+        },
+        "sticky_key": {
+          "description": "StickyKey uses StickyKeyPartitioner. When a record key is set, the partition is derived from the key hash.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__exporter_kafkaexporter__sticky_key_partitioner_config"
+        }
+      }
+    },
+    "core__exporter_exporterhelper__queue_batch_config": {
+      "description": "QueueBatchConfig defines configuration for queueing and batching for the exporter.",
+      "$ref": "#/$defs/core__exporter_exporterhelper_internal_queuebatch__config"
+    },
+    "core__exporter_exporterhelper__timeout_config": {
+      "$ref": "#/$defs/core__exporter_exporterhelper_internal__timeout_config"
+    },
+    "contrib__pkg_resourcetotelemetry__settings": {
+      "description": "Settings defines configuration for converting resource attributes to telemetry attributes. When used, it must be embedded in the exporter configuration: type Config struct { // ... resourcetotelemetry.Settings `mapstructure:\"resource_to_telemetry_conversion\"` }",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Enabled indicates whether to convert resource attributes to telemetry attributes. Default is `false`.",
+          "type": "boolean"
+        },
+        "exclude_service_attributes": {
+          "description": "ExcludeServiceAttributes indicates whether to exclude `service.name`, `service.instance.id` and `service.namespace` resource attributes from being converted to metric attributes. Default is `false`. When set to `true`, these attributes will not be added to metric labels since they are already mapped to Prometheus `job` and `instance` labels respectively.",
+          "type": "boolean"
+        }
+      }
+    },
+    "contrib__exporter_prometheusremotewriteexporter__remote_write_queue": {
+      "description": "RemoteWriteQueue allows to configure the remote write queue.",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Enabled if false the queue is not enabled, the export requests are executed synchronously.",
+          "type": "boolean"
+        },
+        "num_consumers": {
+          "description": "NumWorkers configures the number of workers used by the collector to fan out remote write requests.",
+          "type": "integer"
+        },
+        "queue_size": {
+          "description": "QueueSize is the maximum number of OTLP metric batches allowed in the queue at a given time. Ignored if Enabled is false.",
+          "type": "integer"
+        }
+      }
+    },
+    "contrib__exporter_prometheusremotewriteexporter__target_info": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Enabled if false the target_info metric is not generated by the exporter",
+          "type": "boolean"
+        }
+      }
+    },
+    "contrib__exporter_prometheusremotewriteexporter__wal_config": {
+      "type": "object",
+      "properties": {
+        "buffer_size": {
+          "type": "integer"
+        },
+        "directory": {
+          "type": "string"
+        },
+        "lag_record_frequency": {
+          "type": "string",
+          "format": "duration"
+        },
+        "truncate_frequency": {
+          "type": "string",
+          "format": "duration"
+        }
+      }
+    },
+    "core__config_confighttp__client_config": {
+      "description": "ClientConfig defines settings for creating an HTTP client.",
+      "type": "object",
+      "properties": {
+        "auth": {
+          "description": "Auth configuration for outgoing HTTP calls.",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configauth__config"
+        },
+        "compression": {
+          "description": "The compression key for supported compression types within collector.",
+          "$ref": "#/$defs/core__config_configcompression__type"
+        },
+        "compression_params": {
+          "description": "Advanced configuration options for the Compression",
+          "$ref": "#/$defs/core__config_configcompression__compression_params"
+        },
+        "cookies": {
+          "description": "Cookies configures the cookie management of the HTTP client.",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_confighttp__cookies_config"
+        },
+        "disable_keep_alives": {
+          "description": "DisableKeepAlives, if true, disables HTTP keep-alives and will only use the connection to the server for a single HTTP request. WARNING: enabling this option can result in significant overhead establishing a new HTTP(S) connection for every request. Before enabling this option please consider whether changes to idle connection settings can achieve your goal.",
+          "type": "boolean"
+        },
+        "endpoint": {
+          "description": "The target URL to send data to (e.g.: http://some.url:9411/v1/traces).",
+          "type": "string"
+        },
+        "force_attempt_http2": {
+          "description": "Enabling ForceAttemptHTTP2 forces the HTTP transport to use the HTTP/2 protocol. By default, this is set to true. NOTE: HTTP/2 does not support settings such as MaxConnsPerHost, MaxIdleConnsPerHost and MaxIdleConns.",
+          "type": "boolean"
+        },
+        "headers": {
+          "description": "Additional headers attached to each HTTP request sent by the client. Existing header values are overwritten if collision happens. Header values are opaque since they may be sensitive.",
+          "$ref": "#/$defs/core__config_configopaque__map_list"
+        },
+        "http2_ping_timeout": {
+          "description": "HTTP2PingTimeout if there's no response to the ping within the configured value, the connection will be closed. If not set or set to 0, it defaults to 15s.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "http2_read_idle_timeout": {
+          "description": "This is needed in case you run into https://github.com/golang/go/issues/59690 https://github.com/golang/go/issues/36026 HTTP2ReadIdleTimeout if the connection has been idle for the configured value send a ping frame for health check 0s means no health check will be performed.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "idle_conn_timeout": {
+          "description": "IdleConnTimeout is the maximum amount of time a connection will remain open before closing itself. By default, it is set to 90 seconds.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "max_conns_per_host": {
+          "description": "MaxConnsPerHost limits the total number of connections per host, including connections in the dialing, active, and idle states. Default is 0 (unlimited).",
+          "type": "integer"
+        },
+        "max_idle_conns": {
+          "description": "MaxIdleConns is used to set a limit to the maximum idle HTTP connections the client can keep open. By default, it is set to 100. Zero means no limit.",
+          "type": "integer"
+        },
+        "max_idle_conns_per_host": {
+          "description": "MaxIdleConnsPerHost is used to set a limit to the maximum idle HTTP connections the host can keep open. If zero, [net/http.DefaultMaxIdleConnsPerHost] is used.",
+          "type": "integer"
+        },
+        "middlewares": {
+          "description": "Middlewares are used to add custom functionality to the HTTP client. Middleware handlers are called in the order they appear in this list, with the first middleware becoming the outermost handler.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/core__config_configmiddleware__config"
+          }
+        },
+        "proxy_url": {
+          "description": "ProxyURL setting for the collector",
+          "type": "string"
+        },
+        "read_buffer_size": {
+          "description": "ReadBufferSize for HTTP client. See http.Transport.ReadBufferSize. Default is 0.",
+          "type": "integer"
+        },
+        "timeout": {
+          "description": "Timeout parameter configures `http.Client.Timeout`. Default is 0 (unlimited).",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "tls": {
+          "description": "TLS struct exposes TLS client configuration.",
+          "$ref": "#/$defs/core__config_configtls__client_config"
+        },
+        "write_buffer_size": {
+          "description": "WriteBufferSize for HTTP client. See http.Transport.WriteBufferSize. Default is 0.",
+          "type": "integer"
+        }
+      }
+    },
+    "contrib__internal_healthcheck__config": {
+      "description": "Unresolved reference: contrib__internal_healthcheck__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "core__config_confignet__tcp_addr_config": {
+      "description": "TCPAddrConfig represents a TCP endpoint address.",
+      "type": "object",
+      "properties": {
+        "dialer": {
+          "description": "DialerConfig contains options for connecting to an address.",
+          "$ref": "#/$defs/core__config_confignet__dialer_config"
+        },
+        "endpoint": {
+          "description": "Endpoint configures the address for this network connection. The address has the form \"host:port\". The host must be a literal IP address, or a host name that can be resolved to IP addresses. The port must be a literal port number or a service name. If the host is a literal IPv6 address it must be enclosed in square brackets, as in \"[2001:db8::1]:80\" or \"[fe80::1%zone]:80\". The zone specifies the scope of the literal IPv6 address as defined in RFC 4007.",
+          "type": "string"
+        }
+      }
+    },
+    "core__config_configauth__config": {
+      "description": "Config defines the auth settings for the receiver.",
+      "type": "object",
+      "properties": {
+        "authenticator": {
+          "description": "AuthenticatorID specifies the name of the extension to use in order to authenticate the incoming data point.",
+          "type": "string",
+          "x-customType": "go.opentelemetry.io/collector/component.ID"
+        }
+      }
+    },
+    "core__config_configgrpc__keepalive_server_config": {
+      "description": "KeepaliveServerConfig is the configuration for keepalive.",
+      "type": "object",
+      "properties": {
+        "enforcement_policy": {
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configgrpc__keepalive_enforcement_policy"
+        },
+        "server_parameters": {
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configgrpc__keepalive_server_parameters"
+        }
+      }
+    },
+    "core__config_configmiddleware__config": {
+      "description": "Middleware defines the extension ID for a middleware component.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "ID specifies the name of the extension to use.",
+          "type": "string",
+          "x-customType": "go.opentelemetry.io/collector/component.ID"
+        }
+      }
+    },
+    "core__config_configtls__server_config": {
+      "description": "ServerConfig contains TLS configurations that are specific to server connections in addition to the common configurations. This should be used by components configuring TLS server connections.",
+      "type": "object",
+      "properties": {
+        "client_ca_file": {
+          "description": "Path to the TLS cert to use by the server to verify a client certificate. (optional) This sets the ClientCAs and ClientAuth to RequireAndVerifyClientCert in the TLSConfig. Please refer to https://godoc.org/crypto/tls#Config for more information. (optional)",
+          "type": "string"
+        },
+        "client_ca_file_reload": {
+          "description": "Reload the ClientCAs file when it is modified (optional, default false)",
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/core__config_configtls__config"
+        }
+      ]
+    },
+    "core__config_confignet__addr_config": {
+      "description": "AddrConfig represents a network endpoint address.",
+      "type": "object",
+      "properties": {
+        "dialer": {
+          "description": "DialerConfig contains options for connecting to an address.",
+          "$ref": "#/$defs/core__config_confignet__dialer_config"
+        },
+        "endpoint": {
+          "description": "Endpoint configures the address for this network connection. For TCP and UDP networks, the address has the form \"host:port\". The host must be a literal IP address, or a host name that can be resolved to IP addresses. The port must be a literal port number or a service name. If the host is a literal IPv6 address it must be enclosed in square brackets, as in \"[2001:db8::1]:80\" or \"[fe80::1%zone]:80\". The zone specifies the scope of the literal IPv6 address as defined in RFC 4007.",
+          "type": "string"
+        },
+        "transport": {
+          "description": "Transport to use. Allowed protocols are \"tcp\", \"tcp4\" (IPv4-only), \"tcp6\" (IPv6-only), \"udp\", \"udp4\" (IPv4-only), \"udp6\" (IPv6-only), \"ip\", \"ip4\" (IPv4-only), \"ip6\" (IPv6-only), \"unix\", \"unixgram\", \"unixpacket\" and \"npipe\" (Windows named pipes, Windows-only).",
+          "$ref": "#/$defs/core__config_confignet__transport_type"
+        }
+      }
+    },
+    "core__config_confighttp__auth_config": {
+      "type": "object",
+      "properties": {
+        "request_params": {
+          "description": "RequestParameters is a list of parameters that should be extracted from the request and added to the context. When a parameter is found in both the query string and the header, the value from the query string will be used.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/core__config_configauth__config"
+        }
+      ]
+    },
+    "core__config_confighttp__cors_config": {
+      "description": "CORSConfig configures a receiver for HTTP cross-origin resource sharing (CORS). See the underlying https://github.com/rs/cors package for details.",
+      "type": "object",
+      "properties": {
+        "allowed_headers": {
+          "description": "AllowedHeaders sets what headers will be allowed in CORS requests. The Accept, Accept-Language, Content-Type, and Content-Language headers are implicitly allowed. If no headers are listed, X-Requested-With will also be accepted by default. Include \"*\" to allow any request header.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowed_origins": {
+          "description": "AllowedOrigins sets the allowed values of the Origin header for HTTP/JSON requests to an OTLP receiver. An origin may contain a wildcard (*) to replace 0 or more characters (e.g., \"http://*.domain.com\", or \"*\" to allow any origin).",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "max_age": {
+          "description": "MaxAge sets the value of the Access-Control-Max-Age response header. Set it to the number of seconds that browsers should cache a CORS preflight response for.",
+          "type": "integer"
+        }
+      }
+    },
+    "core__config_configcompression__type": {
+      "description": "Type represents a compression method",
+      "type": "string"
+    },
+    "core__config_configgrpc__keepalive_client_config": {
+      "description": "KeepaliveClientConfig exposes the keepalive.ClientParameters to be used by the exporter. Refer to the original data-structure for the meaning of each parameter: https://godoc.org/google.golang.org/grpc/keepalive#ClientParameters",
+      "type": "object",
+      "properties": {
+        "permit_without_stream": {
+          "type": "boolean"
+        },
+        "time": {
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "timeout": {
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        }
+      }
+    },
+    "core__config_configtls__client_config": {
+      "description": "ClientConfig contains TLS configurations that are specific to client connections in addition to the common configurations. This should be used by components configuring TLS client connections.",
+      "type": "object",
+      "properties": {
+        "insecure": {
+          "description": "In gRPC and HTTP when set to true, this is used to disable the client transport security. See https://godoc.org/google.golang.org/grpc#WithInsecure for gRPC. Please refer to https://godoc.org/crypto/tls#Config for more information. (optional, default false)",
+          "type": "boolean"
+        },
+        "insecure_skip_verify": {
+          "description": "InsecureSkipVerify will enable TLS but not verify the certificate.",
+          "type": "boolean"
+        },
+        "server_name_override": {
+          "description": "ServerName requested by client for virtual hosting. This sets the ServerName in the TLSConfig. Please refer to https://godoc.org/crypto/tls#Config for more information. (optional)",
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/core__config_configtls__config"
+        }
+      ]
+    },
+    "contrib__pkg_kafka_configkafka__authentication_config": {
+      "description": "AuthenticationConfig defines authentication-related configuration.",
+      "type": "object",
+      "properties": {
+        "kerberos": {
+          "description": "Kerberos holds Kerberos authentication configuration.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__pkg_kafka_configkafka__kerberos_config"
+        },
+        "plain_text": {
+          "description": "PlainText is an alias for SASL/PLAIN authentication. Deprecated [v0.123.0]: use SASL with Mechanism set to PLAIN instead.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__pkg_kafka_configkafka__plain_text_config"
+        },
+        "sasl": {
+          "description": "SASL holds SASL authentication configuration.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__pkg_kafka_configkafka__sasl_config"
+        },
+        "tls": {
+          "description": "TLS holds TLS configuration for connecting to Kafka brokers. Deprecated [v0.124.0]: use ClientConfig.TLS instead. This will be used only if ClientConfig.TLS is not set.",
+          "x-pointer": true,
+          "$ref": "#/$defs/core__config_configtls__client_config"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__metadata_config": {
+      "type": "object",
+      "properties": {
+        "full": {
+          "description": "Whether to maintain a full set of metadata for all topics, or just the minimal set that has been necessary so far. The full set is simpler and usually more convenient, but can take up a substantial amount of memory if you have many topics and partitions. Defaults to true.",
+          "type": "boolean"
+        },
+        "refresh_interval": {
+          "description": "RefreshInterval controls the frequency at which cluster metadata is refreshed. Defaults to 10 minutes.",
+          "type": "string",
+          "format": "duration"
+        },
+        "retry": {
+          "description": "Retry configuration for metadata. This configuration is useful to avoid race conditions when broker is starting at the same time as collector.",
+          "$ref": "#/$defs/contrib__pkg_kafka_configkafka__metadata_retry_config"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__auto_commit_config": {
+      "type": "object",
+      "properties": {
+        "enable": {
+          "description": "Whether or not to auto-commit updated offsets back to the broker. (default enabled).",
+          "type": "boolean"
+        },
+        "interval": {
+          "description": "How frequently to commit updated offsets. Ineffective unless auto-commit is enabled (default 1s)",
+          "type": "string",
+          "format": "duration"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__group_rebalance_strategy": {
+      "description": "GroupRebalanceStrategy defines the strategy to use for partition assignment.",
+      "type": "string"
+    },
+    "contrib__receiver_prometheusreceiver_internal_targetallocator__prom_http_client_config": {
+      "x-customType": "github.com/prometheus/common/config.http_client_config"
+    },
+    "contrib__receiver_prometheusreceiver_internal_targetallocator__prom_httpsd_config": {
+      "description": "PromHTTPSDConfig is a redeclaration of promHTTP.SDConfig because we need custom unmarshaling as prometheus \"config\" uses `yaml` tags.",
+      "x-customType": "github.com/prometheus/prometheus/discovery/http.sd_config"
+    },
+    "contrib__internal_filter_filterconfig__match_properties": {
+      "description": "MatchProperties specifies the set of properties in a spans/log/metric to match against and if the input data should be included or excluded from the processor. At least one of services (spans only), names or attributes must be specified. It is supported to have all specified, but this requires all the properties to match for the inclusion/exclusion to occur. The following are examples of invalid configurations: attributes/bad1: # This is invalid because include is specified with neither services or # attributes. include: actions: ... span/bad2: exclude: # This is invalid because services, span_names and attributes have empty values. services: span_names: attributes: actions: ... Please refer to processor/attributesprocessor/testdata/config.yaml and processor/spanprocessor/testdata/config.yaml for valid configurations.",
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "description": "Attributes specifies the list of attributes to match against. All of these attributes must match for a match to occur. This is an optional field.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__internal_filter_filterconfig__attribute"
+          }
+        },
+        "libraries": {
+          "description": "Libraries specify the list of items to match the implementation library against. A match occurs if the span's implementation library matches at least one item in this list. This is an optional field.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__internal_filter_filterconfig__instrumentation_library"
+          }
+        },
+        "log_bodies": {
+          "description": "LogBodies is a list of strings that the LogRecord's body field must match against.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "log_severity_number": {
+          "description": "LogSeverityNumber defines how to match against a log record's SeverityNumber, if defined.",
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__internal_filter_filterconfig__log_severity_number_match_properties"
+        },
+        "log_severity_texts": {
+          "description": "LogSeverityTexts is a list of strings that the LogRecord's severity text field must match against.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "metric_names": {
+          "description": "MetricNames is a list of strings to match metric name against. A match occurs if metric name matches at least one item in the list. This field is optional.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resources": {
+          "description": "Resources specify the list of items to match the resources against. A match occurs if the data's resources match at least one item in this list. This is an optional field.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__internal_filter_filterconfig__attribute"
+          }
+        },
+        "services": {
+          "description": "Services specify the list of items to match service name against. A match occurs if the span's service name matches at least one item in this list. This is an optional field.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "span_kinds": {
+          "description": "SpanKinds specify the list of items to match the span kind against. A match occurs if the span's span kind matches at least one item in this list. This is an optional field",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "span_names": {
+          "description": "SpanNames specify the list of items to match span name against. A match occurs if the span name matches at least one item in this list. This is an optional field.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/contrib__internal_filter_filterset__config"
+        }
+      ]
+    },
+    "contrib__internal_coreinternal_attraction__action": {
+      "description": "Action is the enum to capture the four types of actions to perform on an attribute.",
+      "type": "string"
+    },
+    "contrib__internal_filter_filterconfig__metric_match_type": {
+      "description": "MetricMatchType specifies the strategy for matching against `pmetric.Metric`s. This is distinct from filterset.MatchType which matches against metric (and tracing) names only. To support matching against metric names and `pmetric.Metric`s, filtermetric.MatchType is effectively a superset of filterset.MatchType.",
+      "type": "string"
+    },
+    "core__config_configcompression__compression_params": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/core__config_configcompression__level"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__required_acks": {
+      "description": "RequiredAcks defines record acknowledgement behavior for producers.",
+      "type": "integer"
+    },
+    "core__config_configopaque__pair": {
+      "description": "Pair is an element of a MapList, and consists of a name and an opaque value.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/core__config_configopaque__string"
+        }
+      }
+    },
+    "core__exporter_exporterhelper_internal_queuebatch__config": {
+      "description": "Config defines configuration for queueing and batching incoming requests.",
+      "type": "object",
+      "properties": {
+        "batch": {
+          "description": "BatchConfig it configures how the requests are consumed from the queue and batch together during consumption.",
+          "x-optional": true,
+          "$ref": "#/$defs/core__exporter_exporterhelper_internal_queuebatch__batch_config"
+        },
+        "block_on_overflow": {
+          "description": "BlockOnOverflow determines the behavior when the component's TotalSize limit is reached. If true, the component will wait for space; otherwise, operations will immediately return a retryable error.",
+          "type": "boolean"
+        },
+        "enabled": {
+          "description": "Enabled indicates whether to not enqueue and batch before exporting.",
+          "type": "boolean"
+        },
+        "num_consumers": {
+          "description": "NumConsumers is the maximum number of concurrent consumers from the queue. This applies across all different optional configurations from above (e.g. wait_for_result, block_on_overflow, storage, etc.).",
+          "type": "integer"
+        },
+        "queue_size": {
+          "description": "QueueSize represents the maximum data size allowed for concurrent storage and processing.",
+          "type": "integer",
+          "x-customType": "int64"
+        },
+        "sizer": {
+          "description": "Sizer determines the type of size measurement used by this component. It accepts \"requests\", \"items\", or \"bytes\".",
+          "type": "string",
+          "x-customType": "go.opentelemetry.io/collector/exporter/exporterhelper/internal/request.SizerType"
+        },
+        "storage": {
+          "description": "StorageID if not empty, enables the persistent storage and uses the component specified as a storage extension for the persistent queue. TODO: This will be changed to Optional when available. See https://github.com/open-telemetry/opentelemetry-collector/issues/13822",
+          "x-pointer": true,
+          "type": "string",
+          "x-customType": "go.opentelemetry.io/collector/component.ID"
+        },
+        "wait_for_result": {
+          "description": "WaitForResult determines if incoming requests are blocked until the request is processed or not. Currently, this option is not available when persistent queue is configured using the storage configuration.",
+          "type": "boolean"
+        }
+      }
+    },
+    "core__exporter_exporterhelper_internal__timeout_config": {
+      "description": "TimeoutConfig for timeout. The timeout applies to individual attempts to send data to the backend.",
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "description": "Timeout is the timeout for every attempt to send data to the backend. A zero timeout means no timeout.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        }
+      }
+    },
+    "core__config_confighttp__cookies_config": {
+      "description": "CookiesConfig defines the configuration of the HTTP client regarding cookies served by the server."
+    },
+    "core__config_confignet__dialer_config": {
+      "description": "DialerConfig contains options for connecting to an address.",
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "description": "Timeout is the maximum amount of time a dial will wait for a connect to complete. The default is no timeout.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        }
+      }
+    },
+    "core__config_configgrpc__keepalive_enforcement_policy": {
+      "description": "KeepaliveEnforcementPolicy allow configuration of the keepalive.EnforcementPolicy. The same default values as keepalive.EnforcementPolicy are applicable and get applied by the server. See https://godoc.org/google.golang.org/grpc/keepalive#EnforcementPolicy for details.",
+      "type": "object",
+      "properties": {
+        "min_time": {
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "permit_without_stream": {
+          "type": "boolean"
+        }
+      }
+    },
+    "core__config_configgrpc__keepalive_server_parameters": {
+      "description": "KeepaliveServerParameters allow configuration of the keepalive.ServerParameters. The same default values as keepalive.ServerParameters are applicable and get applied by the server. See https://godoc.org/google.golang.org/grpc/keepalive#ServerParameters for details.",
+      "type": "object",
+      "properties": {
+        "max_connection_age": {
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "max_connection_age_grace": {
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "max_connection_idle": {
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "time": {
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "timeout": {
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        }
+      }
+    },
+    "core__config_configtls__config": {
+      "description": "Config exposes the common client and server TLS configurations. Note: Since there isn't anything specific to a server connection. Components with server connections should use Config.",
+      "type": "object",
+      "properties": {
+        "ca_file": {
+          "description": "Path to the CA cert. For a client this verifies the server certificate. For a server this verifies client certificates. If empty uses system root CA. (optional)",
+          "type": "string"
+        },
+        "ca_pem": {
+          "description": "In memory PEM encoded cert. (optional)",
+          "$ref": "#/$defs/core__config_configopaque__string"
+        },
+        "cert_file": {
+          "description": "Path to the TLS cert to use for TLS required connections. (optional)",
+          "type": "string"
+        },
+        "cert_pem": {
+          "description": "In memory PEM encoded TLS cert to use for TLS required connections. (optional)",
+          "$ref": "#/$defs/core__config_configopaque__string"
+        },
+        "cipher_suites": {
+          "description": "CipherSuites is a list of TLS cipher suites that the TLS transport can use. If left blank, a safe default list is used. See https://go.dev/src/crypto/tls/cipher_suites.go for a list of supported cipher suites.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "curve_preferences": {
+          "description": "contains the elliptic curves that will be used in an ECDHE handshake, in preference order Defaults to empty list and \"crypto/tls\" defaults are used, internally.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "include_system_ca_certs_pool": {
+          "description": "If true, load system CA certificates pool in addition to the certificates configured in this struct.",
+          "type": "boolean"
+        },
+        "key_file": {
+          "description": "Path to the TLS key to use for TLS required connections. (optional)",
+          "type": "string"
+        },
+        "key_pem": {
+          "description": "In memory PEM encoded TLS key to use for TLS required connections. (optional)",
+          "$ref": "#/$defs/core__config_configopaque__string"
+        },
+        "max_version": {
+          "description": "MaxVersion sets the maximum TLS version that is acceptable. If not set, refer to crypto/tls for defaults. (optional)",
+          "type": "string"
+        },
+        "min_version": {
+          "description": "MinVersion sets the minimum TLS version that is acceptable. If not set, TLS 1.2 will be used. (optional)",
+          "type": "string"
+        },
+        "reload_interval": {
+          "description": "ReloadInterval specifies the duration after which the certificate will be reloaded If not set, it will never be reloaded (optional)",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "tpm": {
+          "description": "Trusted platform module configuration",
+          "$ref": "#/$defs/core__config_configtls__tpm_config"
+        }
+      }
+    },
+    "core__config_confignet__transport_type": {
+      "description": "TransportType represents a type of network transport protocol",
+      "type": "string"
+    },
+    "contrib__pkg_kafka_configkafka__kerberos_config": {
+      "description": "KerberosConfig defines kerberos configuration.",
+      "type": "object",
+      "properties": {
+        "config_file": {
+          "type": "string"
+        },
+        "disable_fast_negotiation": {
+          "type": "boolean"
+        },
+        "keytab_file": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "realm": {
+          "type": "string"
+        },
+        "service_name": {
+          "type": "string"
+        },
+        "use_keytab": {
+          "type": "boolean"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__plain_text_config": {
+      "description": "PlainTextConfig defines plaintext authentication.",
+      "type": "object",
+      "properties": {
+        "password": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__sasl_config": {
+      "description": "SASLConfig defines the configuration for the SASL authentication.",
+      "type": "object",
+      "properties": {
+        "aws_msk": {
+          "description": "AWSMSK holds configuration specific to AWS MSK.",
+          "$ref": "#/$defs/contrib__pkg_kafka_configkafka__awsmsk_config"
+        },
+        "mechanism": {
+          "description": "SASL Mechanism to be used, possible values are: (PLAIN, AWS_MSK_IAM_OAUTHBEARER, OAUTHBEARER, SCRAM-SHA-256 or SCRAM-SHA-512).",
+          "type": "string"
+        },
+        "oauthbearer_token_source": {
+          "description": "ID of type \"extension\" providing a TokenSource for OAUTHBEARER Mechanism, typically named \"oauth2client\"",
+          "type": "string",
+          "x-customType": "go.opentelemetry.io/collector/component.ID"
+        },
+        "password": {
+          "description": "Password to be used on authentication",
+          "type": "string"
+        },
+        "username": {
+          "description": "Username to be used on authentication",
+          "type": "string"
+        },
+        "version": {
+          "description": "SASL Protocol Version to be used, possible values are: (0, 1). Defaults to 0.",
+          "type": "integer"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__metadata_retry_config": {
+      "description": "MetadataRetryConfig defines retry configuration for Metadata.",
+      "type": "object",
+      "properties": {
+        "backoff": {
+          "description": "How long to wait for leader election to occur before retrying (default 250ms). Similar to the JVM's `retry.backoff.ms`.",
+          "type": "string",
+          "format": "duration"
+        },
+        "max": {
+          "description": "The total number of times to retry a metadata request when the cluster is in the middle of a leader election or at startup (default 3).",
+          "type": "integer"
+        }
+      }
+    },
+    "contrib__internal_filter_filterconfig__instrumentation_library": {
+      "description": "InstrumentationLibrary specifies the instrumentation library and optional version to match against.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "description": "version match expected actual  match nil      <blank> yes nil      1       yes <blank>  <blank> yes <blank>  1       no 1        <blank> no 1        1       yes",
+          "x-pointer": true,
+          "type": "string"
+        }
+      }
+    },
+    "contrib__internal_filter_filterconfig__log_severity_number_match_properties": {
+      "description": "LogSeverityNumberMatchProperties defines how to match based on a log record's SeverityNumber field.",
+      "type": "object",
+      "properties": {
+        "match_undefined": {
+          "description": "MatchUndefined controls whether logs with \"undefined\" severity matches. If this is true, entries with undefined severity will match.",
+          "type": "boolean"
+        },
+        "min": {
+          "description": "Min is the lowest severity that may be matched. e.g. if this is plog.SeverityNumberInfo, INFO, WARN, ERROR, and FATAL logs will match.",
+          "$ref": "#/$defs/core__pdata_plog__severity_number"
+        }
+      }
+    },
+    "contrib__internal_filter_filterset__config": {
+      "description": "Config configures the matching behavior of a FilterSet.",
+      "type": "object",
+      "properties": {
+        "match_type": {
+          "$ref": "#/$defs/contrib__internal_filter_filterset__match_type"
+        },
+        "regexp": {
+          "x-pointer": true,
+          "$ref": "#/$defs/contrib__internal_filter_filterset_regexp__config"
+        }
+      }
+    },
+    "core__config_configcompression__level": {
+      "type": "integer"
+    },
+    "core__config_configopaque__string": {
+      "description": "String alias that is marshaled and printed in an opaque way. To recover the original value, cast it to a string.",
+      "type": "string"
+    },
+    "core__exporter_exporterhelper_internal_queuebatch__batch_config": {
+      "description": "BatchConfig defines a configuration for batching requests based on a timeout and a minimum number of items.",
+      "type": "object",
+      "properties": {
+        "flush_timeout": {
+          "description": "FlushTimeout sets the time after which a batch will be sent regardless of its size.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "max_size": {
+          "description": "MaxSize defines the configuration for the maximum size of a batch.",
+          "type": "integer",
+          "x-customType": "int64"
+        },
+        "min_size": {
+          "description": "MinSize defines the configuration for the minimum size of a batch.",
+          "type": "integer",
+          "x-customType": "int64"
+        },
+        "partition": {
+          "description": "Partition defines the partitioning of the batches configuration.",
+          "$ref": "#/$defs/core__exporter_exporterhelper_internal_queuebatch__partition_config"
+        },
+        "sizer": {
+          "description": "Sizer determines the type of size measurement used by the batch. If not configured, use the same configuration as the queue. It accepts \"requests\", \"items\", or \"bytes\".",
+          "type": "string",
+          "x-customType": "go.opentelemetry.io/collector/exporter/exporterhelper/internal/request.SizerType"
+        }
+      }
+    },
+    "core__config_configtls__tpm_config": {
+      "description": "TPMConfig defines trusted platform module configuration for storing TLS keys.",
+      "type": "object",
+      "properties": {
+        "auth": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "owner_auth": {
+          "type": "string"
+        },
+        "path": {
+          "description": "The path to the TPM device or Unix domain socket. For instance /dev/tpm0 or /dev/tpmrm0.",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__pkg_kafka_configkafka__awsmsk_config": {
+      "description": "AWSMSKConfig defines the additional SASL authentication measures needed to use the AWS_MSK_IAM_OAUTHBEARER mechanism",
+      "type": "object",
+      "properties": {
+        "region": {
+          "description": "Region is the AWS region the MSK cluster is based in",
+          "type": "string"
+        }
+      }
+    },
+    "core__pdata_plog__severity_number": {
+      "description": "SeverityNumber represents severity number of a log record.",
+      "type": "integer",
+      "x-customType": "int32"
+    },
+    "contrib__internal_filter_filterset__match_type": {
+      "description": "MatchType describes the type of pattern matching a FilterSet uses to filter strings.",
+      "type": "string"
+    },
+    "core__exporter_exporterhelper_internal_queuebatch__partition_config": {
+      "description": "PartitionConfig defines a configuration for partitioning requests based on metadata keys.",
+      "type": "object",
+      "properties": {
+        "metadata_keys": {
+          "description": "MetadataKeys is a list of client.Metadata keys that will be used to partition the data into batches. If this setting is empty, a single batcher instance will be used. When this setting is not empty, one batcher will be used per distinct combination of values for the listed metadata keys. Empty value and unset metadata are treated as distinct cases. Entries are case-insensitive. Duplicated entries will trigger a validation error.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

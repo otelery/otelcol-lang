@@ -56,12 +56,13 @@ otelcol-lang/
 │   ├── otelcol-yaml.tmLanguage.json          YAML + OTTL injection
 │   └── ottl.tmLanguage.json                  vendored from ottl-lang
 ├── scripts/
-│   ├── sync-schemas.mjs                      pulls schemas from sibling repo
-│   ├── copy-schemas.mjs                      copies schemas into dist/ at build time
+│   ├── copy-schemas.mjs                      copies schemas into out/ or dist/ at build time
 │   ├── check-runtime-paths.mjs               build-time sanity check
 │   ├── smoke.mjs                             headless validator
 │   └── hover-probe.mjs                       hover diagnostic tool
-├── schemas/                                  populated at build time, gitignored
+├── schemas/                                  vendored from otelcol-schemas; committed
+│   ├── distributions/                         per-distribution component metadata index
+│   └── json/                                  publishable JSON Schemas + catalog
 └── src/
     ├── extension/extension.ts                VS Code client
     └── server/                               LSP
@@ -69,19 +70,24 @@ otelcol-lang/
 
 ## Schema source
 
-The extension does not vendor schemas in git. At build time
-`scripts/sync-schemas.mjs` copies them from a sibling
-`otelcol-schemas` checkout into `./schemas/`, after which the existing
-`scripts/copy-schemas.mjs` lays them under `./dist/` for packaging.
+The schemas under `schemas/` are **vendored** from
+[otelery/otelcol-schemas](https://github.com/otelery/otelcol-schemas)
+and committed to this repo. Clone-and-build works with no external
+checkout. The build step (`scripts/copy-schemas.mjs`) copies them
+into `./out/schemas/` (for unit tests) and `./dist/schemas/` (for the
+bundled `.vsix`) so the LSP finds them next to the compiled server.
 
-Source resolution order:
+Refreshing the vendored schemas (when upstream OTel distributions
+release new versions):
 
-1. `$OTELCOL_SCHEMAS_PATH` (absolute or relative to cwd)
-2. `../otelcol-schemas/` (sibling)
-3. `../otelcol-schemas-release/` (staging sibling)
+```sh
+# from a sibling otelcol-schemas checkout that has run `npm run build:all`:
+cp -r ../otelcol-schemas/schemas/distributions/* schemas/distributions/
+cp -r ../otelcol-schemas/schemas/json/*           schemas/json/
+```
 
-If none is found the build aborts with a clear message pointing at the
-schemas repo. See `scripts/sync-schemas.mjs`.
+Review the diff, then commit. There is intentionally no auto-fetch —
+schema updates are reviewed events, not silent build artefacts.
 
 The `otelcol.schemaSource` setting (reserved) will, in a future
 release, let the extension download schemas from an HTTPS URL or
@@ -93,17 +99,16 @@ copy. In v0.1.0 the setting has no behaviour.
 ```sh
 npm install
 npm run build
-# = sync-schemas + tsc + copy-schemas
+# = tsc + copy-schemas
 ```
 
-| script                    | does                                                        |
-| ------------------------- | ----------------------------------------------------------- |
-| `npm run sync-schemas`    | pull schemas from sibling otelcol-schemas into `./schemas/` |
-| `npm run build`           | sync + `tsc` + copy distribution indices into `out/`        |
-| `npm run package`         | production esbuild bundle                                   |
-| `npm run package:vsix`    | produce a `.vsix` (requires `vsce`)                         |
-| `npm run smoke -- <file>` | parse a yaml, print model + diagnostics                     |
-| `npm run test`            | full LSP fixture suite                                      |
+| script                    | does                                              |
+| ------------------------- | ------------------------------------------------- |
+| `npm run build`           | `tsc` + copy schemas into `out/` (for unit tests) |
+| `npm run package`         | production esbuild bundle into `dist/`            |
+| `npm run package:vsix`    | produce a `.vsix` (requires `vsce`)               |
+| `npm run smoke -- <file>` | parse a yaml, print model + diagnostics           |
+| `npm run test`            | full LSP fixture suite                            |
 
 ## LSP
 

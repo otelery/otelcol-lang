@@ -1,0 +1,3808 @@
+{
+  "slug": "otelcol",
+  "title": "OpenTelemetry Collector",
+  "description": "Vanilla OSS OpenTelemetry Collector (core distribution).",
+  "version": "0.152.0",
+  "manifestVersion": "0.152.0",
+  "distModule": "github.com/open-telemetry/opentelemetry-collector-releases/core",
+  "distName": "otelcol",
+  "manifest": "../opentelemetry-collector-releases/distributions/otelcol/manifest.yaml",
+  "fileMatch": [
+    "otelcol-config*.yaml",
+    "otelcol-config*.yml"
+  ],
+  "components": [
+    {
+      "class": "receiver",
+      "type": "nop",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/receiver/nopreceiver",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "core",
+      "displayName": "Nop Receiver",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Discards all data; useful for tests.",
+      "schema": null
+    },
+    {
+      "class": "receiver",
+      "type": "otlp",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/receiver/otlpreceiver",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "static",
+      "displayName": "OTLP Receiver",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Receives data via gRPC or HTTP using OTLP format.",
+      "schema": {
+        "description": "Config defines configuration for the OTLP receiver — accepts OTLP data over gRPC and/or HTTP.",
+        "type": "object",
+        "properties": {
+          "protocols": {
+            "description": "One or both of `grpc` and `http`. At least one must be configured.",
+            "type": "object",
+            "properties": {
+              "grpc": {
+                "description": "gRPC server config. Empty object enables defaults (listen on 0.0.0.0:4317).",
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "description": "Address to listen on. Default 0.0.0.0:4317."
+                  },
+                  "transport": {
+                    "type": "string",
+                    "enum": [
+                      "tcp",
+                      "udp",
+                      "unix"
+                    ],
+                    "description": "Transport. Default tcp."
+                  },
+                  "tls": {
+                    "type": "object",
+                    "description": "TLS server config (cert_file, key_file, ca_file, …)."
+                  },
+                  "keepalive": {
+                    "type": "object"
+                  },
+                  "max_recv_msg_size_mib": {
+                    "type": "integer",
+                    "description": "Maximum receive size in MiB. Default 4."
+                  },
+                  "max_concurrent_streams": {
+                    "type": "integer"
+                  },
+                  "read_buffer_size": {
+                    "type": "integer"
+                  },
+                  "write_buffer_size": {
+                    "type": "integer"
+                  },
+                  "auth": {
+                    "type": "object",
+                    "description": "Authenticator extension config."
+                  },
+                  "include_metadata": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "http": {
+                "description": "HTTP server config. Empty object enables defaults (listen on 0.0.0.0:4318).",
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "description": "Address to listen on. Default 0.0.0.0:4318."
+                  },
+                  "tls": {
+                    "type": "object"
+                  },
+                  "cors": {
+                    "type": "object",
+                    "description": "CORS settings.",
+                    "properties": {
+                      "allowed_origins": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "allowed_headers": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "max_age": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "traces_url_path": {
+                    "type": "string",
+                    "description": "Override the OTLP traces path. Default /v1/traces."
+                  },
+                  "metrics_url_path": {
+                    "type": "string",
+                    "description": "Override the OTLP metrics path. Default /v1/metrics."
+                  },
+                  "logs_url_path": {
+                    "type": "string",
+                    "description": "Override the OTLP logs path. Default /v1/logs."
+                  },
+                  "max_request_body_size": {
+                    "type": "integer"
+                  },
+                  "include_metadata": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "class": "receiver",
+      "type": "host_metrics",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Host Metrics Receiver",
+      "signals": [
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "beta": [
+          "metrics"
+        ],
+        "development": [
+          "logs"
+        ]
+      },
+      "description": "The collection interval, root path, the categories of metrics, and individual metrics to be scraped can be configured:",
+      "metadata": {
+        "display_name": "Host Metrics Receiver",
+        "type": "host_metrics",
+        "deprecated_type": "hostmetrics",
+        "description": "The Host Metrics receiver generates metrics about the host system scraped\nfrom various sources and host entity event as log. This is intended to be\nused when the collector is deployed as an agent.\n",
+        "status": {
+          "class": "receiver",
+          "stability": {
+            "beta": [
+              "metrics"
+            ],
+            "development": [
+              "logs"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "codeowners": {
+            "active": [
+              "dmitryax",
+              "braydonk",
+              "rogercoll"
+            ]
+          }
+        },
+        "feature_gates": [
+          {
+            "id": "hostmetrics.process.bootTimeCache",
+            "description": "When enabled, all process scrapes will use the boot time value that is cached at the start of the process.",
+            "stage": "beta",
+            "from_version": "v0.98.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/28849"
+          },
+          {
+            "id": "receiver.hostmetricsreceiver.UseLinuxMemAvailable",
+            "description": "When enabled, the used value for the system.memory.usage and system.memory.utilization metrics will be based on the Linux kernel's MemAvailable statistic instead of MemFree, Buffers, and Cached.",
+            "stage": "beta",
+            "from_version": "v0.137.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/42221"
+          }
+        ],
+        "tests": {
+          "config": null
+        }
+      },
+      "schema": {
+        "description": "Config defines configuration for HostMetrics receiver.",
+        "type": "object",
+        "properties": {
+          "metadata_collection_interval": {
+            "description": "Collection interval for metadata. Metadata of the particular entity is collected when the entity changes. In addition metadata of all entities is collected periodically even if no changes happen. Setting the duration to 0 will disable periodic collection (however will not impact metadata collection on changes).",
+            "type": "string",
+            "format": "duration"
+          },
+          "root_path": {
+            "description": "RootPath is the host's root directory (linux only).",
+            "type": "string"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "go.opentelemetry.io/collector/scraper/scraperhelper.controller_config"
+          }
+        ]
+      }
+    },
+    {
+      "class": "receiver",
+      "type": "hostmetrics",
+      "deprecated": true,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Host Metrics Receiver",
+      "signals": [
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "beta": [
+          "metrics"
+        ],
+        "development": [
+          "logs"
+        ]
+      },
+      "description": "The collection interval, root path, the categories of metrics, and individual metrics to be scraped can be configured:",
+      "metadata": {
+        "display_name": "Host Metrics Receiver",
+        "type": "host_metrics",
+        "deprecated_type": "hostmetrics",
+        "description": "The Host Metrics receiver generates metrics about the host system scraped\nfrom various sources and host entity event as log. This is intended to be\nused when the collector is deployed as an agent.\n",
+        "status": {
+          "class": "receiver",
+          "stability": {
+            "beta": [
+              "metrics"
+            ],
+            "development": [
+              "logs"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "codeowners": {
+            "active": [
+              "dmitryax",
+              "braydonk",
+              "rogercoll"
+            ]
+          }
+        },
+        "feature_gates": [
+          {
+            "id": "hostmetrics.process.bootTimeCache",
+            "description": "When enabled, all process scrapes will use the boot time value that is cached at the start of the process.",
+            "stage": "beta",
+            "from_version": "v0.98.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/28849"
+          },
+          {
+            "id": "receiver.hostmetricsreceiver.UseLinuxMemAvailable",
+            "description": "When enabled, the used value for the system.memory.usage and system.memory.utilization metrics will be based on the Linux kernel's MemAvailable statistic instead of MemFree, Buffers, and Cached.",
+            "stage": "beta",
+            "from_version": "v0.137.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/42221"
+          }
+        ],
+        "tests": {
+          "config": null
+        }
+      },
+      "schema": {
+        "description": "Config defines configuration for HostMetrics receiver.",
+        "type": "object",
+        "properties": {
+          "metadata_collection_interval": {
+            "description": "Collection interval for metadata. Metadata of the particular entity is collected when the entity changes. In addition metadata of all entities is collected periodically even if no changes happen. Setting the duration to 0 will disable periodic collection (however will not impact metadata collection on changes).",
+            "type": "string",
+            "format": "duration"
+          },
+          "root_path": {
+            "description": "RootPath is the host's root directory (linux only).",
+            "type": "string"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "go.opentelemetry.io/collector/scraper/scraperhelper.controller_config"
+          }
+        ]
+      }
+    },
+    {
+      "class": "receiver",
+      "type": "jaeger",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Jaeger Receiver",
+      "signals": [
+        "traces"
+      ],
+      "stability": {
+        "beta": [
+          "traces"
+        ]
+      },
+      "description": "By default, the Jaeger receiver will not serve any protocol. A protocol must be named under the `protocols` object for the jaeger receiver to start. The below protocols are supported, each supports an optional `endpoint` object configuration parameter.",
+      "metadata": {
+        "display_name": "Jaeger Receiver",
+        "type": "jaeger",
+        "description": "The Jaeger Receiver receives trace data in the [Jaeger](https://www.jaegertracing.io/) format.\n",
+        "status": {
+          "class": "receiver",
+          "stability": {
+            "beta": [
+              "traces"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "codeowners": {
+            "active": [
+              "yurishkuro"
+            ]
+          }
+        },
+        "tests": {
+          "config": {
+            "protocols": {
+              "grpc": null
+            }
+          }
+        }
+      },
+      "schema": {
+        "$defs": {
+          "protocol_udp": {
+            "description": "ProtocolUDP is the configuration for a UDP protocol.",
+            "type": "object",
+            "properties": {
+              "endpoint": {
+                "type": "string"
+              }
+            },
+            "allOf": [
+              {
+                "$ref": "server_config_udp"
+              }
+            ]
+          },
+          "protocols": {
+            "description": "Protocols is the configuration for the supported protocols.",
+            "type": "object",
+            "properties": {
+              "grpc": {
+                "x-optional": true,
+                "$ref": "go.opentelemetry.io/collector/config/configgrpc.server_config"
+              },
+              "thrift_binary": {
+                "x-optional": true,
+                "$ref": "protocol_udp"
+              },
+              "thrift_compact": {
+                "x-optional": true,
+                "$ref": "protocol_udp"
+              },
+              "thrift_http": {
+                "x-optional": true,
+                "$ref": "go.opentelemetry.io/collector/config/confighttp.server_config"
+              }
+            }
+          },
+          "remote_sampling_config": {
+            "description": "RemoteSamplingConfig defines config key for remote sampling fetch endpoint",
+            "type": "object",
+            "properties": {
+              "host_endpoint": {
+                "type": "string"
+              },
+              "strategy_file": {
+                "type": "string"
+              },
+              "strategy_file_reload_interval": {
+                "type": "string",
+                "format": "duration"
+              }
+            },
+            "allOf": [
+              {
+                "$ref": "go.opentelemetry.io/collector/config/configgrpc.client_config"
+              }
+            ]
+          },
+          "server_config_udp": {
+            "description": "ServerConfigUDP is the server configuration for a UDP protocol.",
+            "type": "object",
+            "properties": {
+              "max_packet_size": {
+                "type": "integer"
+              },
+              "queue_size": {
+                "type": "integer"
+              },
+              "socket_buffer_size": {
+                "type": "integer"
+              },
+              "workers": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "description": "Config defines configuration for Jaeger receiver.",
+        "type": "object",
+        "properties": {
+          "remote_sampling": {
+            "x-pointer": true,
+            "$ref": "remote_sampling_config"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "protocols"
+          }
+        ]
+      }
+    },
+    {
+      "class": "receiver",
+      "type": "kafka",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kafkareceiver",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Kafka Receiver",
+      "signals": [
+        "metrics",
+        "logs",
+        "traces",
+        "profiles"
+      ],
+      "stability": {
+        "beta": [
+          "metrics",
+          "logs",
+          "traces"
+        ],
+        "development": [
+          "profiles"
+        ]
+      },
+      "description": "There are no required settings.",
+      "metadata": {
+        "display_name": "Kafka Receiver",
+        "type": "kafka",
+        "description": "The Kafka Receiver receives telemetry data from Kafka, with configurable topics and encodings. If used in conjunction\nwith the `kafkaexporter` configured with `include_metadata_keys`, The Kafka Receiver will also propagate the Kafka\nheaders to the downstream pipeline, giving access to the rest of the pipeline to arbitrary metadata keys and values.\n",
+        "status": {
+          "class": "receiver",
+          "stability": {
+            "beta": [
+              "metrics",
+              "logs",
+              "traces"
+            ],
+            "development": [
+              "profiles"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib"
+          ],
+          "codeowners": {
+            "active": [
+              "pavolloffay",
+              "MovieStoreGuy",
+              "axw",
+              "paulojmdias"
+            ]
+          }
+        },
+        "tests": {
+          "skip_lifecycle": true,
+          "goleak": {
+            "ignore": {
+              "top": [
+                "github.com/twmb/franz-go/pkg/kfake.(*group).manage"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "node_id": {
+            "description": "The Kafka node ID.",
+            "type": "int"
+          },
+          "outcome": {
+            "description": "The operation outcome.",
+            "type": "string",
+            "enum": [
+              "success",
+              "failure"
+            ]
+          },
+          "partition": {
+            "description": "The Kafka topic partition.",
+            "type": "int"
+          },
+          "topic": {
+            "description": "The Kafka topic.",
+            "type": "string"
+          }
+        },
+        "telemetry": {
+          "metrics": {
+            "kafka_broker_closed": {
+              "enabled": true,
+              "description": "The total number of connections closed.",
+              "extended_documentation": "Only produced when franz-go is enabled.",
+              "optional": true,
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id"
+              ]
+            },
+            "kafka_broker_connects": {
+              "enabled": true,
+              "description": "The total number of connections opened.",
+              "extended_documentation": "Only produced when franz-go is enabled.",
+              "optional": true,
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "outcome"
+              ]
+            },
+            "kafka_broker_throttling_duration": {
+              "enabled": true,
+              "stability": "deprecated",
+              "description": "The throttling duration in ms imposed by the broker when receiving messages.",
+              "extended_documentation": "Only produced when franz-go is enabled. Deprecated in favor of kafka_broker_throttling_latency.",
+              "optional": true,
+              "unit": "ms",
+              "histogram": {
+                "value_type": "int"
+              },
+              "attributes": [
+                "node_id"
+              ],
+              "warnings": {
+                "if_enabled": "This metric is deprecated in favor of kafka_broker_throttling_latency and will be removed soon."
+              }
+            },
+            "kafka_broker_throttling_latency": {
+              "enabled": true,
+              "description": "The throttling latency in seconds imposed by the broker when receiving records.",
+              "extended_documentation": "Only produced when franz-go is enabled.",
+              "optional": true,
+              "stability": "development",
+              "unit": "s",
+              "histogram": {
+                "value_type": "double",
+                "bucket_boundaries": [
+                  0,
+                  0.005,
+                  0.01,
+                  0.025,
+                  0.05,
+                  0.075,
+                  0.1,
+                  0.25,
+                  0.5,
+                  0.75,
+                  1,
+                  2.5,
+                  5,
+                  7.5,
+                  10,
+                  25,
+                  50,
+                  75,
+                  100
+                ]
+              },
+              "attributes": [
+                "node_id"
+              ]
+            },
+            "kafka_receiver_bytes": {
+              "enabled": true,
+              "description": "The size in bytes of received records seen by the broker.",
+              "extended_documentation": "Only produced when franz-go is enabled.",
+              "optional": true,
+              "stability": "development",
+              "unit": "By",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "topic",
+                "partition",
+                "outcome"
+              ]
+            },
+            "kafka_receiver_bytes_uncompressed": {
+              "enabled": true,
+              "description": "The uncompressed size in bytes of received records seen by the client.",
+              "stability": "development",
+              "unit": "By",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "topic",
+                "partition",
+                "outcome"
+              ]
+            },
+            "kafka_receiver_current_offset": {
+              "enabled": true,
+              "description": "Current message offset",
+              "stability": "development",
+              "unit": "1",
+              "gauge": {
+                "value_type": "int"
+              },
+              "attributes": [
+                "topic",
+                "partition"
+              ]
+            },
+            "kafka_receiver_latency": {
+              "enabled": true,
+              "stability": "deprecated",
+              "description": "The time it took in ms to receive a batch of messages.",
+              "extended_documentation": "Only produced when franz-go is enabled. Deprecated in favor of kafka_receiver_read_latency.",
+              "unit": "ms",
+              "histogram": {
+                "value_type": "int"
+              },
+              "attributes": [
+                "node_id",
+                "topic",
+                "partition",
+                "outcome"
+              ],
+              "warnings": {
+                "if_enabled": "This metric is deprecated in favor of kafka_receiver_read_latency and will be removed soon."
+              }
+            },
+            "kafka_receiver_messages": {
+              "enabled": true,
+              "stability": "deprecated",
+              "description": "The number of received messages.",
+              "extended_documentation": "Deprecated in favor of kafka_receiver_records.",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "topic",
+                "partition",
+                "outcome"
+              ],
+              "warnings": {
+                "if_enabled": "This metric is deprecated in favor of kafka_receiver_records and will be removed soon."
+              }
+            },
+            "kafka_receiver_offset_lag": {
+              "enabled": true,
+              "description": "Current offset lag",
+              "stability": "development",
+              "unit": "1",
+              "gauge": {
+                "value_type": "int"
+              },
+              "attributes": [
+                "topic",
+                "partition"
+              ]
+            },
+            "kafka_receiver_partition_close": {
+              "enabled": true,
+              "description": "Number of finished partitions",
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "kafka_receiver_partition_start": {
+              "enabled": true,
+              "description": "Number of started partitions",
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "kafka_receiver_read_latency": {
+              "enabled": true,
+              "description": "The time it took in seconds to receive a batch of records.",
+              "extended_documentation": "Only produced when franz-go is enabled.",
+              "stability": "development",
+              "unit": "s",
+              "histogram": {
+                "value_type": "double",
+                "bucket_boundaries": [
+                  0,
+                  0.005,
+                  0.01,
+                  0.025,
+                  0.05,
+                  0.075,
+                  0.1,
+                  0.25,
+                  0.5,
+                  0.75,
+                  1,
+                  2.5,
+                  5,
+                  7.5,
+                  10,
+                  25,
+                  50,
+                  75,
+                  100
+                ]
+              },
+              "attributes": [
+                "node_id",
+                "topic",
+                "partition",
+                "outcome"
+              ]
+            },
+            "kafka_receiver_records": {
+              "enabled": true,
+              "description": "The number of received records.",
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "topic",
+                "partition",
+                "outcome"
+              ]
+            },
+            "kafka_receiver_records_delay": {
+              "enabled": true,
+              "optional": true,
+              "description": "The time in seconds between producing and receiving a batch of records.",
+              "extended_documentation": "Optional, only reported when enabled via config.\nNote that this metric may slow down high-volume consuming.\nOnly produced when franz-go is enabled.\nThis metric is reported with an assumption that the exporter and the receiver clocks are synchronized.\n",
+              "stability": "development",
+              "unit": "s",
+              "histogram": {
+                "value_type": "double",
+                "bucket_boundaries": [
+                  0,
+                  0.005,
+                  0.01,
+                  0.025,
+                  0.05,
+                  0.075,
+                  0.1,
+                  0.25,
+                  0.5,
+                  0.75,
+                  1,
+                  2.5,
+                  5,
+                  7.5,
+                  10,
+                  25,
+                  50,
+                  75,
+                  100,
+                  250,
+                  500,
+                  750,
+                  1000,
+                  2500,
+                  5000,
+                  7500,
+                  10000
+                ]
+              },
+              "attributes": [
+                "topic",
+                "partition"
+              ]
+            },
+            "kafka_receiver_unmarshal_failed_log_records": {
+              "enabled": true,
+              "description": "Number of log records failed to be unmarshaled",
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "topic",
+                "partition"
+              ]
+            },
+            "kafka_receiver_unmarshal_failed_metric_points": {
+              "enabled": true,
+              "description": "Number of metric points failed to be unmarshaled",
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "topic",
+                "partition"
+              ]
+            },
+            "kafka_receiver_unmarshal_failed_profiles": {
+              "enabled": true,
+              "description": "Number of profiles failed to be unmarshaled",
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "topic",
+                "partition"
+              ]
+            },
+            "kafka_receiver_unmarshal_failed_spans": {
+              "enabled": true,
+              "description": "Number of spans failed to be unmarshaled",
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "topic",
+                "partition"
+              ]
+            }
+          }
+        }
+      },
+      "schema": {
+        "$defs": {
+          "header_extraction": {
+            "type": "object",
+            "properties": {
+              "extract_headers": {
+                "type": "boolean"
+              },
+              "headers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "message_marking": {
+            "type": "object",
+            "properties": {
+              "after": {
+                "description": "If true, the messages are marked after the pipeline execution",
+                "type": "boolean"
+              },
+              "on_error": {
+                "description": "If false, only the successfully processed messages are marked. This only applies to non-permanent errors. It has no impact if After is set to false. Note: this can block the entire partition in case a message processing returns a non-permanent error.",
+                "type": "boolean"
+              },
+              "on_permanent_error": {
+                "description": "If false, only the successfully processed messages are marked. This only applies to permanent errors. It has no impact if After is set to false. Default value inherits from OnError for backward compatibility. Note: this can block the entire partition in case a message processing returns a permanent error.",
+                "type": "boolean"
+              }
+            }
+          },
+          "metric_config": {
+            "description": "MetricConfig provides common config for a particular metric.",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              }
+            }
+          },
+          "metrics_config": {
+            "description": "MetricsConfig provides config for optional receiver metrics.",
+            "type": "object",
+            "properties": {
+              "kafka_receiver_records_delay": {
+                "description": "KafkaReceiverRecordsDelay controls whether the metric kafka_receiver_records_delay that measures the time in seconds between producing and receiving a batch of records will be reported or not. This metric is not reported by default because it may slow down high-volume consuming.",
+                "$ref": "metric_config"
+              }
+            }
+          },
+          "telemetry_config": {
+            "type": "object",
+            "properties": {
+              "metrics": {
+                "$ref": "metrics_config"
+              }
+            }
+          },
+          "topic_encoding_config": {
+            "description": "TopicEncodingConfig holds signal-specific topic and encoding configuration.",
+            "type": "object",
+            "properties": {
+              "encoding": {
+                "description": "Encoding holds the expected encoding of messages for the signal type Defaults to \"otlp_proto\".",
+                "type": "string"
+              },
+              "exclude_topics": {
+                "description": "Optional exclude topics option, used only in regex mode.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "topics": {
+                "description": "Topics holds the name of the Kafka topics from which messages of the signal type should be consumed. The default depends on the signal type: - \"otlp_spans\" for traces - \"otlp_metrics\" for metrics - \"otlp_logs\" for logs - \"otlp_profiles\" for profiles",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "description": "Config defines configuration for Kafka receiver.",
+        "type": "object",
+        "properties": {
+          "error_backoff": {
+            "description": "ErrorBackoff controls backoff/retry behavior when the next consumer returns an error.",
+            "$ref": "go.opentelemetry.io/collector/config/configretry.back_off_config"
+          },
+          "header_extraction": {
+            "description": "HeaderExtraction controls extraction of headers from Kafka records.",
+            "$ref": "header_extraction"
+          },
+          "logs": {
+            "description": "Logs holds configuration about how logs should be consumed.",
+            "$ref": "topic_encoding_config"
+          },
+          "message_marking": {
+            "description": "MessageMarking controls the way the messages are marked as consumed.",
+            "$ref": "message_marking"
+          },
+          "metrics": {
+            "description": "Metrics holds configuration about how metrics should be consumed.",
+            "$ref": "topic_encoding_config"
+          },
+          "profiles": {
+            "description": "Profiles holds configuration about how profiles should be consumed.",
+            "$ref": "topic_encoding_config"
+          },
+          "telemetry": {
+            "description": "Telemetry controls optional telemetry configuration.",
+            "$ref": "telemetry_config"
+          },
+          "traces": {
+            "description": "Traces holds configuration about how traces should be consumed.",
+            "$ref": "topic_encoding_config"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "/pkg/kafka/configkafka.client_config"
+          },
+          {
+            "$ref": "/pkg/kafka/configkafka.consumer_config"
+          }
+        ]
+      }
+    },
+    {
+      "class": "receiver",
+      "type": "prometheus",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Prometheus Receiver",
+      "signals": [
+        "metrics"
+      ],
+      "stability": {
+        "beta": [
+          "metrics"
+        ]
+      },
+      "description": "See the [Design](DESIGN.md) for additional information on this receiver.",
+      "metadata": {
+        "display_name": "Prometheus Receiver",
+        "type": "prometheus",
+        "description": "The Prometheus Receiver receives metric data in [Prometheus](https://prometheus.io/) format.\n",
+        "status": {
+          "class": "receiver",
+          "stability": {
+            "beta": [
+              "metrics"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "codeowners": {
+            "active": [
+              "Aneurysm9",
+              "dashpole",
+              "ArthurSens",
+              "krajorama"
+            ]
+          }
+        },
+        "tests": {
+          "config": {
+            "config": {
+              "scrape_configs": [
+                {
+                  "job_name": "test"
+                }
+              ]
+            }
+          },
+          "goleak": {
+            "ignore": {
+              "top": [
+                "go.opencensus.io/stats/view.(*worker).start"
+              ]
+            }
+          }
+        },
+        "feature_gates": [
+          {
+            "id": "receiver.prometheusreceiver.EnableCreatedTimestampZeroIngestion",
+            "stage": "alpha",
+            "description": "Enables the Prometheus created-timestamps-zero-injection feature. Created timestamps are injected as 0-valued samples when appropriate. This is disabled by default due to worse CPU performance with higher metric volumes.",
+            "from_version": "v0.113.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/40355"
+          },
+          {
+            "id": "receiver.prometheusreceiver.EnableNativeHistograms",
+            "stage": "stable",
+            "description": "Converts scraped Prometheus native histograms into OpenTelemetry exponential histograms. You still need to configure 'scrape_native_histograms: true' in your Prometheus scrape config to actually scrape native histograms. For mixed histograms (both classic and native), only the native histogram buckets are used.",
+            "from_version": "v0.142.0",
+            "to_version": "v0.145.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/34473"
+          },
+          {
+            "id": "receiver.prometheusreceiver.IgnoreScopeInfoMetric",
+            "stage": "alpha",
+            "description": "When enabled, the `otel_scope_info` metric is ignored for scope attribute extraction.",
+            "from_version": "v0.148.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/41502"
+          },
+          {
+            "id": "receiver.prometheusreceiver.RemoveStartTimeAdjustment",
+            "stage": "stable",
+            "description": "When enabled, the Prometheus receiver will leave the start time unset. Use the metric_start_time processor instead if you need this functionality.",
+            "from_version": "v0.121.0",
+            "to_version": "v0.142.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/pull/36364"
+          },
+          {
+            "id": "receiver.prometheusreceiver.UseCreatedMetric",
+            "stage": "deprecated",
+            "description": "When enabled, the Prometheus receiver will retrieve the start time for Summary, Histogram and Sum metrics from _created metric.",
+            "from_version": "v0.89.0",
+            "to_version": "v0.141.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/21909"
+          }
+        ]
+      },
+      "schema": {
+        "$defs": {
+          "api_server": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "server_config": {
+                "$ref": "go.opentelemetry.io/collector/config/confighttp.server_config"
+              }
+            }
+          },
+          "prom_config": {
+            "description": "PromConfig is a redeclaration of promconfig.Config because we need custom unmarshaling as prometheus \"config\" uses `yaml` tags.",
+            "x-customType": "github.com/prometheus/prometheus/config.config"
+          }
+        },
+        "description": "Config defines configuration for Prometheus receiver.",
+        "type": "object",
+        "properties": {
+          "api_server": {
+            "description": "APIServer has the settings to enable the receiver to host the Prometheus API server in agent mode. This allows the user to call the endpoint to get the config, service discovery, and targets for debugging purposes.",
+            "$ref": "api_server"
+          },
+          "config": {
+            "x-pointer": true,
+            "$ref": "prom_config"
+          },
+          "target_allocator": {
+            "x-optional": true,
+            "$ref": "./internal/targetallocator.config"
+          },
+          "trim_metric_suffixes": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    {
+      "class": "receiver",
+      "type": "zipkin",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zipkinreceiver",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Zipkin Receiver",
+      "signals": [
+        "traces"
+      ],
+      "stability": {
+        "beta": [
+          "traces"
+        ]
+      },
+      "description": "All that is required to enable the Zipkin receiver is to include it in the receiver definitions.",
+      "metadata": {
+        "display_name": "Zipkin Receiver",
+        "type": "zipkin",
+        "description": "This receiver receives spans from [Zipkin](https://zipkin.io/) (V1 and V2).\n",
+        "status": {
+          "class": "receiver",
+          "stability": {
+            "beta": [
+              "traces"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "codeowners": {
+            "active": [
+              "MovieStoreGuy",
+              "andrzej-stencel",
+              "crobert-1"
+            ]
+          }
+        }
+      },
+      "schema": {
+        "description": "Config defines configuration for Zipkin receiver.",
+        "type": "object",
+        "properties": {
+          "parse_string_tags": {
+            "description": "If enabled the zipkin receiver will attempt to parse string tags/binary annotations into int/bool/float. Disabled by default",
+            "type": "boolean"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "go.opentelemetry.io/collector/config/confighttp.server_config"
+          }
+        ]
+      }
+    },
+    {
+      "class": "processor",
+      "type": "batch",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/processor/batchprocessor",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "static",
+      "displayName": "Batch Processor",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Batches incoming data before forwarding. Improves throughput and compresses better.",
+      "schema": {
+        "description": "Config defines configuration for the batch processor — groups items together before forwarding to the next consumer.",
+        "type": "object",
+        "properties": {
+          "send_batch_size": {
+            "description": "Number of spans, metric data points, or log records after which a batch is sent regardless of timeout. Default 8192. Should be lower than `send_batch_max_size`.",
+            "type": "integer",
+            "minimum": 0,
+            "default": 8192
+          },
+          "send_batch_max_size": {
+            "description": "Maximum allowed batch size. Items beyond this split into multiple batches. 0 = no upper bound. Must be greater than or equal to `send_batch_size`.",
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "timeout": {
+            "description": "Time after which the batch is sent regardless of size. 0 disables time-based batching. Default 200ms.",
+            "type": "string",
+            "format": "duration",
+            "default": "200ms"
+          },
+          "metadata_keys": {
+            "description": "Client metadata keys whose values, when set, isolate batches. Different values create different batches. Empty (default) means client metadata is ignored.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metadata_cardinality_limit": {
+            "description": "Hard limit on the number of distinct combinations of `metadata_keys` values. Default 1000.",
+            "type": "integer",
+            "minimum": 1,
+            "default": 1000
+          }
+        }
+      }
+    },
+    {
+      "class": "processor",
+      "type": "memory_limiter",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/processor/memorylimiterprocessor",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "static",
+      "displayName": "Memory Limiter Processor",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Prevents the collector from OOMing by checking memory and refusing data when limits are exceeded.",
+      "schema": {
+        "description": "Config defines configuration for the memory_limiter processor — refuses data and forces GC when memory limits are exceeded, protecting the collector from OOM.",
+        "type": "object",
+        "properties": {
+          "check_interval": {
+            "description": "Frequency of memory checks. Default 0 (disabled). Common values 1s–5s. Lower values increase responsiveness at the cost of CPU.",
+            "type": "string",
+            "format": "duration"
+          },
+          "limit_mib": {
+            "description": "Hard memory limit in MiB. When exceeded, the processor refuses data and force-runs GC. Mutually exclusive with `limit_percentage`. 0 = disabled.",
+            "type": "integer",
+            "minimum": 0
+          },
+          "spike_limit_mib": {
+            "description": "Spike allowance subtracted from `limit_mib` to derive the soft limit. Default 20% of `limit_mib`.",
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit_percentage": {
+            "description": "Hard memory limit as a percentage of total system memory (0–100). Used in containerized environments. Mutually exclusive with `limit_mib`.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "spike_limit_percentage": {
+            "description": "Spike allowance as a percentage of total memory. Used with `limit_percentage`.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          }
+        }
+      }
+    },
+    {
+      "class": "processor",
+      "type": "attributes",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/processor/attributesprocessor",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Attributes Processor",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "beta": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "The attributes processor modifies attributes of a span, log, or metric. Please refer to [config.go](./config.go) for the config spec.",
+      "metadata": {
+        "display_name": "Attributes Processor",
+        "type": "attributes",
+        "status": {
+          "class": "processor",
+          "stability": {
+            "beta": [
+              "traces",
+              "metrics",
+              "logs"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "warnings": [
+            "Identity Conflict"
+          ],
+          "codeowners": {
+            "active": [
+              "boostchicken"
+            ]
+          }
+        },
+        "tests": {
+          "config": {
+            "actions": [
+              {
+                "key": "attribute1",
+                "value": 123,
+                "action": "insert"
+              }
+            ]
+          }
+        }
+      },
+      "schema": {
+        "description": "Config specifies the set of attributes to be inserted, updated, upserted and deleted and the properties to include/exclude a span from being processed. This processor handles all forms of modifications to attributes within a span, log, or metric. Prior to any actions being applied, each span is compared against the include properties and then the exclude properties if they are specified. This determines if a span is to be processed or not. The list of actions is applied in order specified in the configuration.",
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "/internal/filter/filterconfig.match_config"
+          },
+          {
+            "$ref": "/internal/coreinternal/attraction.settings"
+          }
+        ]
+      }
+    },
+    {
+      "class": "processor",
+      "type": "resource",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourceprocessor",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Resource Processor",
+      "signals": [
+        "profiles",
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "development": [
+          "profiles"
+        ],
+        "beta": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "The resource processor can be used to apply changes on resource attributes. Please refer to [config.go](./config.go) for the config spec.",
+      "metadata": {
+        "display_name": "Resource Processor",
+        "type": "resource",
+        "status": {
+          "class": "processor",
+          "stability": {
+            "development": [
+              "profiles"
+            ],
+            "beta": [
+              "traces",
+              "metrics",
+              "logs"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "codeowners": {
+            "active": [
+              "dmitryax"
+            ]
+          }
+        },
+        "tests": {
+          "config": null
+        }
+      },
+      "schema": {
+        "description": "Config defines configuration for Resource processor.",
+        "type": "object",
+        "properties": {
+          "attributes": {
+            "description": "AttributesActions specifies the list of actions to be applied on resource attributes. The set of actions are {INSERT, UPDATE, UPSERT, DELETE, HASH, EXTRACT}.",
+            "type": "array",
+            "items": {
+              "$ref": "/internal/coreinternal/attraction.action_key_value"
+            }
+          }
+        }
+      }
+    },
+    {
+      "class": "processor",
+      "type": "span",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanprocessor",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Span Processor",
+      "signals": [
+        "traces"
+      ],
+      "stability": {
+        "alpha": [
+          "traces"
+        ]
+      },
+      "description": "The span processor modifies the span name based on its attributes or extract span attributes from the span name. It also allows to change span status. Please refer to [config.go](./config.go) for the config spec.",
+      "metadata": {
+        "display_name": "Span Processor",
+        "type": "span",
+        "status": {
+          "class": "processor",
+          "stability": {
+            "alpha": [
+              "traces"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib"
+          ],
+          "codeowners": {
+            "active": [
+              "boostchicken"
+            ]
+          }
+        },
+        "tests": {
+          "config": {
+            "name": {
+              "from_attributes": [
+                "db.svc",
+                "operation",
+                "id"
+              ]
+            }
+          }
+        }
+      },
+      "schema": {
+        "$defs": {
+          "name": {
+            "description": "Name specifies the attributes to use to re-name a span.",
+            "type": "object",
+            "properties": {
+              "from_attributes": {
+                "description": "FromAttributes represents the attribute keys to pull the values from to generate the new span name. All attribute keys are required in the span to re-name a span. If any attribute is missing from the span, no re-name will occur. Note: The new span name is constructed in order of the `from_attributes` specified in the configuration. This field is required and cannot be empty.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "separator": {
+                "description": "Separator is the string used to separate attributes values in the new span name. If no value is set, no separator is used between attribute values. Used with FromAttributes only.",
+                "type": "string"
+              },
+              "to_attributes": {
+                "description": "ToAttributes specifies a configuration to extract attributes from span name.",
+                "x-pointer": true,
+                "$ref": "to_attributes"
+              }
+            }
+          },
+          "status": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "description": "Code is one of three values \"Ok\" or \"Error\" or \"Unset\". Please check: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#set-status",
+                "type": "string"
+              },
+              "description": {
+                "description": "Description is an optional field documenting Error statuses.",
+                "type": "string"
+              }
+            }
+          },
+          "to_attributes": {
+            "description": "ToAttributes specifies a configuration to extract attributes from span name.",
+            "type": "object",
+            "properties": {
+              "break_after_match": {
+                "description": "BreakAfterMatch specifies if processing of rules should stop after the first match. If it is false rule processing will continue to be performed over the modified span name.",
+                "type": "boolean"
+              },
+              "keep_original_name": {
+                "description": "KeepOriginalName specifies if the original span name should be kept after processing the rules. If it is true the original span name will be kept, otherwise it will be replaced with the placeholders of the captured attributes.",
+                "type": "boolean"
+              },
+              "rules": {
+                "description": "Rules is a list of rules to extract attribute values from span name. The values in the span name are replaced by extracted attribute names. Each rule in the list is a regex pattern string. Span name is checked against the regex. If it matches then all named subexpressions of the regex are extracted as attributes and are added to the span. Each subexpression name becomes an attribute name and subexpression matched portion becomes the attribute value. The matched portion in the span name is replaced by extracted attribute name. If the attributes already exist in the span then they will be overwritten. The process is repeated for all rules in the order they are specified. Each subsequent rule works on the span name that is the output after processing the previous rule.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "description": "Config is the configuration for the span processor. Prior to any actions being applied, each span is compared against the include properties and then the exclude properties if they are specified. This determines if a span is to be processed or not.",
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Rename specifies the components required to re-name a span. The `from_attributes` field needs to be set for this processor to be properly configured. Note: The field name is `Rename` to avoid collision with the Name() method from config.NamedEntity",
+            "$ref": "name"
+          },
+          "status": {
+            "description": "SetStatus specifies status which should be set for this span.",
+            "x-pointer": true,
+            "$ref": "status"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "/internal/filter/filterconfig.match_config"
+          }
+        ]
+      }
+    },
+    {
+      "class": "processor",
+      "type": "probabilistic_sampler",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/processor/probabilisticsamplerprocessor",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Probabilistic Sampling Processor",
+      "signals": [
+        "traces",
+        "logs"
+      ],
+      "stability": {
+        "beta": [
+          "traces"
+        ],
+        "alpha": [
+          "logs"
+        ]
+      },
+      "description": "The probabilistic sampler processor supports several modes of sampling for spans and log records. Sampling is performed on a per-request basis, considering individual items statelessly. For whole trace sampling, see [tailsamplingprocessor](../tailsamplingprocessor/README.md).",
+      "metadata": {
+        "display_name": "Probabilistic Sampling Processor",
+        "type": "probabilistic_sampler",
+        "status": {
+          "class": "processor",
+          "stability": {
+            "beta": [
+              "traces"
+            ],
+            "alpha": [
+              "logs"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "codeowners": {
+            "active": [
+              "jmacd"
+            ],
+            "emeritus": [
+              "jpkrohling"
+            ],
+            "seeking_new": true
+          }
+        },
+        "tests": {
+          "config": null
+        },
+        "telemetry": {
+          "metrics": {
+            "processor_probabilistic_sampler_count_logs_sampled": {
+              "enabled": true,
+              "description": "Count of logs that were sampled or not",
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "processor_probabilistic_sampler_count_traces_sampled": {
+              "enabled": true,
+              "description": "Count of traces that were sampled or not",
+              "stability": "development",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            }
+          }
+        }
+      },
+      "schema": {
+        "$defs": {
+          "attribute_source": {
+            "type": "string"
+          },
+          "sampler_mode": {
+            "description": "SamplerMode determines which of several modes is used for the sampling decision.",
+            "type": "string"
+          }
+        },
+        "description": "Config has the configuration guiding the sampler processor.",
+        "type": "object",
+        "properties": {
+          "fail_closed": {
+            "description": "FailClosed indicates to not sample data (the processor will fail \"closed\") in case of error, such as failure to parse the tracestate field or missing the randomness attribute. By default, failure cases are sampled (the processor is fails \"open\").  Sampling priority-based decisions are made after FailClosed is processed, making it possible to sample despite errors using priority.",
+            "type": "boolean"
+          },
+          "from_attribute": {
+            "description": "FromAttribute (logs only) The optional name of a log record attribute used for sampling purposes, such as a unique log record ID. The value of the attribute is only used if the trace ID is absent or if `attribute_source` is set to `record`.",
+            "type": "string"
+          },
+          "hash_seed": {
+            "description": "HashSeed allows one to configure the hashing seed. This is important in scenarios where multiple layers of collectors have different sampling rates: if they use the same seed all passing one layer may pass the other even if they have different sampling rates, configuring different seeds avoids that.",
+            "type": "integer",
+            "x-customType": "uint32"
+          },
+          "mode": {
+            "description": "Mode selects the sampling behavior. Supported values: - \"hash_seed\": the legacy behavior of this processor. Using an FNV hash combined with the HashSeed value, this sampler performs a non-consistent probabilistic downsampling.  The number of spans output is expected to equal SamplingPercentage (as a ratio) times the number of spans inpout, assuming good behavior from FNV and good entropy in the hashed attributes or TraceID. - \"equalizing\": Using an OTel-specified consistent sampling mechanism, this sampler selectively reduces the effective sampling probability of arriving spans.  This can be useful to select a small fraction of complete traces from a stream with mixed sampling rates.  The rate of spans passing through depends on how much sampling has already been applied.  If an arriving span was head sampled at the same probability it passes through.  If the span arrives with lower probability, a warning is logged because it means this sampler is configured with too large a sampling probability to ensure complete traces. - \"proportional\": Using an OTel-specified consistent sampling mechanism, this sampler reduces the effective sampling probability of each span by `SamplingProbability`.",
+            "$ref": "sampler_mode"
+          },
+          "sampling_percentage": {
+            "description": "SamplingPercentage is the percentage rate at which traces or logs are going to be sampled. Defaults to zero, i.e.: no sample. Values greater or equal 100 are treated as \"sample all traces/logs\".",
+            "type": "number",
+            "x-customType": "float32"
+          },
+          "sampling_precision": {
+            "description": "SamplingPrecision is how many hex digits of sampling threshold will be encoded, from 1 up to 14.  Default is 4. 0 is treated as full precision.",
+            "type": "integer"
+          },
+          "sampling_priority": {
+            "description": "SamplingPriority (logs only) enables using a log record attribute as the sampling priority of the log record.",
+            "type": "string"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "attribute_source"
+          }
+        ]
+      }
+    },
+    {
+      "class": "processor",
+      "type": "filter",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Filter Processor",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs",
+        "profiles"
+      ],
+      "stability": {
+        "alpha": [
+          "traces",
+          "metrics",
+          "logs"
+        ],
+        "development": [
+          "profiles"
+        ]
+      },
+      "description": "The Filter Processor utilizes the [OpenTelemetry Transformation Language](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/ottl/README.md) to create conditions that determine when telemetry should be dropped. If **any** condition is met, the telemetry is dropped (each condition is ORed together).",
+      "metadata": {
+        "display_name": "Filter Processor",
+        "type": "filter",
+        "description": "The Filter Processor allows dropping spans, span events, metrics, datapoints, and logs from the collector.",
+        "status": {
+          "class": "processor",
+          "stability": {
+            "alpha": [
+              "traces",
+              "metrics",
+              "logs"
+            ],
+            "development": [
+              "profiles"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "warnings": [
+            "Orphaned Telemetry",
+            "Other"
+          ],
+          "codeowners": {
+            "active": [
+              "TylerHelmuth",
+              "evan-bradley",
+              "edmocosta",
+              "bogdandrutu"
+            ],
+            "emeritus": [
+              "boostchicken"
+            ]
+          }
+        },
+        "feature_gates": [
+          {
+            "id": "processor.filter.defaultErrorModeIgnore",
+            "description": "Changes the default error_mode of the filter processor from propagate to ignore",
+            "stage": "alpha",
+            "from_version": "v0.150.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/47232"
+          }
+        ],
+        "tests": {
+          "config": null
+        },
+        "telemetry": {
+          "metrics": {
+            "processor_filter_datapoints.filtered": {
+              "enabled": true,
+              "description": "Number of metric data points dropped by the filter processor",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "stability": "development"
+            },
+            "processor_filter_logs.filtered": {
+              "enabled": true,
+              "description": "Number of logs dropped by the filter processor",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "stability": "development"
+            },
+            "processor_filter_profiles.filtered": {
+              "enabled": true,
+              "description": "Number of profiles dropped by the filter processor",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "stability": "development"
+            },
+            "processor_filter_spans.filtered": {
+              "enabled": true,
+              "description": "Number of spans dropped by the filter processor",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "stability": "development"
+            }
+          }
+        }
+      },
+      "schema": {
+        "$defs": {
+          "log_filters": {
+            "description": "LogFilters filters by Log properties.",
+            "type": "object",
+            "properties": {
+              "exclude": {
+                "description": "Exclude match properties describe logs that should be excluded from the Collector Service pipeline, all other logs should be included. If both Include and Exclude are specified, Include filtering occurs first.",
+                "x-pointer": true,
+                "$ref": "log_match_properties"
+              },
+              "include": {
+                "description": "Include match properties describe logs that should be included in the Collector Service pipeline, all other logs should be dropped from further processing. If both Include and Exclude are specified, Include filtering occurs first.",
+                "x-pointer": true,
+                "$ref": "log_match_properties"
+              },
+              "log_record": {
+                "description": "LogConditions is a list of OTTL conditions for an ottllog context. If any condition resolves to true, the log event will be dropped. Supports `and`, `or`, and `()`",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resource": {
+                "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "log_match_properties": {
+            "description": "LogMatchProperties specifies the set of properties in a log to match against and the type of string pattern matching to use.",
+            "type": "object",
+            "properties": {
+              "bodies": {
+                "description": "LogBodies is a list of strings that the LogRecord's body field must match against.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "match_type": {
+                "description": "LogMatchType specifies the type of matching desired",
+                "$ref": "log_match_type"
+              },
+              "record_attributes": {
+                "description": "RecordAttributes defines a list of possible record attributes to match logs against. A match occurs if any record attribute matches at least one expression in this given list.",
+                "type": "array",
+                "items": {
+                  "$ref": "/internal/filter/filterconfig.attribute"
+                }
+              },
+              "resource_attributes": {
+                "description": "ResourceAttributes defines a list of possible resource attributes to match logs against. A match occurs if any resource attribute matches all expressions in this given list.",
+                "type": "array",
+                "items": {
+                  "$ref": "/internal/filter/filterconfig.attribute"
+                }
+              },
+              "severity_number": {
+                "description": "SeverityNumberProperties defines how to match against a log record's SeverityNumber, if defined.",
+                "x-pointer": true,
+                "$ref": "log_severity_number_match_properties"
+              },
+              "severity_texts": {
+                "description": "SeverityTexts is a list of strings that the LogRecord's severity text field must match against.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "log_match_type": {
+            "description": "LogMatchType specifies the strategy for matching against `plog.Log`s.",
+            "type": "string"
+          },
+          "log_severity_number_match_properties": {
+            "type": "object",
+            "properties": {
+              "match_undefined": {
+                "description": "MatchUndefined lets logs records with \"unknown\" severity match. If MinSeverity is not set, this field is ignored, as fields are not matched based on severity.",
+                "type": "boolean"
+              },
+              "min": {
+                "description": "Min is the minimum severity needed for the log record to match. This corresponds to the short names specified here: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#displaying-severity this field is case-insensitive (\"INFO\" == \"info\")",
+                "type": "string"
+              }
+            }
+          },
+          "metric_filters": {
+            "description": "MetricFilters filters by Metric properties.",
+            "type": "object",
+            "properties": {
+              "datapoint": {
+                "description": "DataPointConditions is a list of OTTL conditions for an ottldatapoint context. If any condition resolves to true, the datapoint will be dropped. Supports `and`, `or`, and `()`",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "exclude": {
+                "description": "Exclude match properties describe metrics that should be excluded from the Collector Service pipeline, all other metrics should be included. If both Include and Exclude are specified, Include filtering occurs first.",
+                "x-pointer": true,
+                "$ref": "/internal/filter/filterconfig.metric_match_properties"
+              },
+              "include": {
+                "description": "Include match properties describe metrics that should be included in the Collector Service pipeline, all other metrics should be dropped from further processing. If both Include and Exclude are specified, Include filtering occurs first.",
+                "x-pointer": true,
+                "$ref": "/internal/filter/filterconfig.metric_match_properties"
+              },
+              "metric": {
+                "description": "MetricConditions is a list of OTTL conditions for an ottlmetric context. If any condition resolves to true, the metric will be dropped. Supports `and`, `or`, and `()`",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "regexp": {
+                "description": "RegexpConfig specifies options for the regexp match type",
+                "x-pointer": true,
+                "$ref": "/internal/filter/filterset/regexp.config"
+              },
+              "resource": {
+                "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "profile_filters": {
+            "description": "ProfileFilters filters by OTTL conditions",
+            "type": "object",
+            "properties": {
+              "profile": {
+                "description": "ProfileConditions is a list of OTTL conditions for an ottlprofile context. If any condition resolves to true, the profile will be dropped. Supports `and`, `or`, and `()`",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resource": {
+                "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "trace_filters": {
+            "description": "TraceFilters filters by OTTL conditions",
+            "type": "object",
+            "properties": {
+              "resource": {
+                "description": "ResourceConditions is a list of OTTL conditions for an ottlresource context. If any condition resolves to true, the whole resource will be dropped. Supports `and`, `or`, and `()`",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "span": {
+                "description": "SpanConditions is a list of OTTL conditions for an ottlspan context. If any condition resolves to true, the span will be dropped. Supports `and`, `or`, and `()`",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "spanevent": {
+                "description": "SpanEventConditions is a list of OTTL conditions for an ottlspanevent context. If any condition resolves to true, the span event will be dropped. Supports `and`, `or`, and `()`",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "description": "Config defines configuration for Resource processor.",
+        "type": "object",
+        "properties": {
+          "error_mode": {
+            "description": "ErrorMode determines how the processor reacts to errors that occur while processing an OTTL condition. Valid values are `ignore` and `propagate`. `ignore` means the processor ignores errors returned by conditions and continues on to the next condition. This is the recommended mode. `propagate` means the processor returns the error up the pipeline.  This will result in the payload being dropped from the collector. The default value is `propagate`. It will change to `ignore` when the `processor.filter.defaultErrorModeIgnore` feature gate is stable.",
+            "$ref": "/pkg/ottl.error_mode"
+          },
+          "log_conditions": {
+            "type": "array",
+            "items": {
+              "$ref": "./internal/condition.context_conditions"
+            }
+          },
+          "logs": {
+            "description": "Deprecated: use LogConditions instead.",
+            "$ref": "log_filters"
+          },
+          "metric_conditions": {
+            "type": "array",
+            "items": {
+              "$ref": "./internal/condition.context_conditions"
+            }
+          },
+          "metrics": {
+            "description": "Deprecated: use MetricConditions instead.",
+            "$ref": "metric_filters"
+          },
+          "profile_conditions": {
+            "type": "array",
+            "items": {
+              "$ref": "./internal/condition.context_conditions"
+            }
+          },
+          "profiles": {
+            "description": "Deprecated: use ProfileConditions instead.",
+            "$ref": "profile_filters"
+          },
+          "spans": {
+            "description": "Deprecated: use TraceConditions instead.",
+            "$ref": "/internal/filter/filterconfig.match_config"
+          },
+          "trace_conditions": {
+            "type": "array",
+            "items": {
+              "$ref": "./internal/condition.context_conditions"
+            }
+          },
+          "traces": {
+            "description": "Deprecated: use TraceConditions instead.",
+            "$ref": "trace_filters"
+          }
+        }
+      }
+    },
+    {
+      "class": "exporter",
+      "type": "debug",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/exporter/debugexporter",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "static",
+      "displayName": "Debug Exporter",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Writes pipeline data to the collector's logs. Replaces the deprecated logging exporter.",
+      "schema": {
+        "description": "Config defines configuration for the debug exporter — writes telemetry to the collector's own log. Replaces the deprecated logging exporter.",
+        "type": "object",
+        "properties": {
+          "verbosity": {
+            "description": "How verbose the output is. `basic` prints counts only, `normal` prints summary lines, `detailed` prints every record.",
+            "type": "string",
+            "enum": [
+              "basic",
+              "normal",
+              "detailed"
+            ],
+            "default": "basic"
+          },
+          "sampling_initial": {
+            "description": "Number of records logged at the start of each second before sampling kicks in. Default 2.",
+            "type": "integer",
+            "minimum": 0,
+            "default": 2
+          },
+          "sampling_thereafter": {
+            "description": "After `sampling_initial`, log 1 of every N records. Default 1 (log everything).",
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          },
+          "use_internal_logger": {
+            "description": "If true, route output through the collector's own zap logger (default). If false, write directly to stdout.",
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
+    },
+    {
+      "class": "exporter",
+      "type": "nop",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/exporter/nopexporter",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "core",
+      "displayName": "Nop Exporter",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Discards data; useful for performance testing.",
+      "schema": null
+    },
+    {
+      "class": "exporter",
+      "type": "otlp",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/exporter/otlpexporter",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "static",
+      "displayName": "OTLP Exporter",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Exports data via gRPC using OTLP format.",
+      "schema": {
+        "$defs": {
+          "tls_client": {
+            "description": "TLS client config. Fields are shared with go.opentelemetry.io/collector/config/configtls.ClientConfig.",
+            "type": "object",
+            "properties": {
+              "insecure": {
+                "description": "Disable TLS entirely. The connection is sent in plaintext. Default false. Mutually exclusive with the cert/ca settings.",
+                "type": "boolean",
+                "default": false
+              },
+              "insecure_skip_verify": {
+                "description": "Skip certificate verification. The TLS connection is still encrypted but vulnerable to MITM. Default false. Set true only in dev.",
+                "type": "boolean",
+                "default": false
+              },
+              "server_name_override": {
+                "description": "Override the server name used in TLS handshake. Useful when connecting via IP or when the cert CN doesn't match the endpoint host.",
+                "type": "string"
+              },
+              "ca_file": {
+                "description": "Path to the CA bundle used to verify the server certificate. If unset, system roots are used.",
+                "type": "string"
+              },
+              "ca_pem": {
+                "description": "PEM-encoded CA bundle inlined directly. Alternative to `ca_file`.",
+                "type": "string"
+              },
+              "cert_file": {
+                "description": "Path to the client certificate (for mTLS).",
+                "type": "string"
+              },
+              "cert_pem": {
+                "description": "PEM-encoded client certificate inlined directly.",
+                "type": "string"
+              },
+              "key_file": {
+                "description": "Path to the client private key (for mTLS).",
+                "type": "string"
+              },
+              "key_pem": {
+                "description": "PEM-encoded client private key inlined directly.",
+                "type": "string"
+              },
+              "min_version": {
+                "description": "Minimum accepted TLS version. e.g. \"1.2\", \"1.3\". Default \"1.2\".",
+                "type": "string"
+              },
+              "max_version": {
+                "description": "Maximum accepted TLS version.",
+                "type": "string"
+              },
+              "reload_interval": {
+                "description": "How often to reload cert files from disk. 0 disables reloading.",
+                "type": "string",
+                "format": "duration"
+              },
+              "include_system_ca_certs_pool": {
+                "description": "When using `ca_file`/`ca_pem`, also include the system roots. Default false.",
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "description": "Config defines configuration for the OTLP gRPC exporter.",
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "properties": {
+          "endpoint": {
+            "description": "gRPC endpoint of the OTLP backend (host:port, with optional scheme).",
+            "type": "string"
+          },
+          "tls": {
+            "$ref": "#/$defs/tls_client"
+          },
+          "compression": {
+            "description": "Compression to apply. Defaults to gzip.",
+            "type": "string",
+            "enum": [
+              "",
+              "none",
+              "gzip",
+              "snappy",
+              "zstd",
+              "deflate",
+              "lz4"
+            ]
+          },
+          "headers": {
+            "description": "Static gRPC metadata sent on every request.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "timeout": {
+            "description": "Per-request timeout. Default 5s.",
+            "type": "string",
+            "format": "duration"
+          },
+          "keepalive": {
+            "type": "object"
+          },
+          "balancer_name": {
+            "description": "gRPC load-balancing policy. e.g. \"round_robin\", \"pick_first\".",
+            "type": "string"
+          },
+          "sending_queue": {
+            "description": "Standard exporterhelper send-queue config.",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "num_consumers": {
+                "type": "integer"
+              },
+              "queue_size": {
+                "type": "integer"
+              },
+              "storage": {
+                "type": "string",
+                "description": "ID of a storage extension to persist the queue."
+              }
+            }
+          },
+          "retry_on_failure": {
+            "description": "Standard exporterhelper retry config.",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "initial_interval": {
+                "type": "string",
+                "format": "duration"
+              },
+              "randomization_factor": {
+                "type": "number"
+              },
+              "multiplier": {
+                "type": "number"
+              },
+              "max_interval": {
+                "type": "string",
+                "format": "duration"
+              },
+              "max_elapsed_time": {
+                "type": "string",
+                "format": "duration"
+              }
+            }
+          },
+          "auth": {
+            "description": "Authenticator extension config.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "class": "exporter",
+      "type": "otlphttp",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/exporter/otlphttpexporter",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "static",
+      "displayName": "OTLP HTTP Exporter",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Exports data via HTTP using OTLP protobuf or JSON encoding.",
+      "schema": {
+        "description": "Config defines configuration for the OTLP HTTP exporter.",
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "description": "Base URL of the OTLP HTTP backend. If set, default per-signal paths are appended.",
+            "type": "string"
+          },
+          "traces_endpoint": {
+            "description": "Override the full URL for traces (no path is appended).",
+            "type": "string"
+          },
+          "metrics_endpoint": {
+            "description": "Override the full URL for metrics.",
+            "type": "string"
+          },
+          "logs_endpoint": {
+            "description": "Override the full URL for logs.",
+            "type": "string"
+          },
+          "tls": {
+            "type": "object"
+          },
+          "compression": {
+            "type": "string",
+            "enum": [
+              "",
+              "none",
+              "gzip",
+              "snappy",
+              "zstd",
+              "deflate",
+              "lz4"
+            ]
+          },
+          "encoding": {
+            "description": "Wire format. Default `proto`.",
+            "type": "string",
+            "enum": [
+              "proto",
+              "json"
+            ]
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "timeout": {
+            "type": "string",
+            "format": "duration"
+          },
+          "sending_queue": {
+            "type": "object"
+          },
+          "retry_on_failure": {
+            "type": "object"
+          },
+          "auth": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "class": "exporter",
+      "type": "file",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/fileexporter",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "File Exporter",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs",
+        "profiles"
+      ],
+      "stability": {
+        "alpha": [
+          "traces",
+          "metrics",
+          "logs"
+        ],
+        "development": [
+          "profiles"
+        ]
+      },
+      "description": "Writes telemetry data to files on disk.",
+      "metadata": {
+        "type": "file",
+        "display_name": "File Exporter",
+        "status": {
+          "class": "exporter",
+          "stability": {
+            "alpha": [
+              "traces",
+              "metrics",
+              "logs"
+            ],
+            "development": [
+              "profiles"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "codeowners": {
+            "active": [
+              "atingchen"
+            ]
+          }
+        },
+        "tests": {
+          "config": {
+            "path": "testdata/log.json"
+          },
+          "expect_consumer_error": true
+        }
+      },
+      "schema": {
+        "$defs": {
+          "group_by": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "description": "Enables group_by. Default is false.",
+                "type": "boolean"
+              },
+              "max_open_files": {
+                "description": "MaxOpenFiles specifies the maximum number of open file descriptors for the output files. The default is 100.",
+                "type": "integer"
+              },
+              "resource_attribute": {
+                "description": "ResourceAttribute specifies the name of the resource attribute that contains the path segment of the file to write to. The final path will be the Path config value, with the * replaced with the value of this resource attribute. Default is \"fileexporter.path_segment\".",
+                "type": "string"
+              }
+            }
+          },
+          "rotation": {
+            "description": "Rotation an option to rolling log files",
+            "type": "object",
+            "properties": {
+              "localtime": {
+                "description": "LocalTime determines if the time used for formatting the timestamps in backup files is the computer's local time.  The default is to use UTC time.",
+                "type": "boolean"
+              },
+              "max_backups": {
+                "description": "MaxBackups is the maximum number of old log files to retain. The default is to 100 files.",
+                "type": "integer"
+              },
+              "max_days": {
+                "description": "MaxDays is the maximum number of days to retain old log files based on the timestamp encoded in their filename.  Note that a day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc. The default is not to remove old log files based on age.",
+                "type": "integer"
+              },
+              "max_megabytes": {
+                "description": "MaxMegabytes is the maximum size in megabytes of the file before it gets rotated. It defaults to 100 megabytes.",
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "description": "Config defines configuration for file exporter.",
+        "type": "object",
+        "properties": {
+          "append": {
+            "description": "Mode defines whether the exporter should append to the file. Options: - false[default]:  truncates the file - true:  appends to the file.",
+            "type": "boolean"
+          },
+          "compression": {
+            "description": "Compression Codec used to export telemetry data Supported compression algorithms:`zstd`",
+            "type": "string"
+          },
+          "create_directory": {
+            "description": "CreateDirectory specifies that the parent directory of the output file should be created automatically on start.",
+            "type": "boolean"
+          },
+          "directory_permissions": {
+            "description": "DirectoryPermissions specifies permissions used when creating directories (minus process umask). Value must be an octal string like \"0755\".",
+            "type": "string"
+          },
+          "encoding": {
+            "description": "Encoding defines the encoding of the telemetry data. If specified, it overrides `FormatType` and applies an encoding extension.",
+            "x-pointer": true,
+            "type": "string",
+            "x-customType": "go.opentelemetry.io/collector/component.ID"
+          },
+          "flush_interval": {
+            "description": "FlushInterval is the duration between flushes. See time.ParseDuration for valid values.",
+            "type": "string",
+            "format": "duration"
+          },
+          "format": {
+            "description": "FormatType define the data format of encoded telemetry data Options: - json[default]:  OTLP json bytes. - proto:  OTLP binary protobuf bytes.",
+            "type": "string"
+          },
+          "group_by": {
+            "description": "GroupBy enables writing to separate files based on a resource attribute.",
+            "x-pointer": true,
+            "$ref": "group_by"
+          },
+          "path": {
+            "description": "Path of the file to write to. Path is relative to current directory.",
+            "type": "string"
+          },
+          "rotation": {
+            "description": "Rotation defines an option about rotation of telemetry files.",
+            "x-pointer": true,
+            "$ref": "rotation"
+          }
+        }
+      }
+    },
+    {
+      "class": "exporter",
+      "type": "kafka",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Kafka Exporter",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs",
+        "profiles"
+      ],
+      "stability": {
+        "beta": [
+          "traces",
+          "metrics",
+          "logs"
+        ],
+        "development": [
+          "profiles"
+        ]
+      },
+      "description": "Kafka exporter exports logs, metrics, and traces to Kafka. This exporter uses a synchronous producer that blocks and does not batch messages, therefore it should be used with batch and queued retry processors for higher throughput and resiliency. Message payload encoding is configurable.",
+      "metadata": {
+        "type": "kafka",
+        "display_name": "Kafka Exporter",
+        "status": {
+          "class": "exporter",
+          "stability": {
+            "beta": [
+              "traces",
+              "metrics",
+              "logs"
+            ],
+            "development": [
+              "profiles"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib"
+          ],
+          "codeowners": {
+            "active": [
+              "pavolloffay",
+              "MovieStoreGuy",
+              "axw",
+              "paulojmdias"
+            ]
+          }
+        },
+        "tests": {
+          "config": null,
+          "skip_lifecycle": true,
+          "goleak": {
+            "ignore": {
+              "top": [
+                "github.com/twmb/franz-go/pkg/kfake.(*group).manage"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "node_id": {
+            "description": "The Kafka node ID.",
+            "type": "int"
+          },
+          "outcome": {
+            "description": "The operation outcome.",
+            "type": "string",
+            "enum": [
+              "success",
+              "failure"
+            ]
+          },
+          "partition": {
+            "description": "The Kafka topic partition.",
+            "type": "int"
+          },
+          "server.address": {
+            "description": "The Kafka node address.",
+            "type": "string"
+          },
+          "topic": {
+            "description": "The Kafka topic.",
+            "type": "string"
+          }
+        },
+        "telemetry": {
+          "metrics": {
+            "kafka_broker_closed": {
+              "enabled": true,
+              "stability": "development",
+              "description": "The total number of connections closed.",
+              "extended_documentation": "Only produced when franz-go is enabled.",
+              "optional": true,
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "server.address"
+              ]
+            },
+            "kafka_broker_connects": {
+              "enabled": true,
+              "stability": "development",
+              "description": "The total number of connections opened.",
+              "extended_documentation": "Only produced when franz-go is enabled.",
+              "optional": true,
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "server.address",
+                "outcome"
+              ]
+            },
+            "kafka_broker_throttling_duration": {
+              "enabled": true,
+              "stability": "deprecated",
+              "description": "The throttling duration in ms imposed by the broker when exporting messages.",
+              "extended_documentation": "Only produced when franz-go is enabled. Deprecated in favor of kafka_broker_throttling_latency.",
+              "optional": true,
+              "unit": "ms",
+              "histogram": {
+                "value_type": "int"
+              },
+              "attributes": [
+                "node_id",
+                "server.address"
+              ],
+              "warnings": {
+                "if_enabled": "This metric is deprecated in favor of kafka_broker_throttling_latency and will be removed soon."
+              }
+            },
+            "kafka_broker_throttling_latency": {
+              "enabled": true,
+              "stability": "development",
+              "description": "The throttling latency in seconds imposed by the broker when exporting records.",
+              "extended_documentation": "Only produced when franz-go is enabled.",
+              "optional": true,
+              "unit": "s",
+              "histogram": {
+                "value_type": "double",
+                "bucket_boundaries": [
+                  0,
+                  0.005,
+                  0.01,
+                  0.025,
+                  0.05,
+                  0.075,
+                  0.1,
+                  0.25,
+                  0.5,
+                  0.75,
+                  1,
+                  2.5,
+                  5,
+                  7.5,
+                  10,
+                  25,
+                  50,
+                  75,
+                  100
+                ]
+              },
+              "attributes": [
+                "node_id",
+                "server.address"
+              ]
+            },
+            "kafka_exporter_bytes": {
+              "enabled": true,
+              "stability": "development",
+              "description": "The size in bytes of exported records seen by the broker.",
+              "extended_documentation": "Only produced when franz-go is enabled.",
+              "optional": true,
+              "unit": "By",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "server.address",
+                "topic",
+                "partition",
+                "outcome"
+              ]
+            },
+            "kafka_exporter_bytes_uncompressed": {
+              "enabled": true,
+              "stability": "development",
+              "description": "The uncompressed size in bytes of exported messages seen by the client.",
+              "unit": "By",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "server.address",
+                "topic",
+                "partition",
+                "outcome"
+              ]
+            },
+            "kafka_exporter_latency": {
+              "enabled": true,
+              "stability": "deprecated",
+              "description": "The time it took in ms to export a batch of messages.",
+              "extended_documentation": "Deprecated in favor of kafka_exporter_write_latency.",
+              "unit": "ms",
+              "histogram": {
+                "value_type": "int"
+              },
+              "attributes": [
+                "node_id",
+                "server.address",
+                "topic",
+                "partition",
+                "outcome"
+              ],
+              "warnings": {
+                "if_enabled": "This metric is deprecated in favor of kafka_exporter_write_latency and will be removed soon."
+              }
+            },
+            "kafka_exporter_messages": {
+              "enabled": true,
+              "stability": "deprecated",
+              "description": "The number of exported messages.",
+              "extended_documentation": "Deprecated in favor of kafka_exporter_records.",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "server.address",
+                "topic",
+                "partition",
+                "outcome"
+              ],
+              "warnings": {
+                "if_enabled": "This metric is deprecated in favor of kafka_exporter_records and will be removed soon."
+              }
+            },
+            "kafka_exporter_records": {
+              "enabled": true,
+              "stability": "development",
+              "description": "The number of exported records.",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              },
+              "attributes": [
+                "node_id",
+                "server.address",
+                "topic",
+                "partition",
+                "outcome"
+              ]
+            },
+            "kafka_exporter_write_latency": {
+              "enabled": true,
+              "stability": "development",
+              "description": "The time it took in seconds to export a batch of records.",
+              "unit": "s",
+              "histogram": {
+                "value_type": "double",
+                "bucket_boundaries": [
+                  0,
+                  0.005,
+                  0.01,
+                  0.025,
+                  0.05,
+                  0.075,
+                  0.1,
+                  0.25,
+                  0.5,
+                  0.75,
+                  1,
+                  2.5,
+                  5,
+                  7.5,
+                  10,
+                  25,
+                  50,
+                  75,
+                  100
+                ]
+              },
+              "attributes": [
+                "node_id",
+                "server.address",
+                "topic",
+                "partition",
+                "outcome"
+              ]
+            }
+          }
+        }
+      },
+      "schema": {
+        "$defs": {
+          "record_partitioner_config": {
+            "description": "RecordPartitionerConfig configures the strategy used to assign Kafka records to partitions. At most one field should be set.",
+            "type": "object",
+            "properties": {
+              "extension": {
+                "description": "Extension is the component ID of an extension implementing RecordPartitionerExtension. Setting this field delegates partition assignment to that extension.",
+                "x-pointer": true,
+                "type": "string",
+                "x-customType": "go.opentelemetry.io/collector/component.ID"
+              },
+              "least_backup": {
+                "description": "LeastBackup routes each record to the partition with the fewest buffered records.",
+                "x-pointer": true,
+                "type": "object"
+              },
+              "round_robin": {
+                "description": "RoundRobin distributes records evenly across all available partitions in round-robin order.",
+                "x-pointer": true,
+                "type": "object"
+              },
+              "sticky_key": {
+                "description": "StickyKey uses StickyKeyPartitioner. When a record key is set, the partition is derived from the key hash.",
+                "x-pointer": true,
+                "$ref": "sticky_key_partitioner_config"
+              }
+            }
+          },
+          "signal_config": {
+            "description": "SignalConfig holds signal-specific configuration for the Kafka exporter.",
+            "type": "object",
+            "properties": {
+              "encoding": {
+                "description": "Encoding holds the encoding of messages for the signal type. Defaults to \"otlp_proto\".",
+                "type": "string"
+              },
+              "topic": {
+                "description": "Topic holds the name of the Kafka topic to which messages of the signal type should be produced. The default depends on the signal type: - \"otlp_spans\" for traces - \"otlp_metrics\" for metrics - \"otlp_logs\" for logs - \"otlp_profiles\" for profiles",
+                "type": "string"
+              },
+              "topic_from_metadata_key": {
+                "description": "TopicFromMetadataKey holds the name of the metadata key to use as the topic name for this signal type. If this is set, it takes precedence over the topic name set in the topic field.",
+                "type": "string"
+              }
+            }
+          },
+          "sticky_key_partitioner_config": {
+            "description": "StickyKeyPartitionerConfig configures the StickyKeyPartitioner.",
+            "type": "object",
+            "properties": {
+              "hasher": {
+                "description": "Hasher is the hash algorithm used for key-based partition assignment. Valid values: \"sarama_compat\" (default). - \"sarama_compat\": Sarama-compatible FNV-1a hashing (SaramaCompatHasher). - \"murmur2\": Murmur2 hashing.",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "description": "Config defines configuration for Kafka exporter.",
+        "type": "object",
+        "properties": {
+          "include_metadata_keys": {
+            "description": "IncludeMetadataKeys indicates the receiver's client metadata keys to propagate as Kafka message headers.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "logs": {
+            "description": "Logs holds configuration about how logs should be sent to Kafka.",
+            "$ref": "signal_config"
+          },
+          "metrics": {
+            "description": "Metrics holds configuration about how metrics should be sent to Kafka.",
+            "$ref": "signal_config"
+          },
+          "partition_logs_by_resource_attributes": {
+            "description": "PartitionLogsByResourceAttributes controls the partitioning of logs messages by resource. If this is true, then the message key will be set to a hash of the resource's identifying attributes.",
+            "type": "boolean"
+          },
+          "partition_logs_by_trace_id": {
+            "description": "PartitionLogsByTraceID controls partitioning of log messages by trace ID only. When enabled, the exporter splits incoming logs per TraceID (using SplitLogs) and sets the Kafka message key to the 16-byte hex string of that TraceID. If a LogRecord has an empty TraceID, the key may be empty and partition selection falls back to the Kafka client’s default strategy. Resource attributes are not used for the key when this option is enabled.",
+            "type": "boolean"
+          },
+          "partition_metrics_by_resource_attributes": {
+            "description": "PartitionMetricsByResourceAttributes controls the partitioning of metrics messages by resource. If this is true, then the message key will be set to a hash of the resource's identifying attributes.",
+            "type": "boolean"
+          },
+          "partition_traces_by_id": {
+            "description": "PartitionTracesByID sets the message key of outgoing trace messages to the trace ID. NOTE: this does not have any effect for Jaeger encodings. Jaeger encodings always use use the trace ID for the message key.",
+            "type": "boolean"
+          },
+          "producer": {
+            "$ref": "/pkg/kafka/configkafka.producer_config"
+          },
+          "profiles": {
+            "description": "Profiles holds configuration about how profiles should be sent to Kafka.",
+            "$ref": "signal_config"
+          },
+          "record_headers": {
+            "description": "RecordHeaders sets static headers on every outgoing Kafka record.",
+            "$ref": "go.opentelemetry.io/collector/config/configopaque.map_list"
+          },
+          "record_partitioner": {
+            "description": "RecordPartitioner configures how Kafka records are assigned to partitions. The default (\"sarama_compatible\") retains the legacy Sarama-compatible hashing behavior. Set to \"sticky\", \"round_robin\", or \"least_backup\" to use one of the built-in franz-go partitioners, or \"extension\" to delegate to a custom extension.",
+            "$ref": "record_partitioner_config"
+          },
+          "sending_queue": {
+            "x-optional": true,
+            "$ref": "go.opentelemetry.io/collector/exporter/exporterhelper.queue_batch_config"
+          },
+          "topic_from_attribute": {
+            "description": "TopicFromAttribute is the name of the attribute to use as the topic name.",
+            "type": "string"
+          },
+          "traces": {
+            "description": "Traces holds configuration about how traces should be sent to Kafka.",
+            "$ref": "signal_config"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "go.opentelemetry.io/collector/exporter/exporterhelper.timeout_config"
+          },
+          {
+            "$ref": "go.opentelemetry.io/collector/config/configretry.back_off_config"
+          },
+          {
+            "$ref": "/pkg/kafka/configkafka.client_config"
+          }
+        ]
+      }
+    },
+    {
+      "class": "exporter",
+      "type": "prometheus",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Prometheus Exporter",
+      "signals": [
+        "metrics"
+      ],
+      "stability": {
+        "beta": [
+          "metrics"
+        ]
+      },
+      "description": "Exports data in the [Prometheus format](https://prometheus.io/docs/concepts/data_model/), which allows it to be scraped by a [Prometheus](https://prometheus.io/) server.",
+      "metadata": {
+        "type": "prometheus",
+        "display_name": "Prometheus Exporter",
+        "status": {
+          "class": "exporter",
+          "stability": {
+            "beta": [
+              "metrics"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib"
+          ],
+          "codeowners": {
+            "active": [
+              "Aneurysm9",
+              "dashpole",
+              "ArthurSens"
+            ]
+          }
+        },
+        "feature_gates": [
+          {
+            "id": "exporter.prometheusexporter.DisableAddMetricSuffixes",
+            "description": "When enabled, the deprecated add_metric_suffixes configuration option is ignored and translation_strategy is always used",
+            "stage": "alpha",
+            "from_version": "v0.132.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-specification/pull/4533"
+          }
+        ],
+        "tests": {
+          "config": {
+            "endpoint": "127.0.0.1:1234"
+          },
+          "goleak": {
+            "ignore": {
+              "top": [
+                "go.opencensus.io/stats/view.(*worker).start"
+              ]
+            }
+          }
+        }
+      },
+      "schema": {
+        "description": "Config defines configuration for Prometheus exporter.",
+        "type": "object",
+        "properties": {
+          "add_metric_suffixes": {
+            "description": "AddMetricSuffixes controls whether suffixes are added to metric names. Defaults to true. Deprecated: Use TranslationStrategy instead. This setting is ignored when TranslationStrategy is explicitly set.",
+            "type": "boolean"
+          },
+          "const_labels": {
+            "description": "ConstLabels are values that are applied for every exported metric.",
+            "x-customType": "github.com/prometheus/client_golang/prometheus.labels"
+          },
+          "enable_open_metrics": {
+            "description": "EnableOpenMetrics enables the use of the OpenMetrics encoding option for the prometheus exporter.",
+            "type": "boolean"
+          },
+          "metric_expiration": {
+            "description": "MetricExpiration defines how long metrics are kept without updates",
+            "type": "string",
+            "format": "duration"
+          },
+          "namespace": {
+            "description": "Namespace if set, exports metrics under the provided value.",
+            "type": "string"
+          },
+          "resource_to_telemetry_conversion": {
+            "description": "ResourceToTelemetrySettings defines configuration for converting resource attributes to metric labels.",
+            "$ref": "/pkg/resourcetotelemetry.settings"
+          },
+          "send_timestamps": {
+            "description": "SendTimestamps will send the underlying scrape timestamp with the export",
+            "type": "boolean"
+          },
+          "sending_queue": {
+            "description": "QueueBatchConfig defines the queue configuration.",
+            "x-optional": true,
+            "$ref": "go.opentelemetry.io/collector/exporter/exporterhelper.queue_batch_config"
+          },
+          "translation_strategy": {
+            "description": "TranslationStrategy controls how OTLP metric and attribute names are translated into Prometheus metric and label names. When set, this takes precedence over AddMetricSuffixes.",
+            "type": "string"
+          },
+          "without_scope_info": {
+            "description": "WithoutScopeInfo controls the addition of labels for the instrumentation scope.",
+            "type": "boolean"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "go.opentelemetry.io/collector/config/confighttp.server_config"
+          }
+        ]
+      }
+    },
+    {
+      "class": "exporter",
+      "type": "prometheusremotewrite",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Prometheus Remote Write Exporter",
+      "signals": [
+        "metrics"
+      ],
+      "stability": {
+        "beta": [
+          "metrics"
+        ]
+      },
+      "description": "Prometheus Remote Write Exporter sends OpenTelemetry metrics to Prometheus [remote write compatible backends](https://prometheus.io/docs/operating/integrations/) such as Cortex, Mimir, and Thanos. By default, this exporter requires TLS and offers queued retry capabilities.",
+      "metadata": {
+        "type": "prometheusremotewrite",
+        "display_name": "Prometheus Remote Write Exporter",
+        "status": {
+          "class": "exporter",
+          "stability": {
+            "beta": [
+              "metrics"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib"
+          ],
+          "codeowners": {
+            "active": [
+              "Aneurysm9",
+              "rapphil",
+              "dashpole",
+              "ArthurSens",
+              "ywwg"
+            ]
+          }
+        },
+        "tests": {
+          "expect_consumer_error": true,
+          "goleak": {
+            "ignore": {
+              "top": [
+                "go.opencensus.io/stats/view.(*worker).start"
+              ]
+            }
+          }
+        },
+        "telemetry": {
+          "metrics": {
+            "exporter_prometheusremotewrite_consumers": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of configured workers to use to fan out the outgoing requests",
+              "unit": "{consumer}",
+              "sum": {
+                "value_type": "int",
+                "monotonic": false
+              }
+            },
+            "exporter_prometheusremotewrite_failed_translations": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of translation operations that failed to translate metrics from Otel to Prometheus",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_sent_batches": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of remote write request batches sent to the remote write endpoint regardless of success or failure",
+              "unit": "{batch}",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_translated_time_series": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of Prometheus time series that were translated from OTel metrics",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_wal_bytes_read": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Total number of bytes read from the WAL",
+              "unit": "By",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_wal_bytes_written": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Total number of bytes written to the WAL",
+              "unit": "By",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_wal_lag": {
+              "enabled": true,
+              "stability": "development",
+              "description": "WAL lag",
+              "unit": "1",
+              "gauge": {
+                "value_type": "int"
+              }
+            },
+            "exporter_prometheusremotewrite_wal_read_latency": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Response latency in ms for the WAL reads.",
+              "unit": "ms",
+              "histogram": {
+                "value_type": "int",
+                "bucket_boundaries": [
+                  5,
+                  10,
+                  20,
+                  50,
+                  100,
+                  200,
+                  500,
+                  1000,
+                  2000,
+                  5000
+                ]
+              }
+            },
+            "exporter_prometheusremotewrite_wal_reads": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of WAL reads",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_wal_reads_failures": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of WAL reads that failed",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_wal_write_latency": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Response latency in ms for the WAL writes.",
+              "unit": "ms",
+              "histogram": {
+                "value_type": "int",
+                "bucket_boundaries": [
+                  5,
+                  10,
+                  20,
+                  50,
+                  100,
+                  200,
+                  500,
+                  1000,
+                  2000,
+                  5000
+                ]
+              }
+            },
+            "exporter_prometheusremotewrite_wal_writes": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of WAL writes",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_wal_writes_failures": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of WAL writes that failed",
+              "unit": "1",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_written_exemplars": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of Prometheus Exemplars that were successfully written to the remote write endpoint (only available when using remote write v2)",
+              "unit": "{exemplar}",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_written_histograms": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of Prometheus Histograms that were successfully written to the remote write endpoint (only available when using remote write v2)",
+              "unit": "{histogram}",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            },
+            "exporter_prometheusremotewrite_written_samples": {
+              "enabled": true,
+              "stability": "development",
+              "description": "Number of Prometheus Samples that were successfully written to the remote write endpoint (only available when using remote write v2)",
+              "unit": "{sample}",
+              "sum": {
+                "value_type": "int",
+                "monotonic": true
+              }
+            }
+          }
+        }
+      },
+      "schema": {
+        "$defs": {
+          "remote_write_queue": {
+            "description": "RemoteWriteQueue allows to configure the remote write queue.",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "description": "Enabled if false the queue is not enabled, the export requests are executed synchronously.",
+                "type": "boolean"
+              },
+              "num_consumers": {
+                "description": "NumWorkers configures the number of workers used by the collector to fan out remote write requests.",
+                "type": "integer"
+              },
+              "queue_size": {
+                "description": "QueueSize is the maximum number of OTLP metric batches allowed in the queue at a given time. Ignored if Enabled is false.",
+                "type": "integer"
+              }
+            }
+          },
+          "target_info": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "description": "Enabled if false the target_info metric is not generated by the exporter",
+                "type": "boolean"
+              }
+            }
+          },
+          "wal_config": {
+            "type": "object",
+            "properties": {
+              "buffer_size": {
+                "type": "integer"
+              },
+              "directory": {
+                "type": "string"
+              },
+              "lag_record_frequency": {
+                "type": "string",
+                "format": "duration"
+              },
+              "truncate_frequency": {
+                "type": "string",
+                "format": "duration"
+              }
+            }
+          }
+        },
+        "description": "Config defines configuration for Remote Write exporter.",
+        "type": "object",
+        "properties": {
+          "add_metric_suffixes": {
+            "description": "AddMetricSuffixes controls whether unit and type suffixes are added to metrics on export",
+            "type": "boolean"
+          },
+          "disable_scope_info": {
+            "description": "DisableScopeInfo allows disabling the export of the scope info labels",
+            "type": "boolean"
+          },
+          "external_labels": {
+            "description": "ExternalLabels defines a map of label keys and values that are allowed to start with reserved prefix \"__\"",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "max_batch_request_parallelism": {
+            "description": "maximum amount of parallel requests to do when handling large batch request",
+            "x-pointer": true,
+            "type": "integer"
+          },
+          "max_batch_size_bytes": {
+            "description": "maximum size in bytes of time series batch sent to remote storage",
+            "type": "integer"
+          },
+          "namespace": {
+            "description": "prefix attached to each exported metric name See: https://prometheus.io/docs/practices/naming/#metric-names",
+            "type": "string"
+          },
+          "protobuf_message": {
+            "description": "RemoteWriteProtoMsg controls whether prometheus remote write v1 or v2 is sent.",
+            "x-customType": "github.com/prometheus/client_golang/exp/api/remote.write_message_type"
+          },
+          "remote_write_queue": {
+            "description": "QueueConfig allows users to fine tune the queues that handle outgoing requests.",
+            "$ref": "remote_write_queue"
+          },
+          "resource_to_telemetry_conversion": {
+            "description": "ResourceToTelemetrySettings is the option for converting resource attributes to telemetry attributes. \"Enabled\" - A boolean field to enable/disable this option. Default is `false`. If enabled, all the resource attributes will be converted to metric labels by default. \"ExcludeServiceAttributes\" - If set to `true`, the `service.name`, `service.instance.id` and `service.namespace` resource attributes, which are already converted to `job` and `instance` labels respectively, will be excluded from the final metrics.",
+            "$ref": "/pkg/resourcetotelemetry.settings"
+          },
+          "send_metadata": {
+            "description": "SendMetadata controls whether prometheus metadata will be generated and sent, this option is ignored when using PRW 2.0, which always includes metadata.",
+            "type": "boolean"
+          },
+          "target_info": {
+            "description": "TargetInfo allows customizing the target_info metric",
+            "$ref": "target_info"
+          },
+          "wal": {
+            "description": "WAL enables persisting metrics to a write-ahead-log before sending to the remote storage.",
+            "x-optional": true,
+            "$ref": "wal_config"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "go.opentelemetry.io/collector/exporter/exporterhelper.timeout_config"
+          },
+          {
+            "$ref": "go.opentelemetry.io/collector/config/configretry.back_off_config"
+          },
+          {
+            "$ref": "go.opentelemetry.io/collector/config/confighttp.client_config"
+          }
+        ]
+      }
+    },
+    {
+      "class": "exporter",
+      "type": "zipkin",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/exporter/zipkinexporter",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Zipkin Exporter",
+      "signals": [
+        "traces"
+      ],
+      "stability": {
+        "beta": [
+          "traces"
+        ]
+      },
+      "description": "Exports data to a [Zipkin](https://zipkin.io/) back-end. By default, this exporter requires TLS and offers queued retry capabilities.",
+      "metadata": {
+        "type": "zipkin",
+        "display_name": "Zipkin Exporter",
+        "status": {
+          "class": "exporter",
+          "stability": {
+            "beta": [
+              "traces"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib"
+          ],
+          "codeowners": {
+            "active": [
+              "MovieStoreGuy",
+              "andrzej-stencel",
+              "crobert-1"
+            ]
+          }
+        }
+      },
+      "schema": {
+        "description": "Config defines configuration settings for the Zipkin exporter.",
+        "type": "object",
+        "properties": {
+          "default_service_name": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "sending_queue": {
+            "x-optional": true,
+            "$ref": "go.opentelemetry.io/collector/exporter/exporterhelper.queue_batch_config"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "go.opentelemetry.io/collector/config/configretry.back_off_config"
+          },
+          {
+            "$ref": "go.opentelemetry.io/collector/config/confighttp.client_config"
+          }
+        ]
+      }
+    },
+    {
+      "class": "connector",
+      "type": "forward",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/connector/forwardconnector",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "core",
+      "displayName": "Forward Connector",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Forwards data unchanged from one pipeline to another of the same signal type.",
+      "schema": null
+    },
+    {
+      "class": "extension",
+      "type": "zpages",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/extension/zpagesextension",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "core",
+      "displayName": "zPages Extension",
+      "signals": [],
+      "stability": {
+        "stable": []
+      },
+      "description": "Exposes /debug/tracez and similar zPages diagnostic endpoints.",
+      "schema": null
+    },
+    {
+      "class": "extension",
+      "type": "health_check",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Health Check Extension",
+      "signals": [
+        "extension"
+      ],
+      "stability": {
+        "alpha": [
+          "extension"
+        ]
+      },
+      "description": "Health Check extension enables an HTTP url that can be probed to check the status of the OpenTelemetry Collector. This extension can be used as a liveness and/or readiness probe on Kubernetes.",
+      "metadata": {
+        "display_name": "Health Check Extension",
+        "type": "health_check",
+        "status": {
+          "class": "extension",
+          "stability": {
+            "alpha": [
+              "extension"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "codeowners": {
+            "active": [
+              "evan-bradley"
+            ],
+            "seeking_new": true
+          }
+        },
+        "feature_gates": [
+          {
+            "id": "extension.healthcheck.useComponentStatus",
+            "description": "Switch to the shared healthcheck implementation powered by component status events",
+            "stage": "alpha",
+            "from_version": "v0.142.0",
+            "reference_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/42256"
+          }
+        ],
+        "tests": {
+          "config": {
+            "endpoint": "localhost:0"
+          }
+        }
+      },
+      "schema": {
+        "description": "Config wraps the shared healthcheck.Config to add extension-specific validation.",
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "/internal/healthcheck.config"
+          }
+        ]
+      }
+    },
+    {
+      "class": "extension",
+      "type": "pprof",
+      "deprecated": false,
+      "modulePath": "github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension",
+      "version": "v0.152.0",
+      "vendor": "contrib",
+      "source": "contrib",
+      "displayName": "Performance Profiler Extension",
+      "signals": [
+        "extension"
+      ],
+      "stability": {
+        "beta": [
+          "extension"
+        ]
+      },
+      "description": "Performance Profiler extension enables the golang `net/http/pprof` endpoint. This is typically used by developers to collect performance profiles and investigate issues with the service.",
+      "metadata": {
+        "display_name": "Performance Profiler Extension",
+        "type": "pprof",
+        "status": {
+          "class": "extension",
+          "stability": {
+            "beta": [
+              "extension"
+            ]
+          },
+          "distributions": [
+            "core",
+            "contrib",
+            "k8s"
+          ],
+          "codeowners": {
+            "active": [
+              "MovieStoreGuy"
+            ]
+          }
+        },
+        "tests": {
+          "config": null
+        }
+      },
+      "schema": {
+        "description": "Config has the configuration for the extension enabling the golang net/http/pprof (Performance Profiler) extension.",
+        "type": "object",
+        "properties": {
+          "block_profile_fraction": {
+            "description": "Fraction of blocking events that are profiled. A value <= 0 disables profiling. See https://golang.org/pkg/runtime/#SetBlockProfileRate for details.",
+            "type": "integer"
+          },
+          "mutex_profile_fraction": {
+            "description": "Fraction of mutex contention events that are profiled. A value <= 0 disables profiling. See https://golang.org/pkg/runtime/#SetMutexProfileFraction for details.",
+            "type": "integer"
+          },
+          "save_to_file": {
+            "description": "Optional file name to save the CPU profile to. The profiling starts when the Collector starts and is saved to the file when the Collector is terminated.",
+            "type": "string"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "go.opentelemetry.io/collector/config/confignet.tcp_addr_config"
+          }
+        ]
+      }
+    }
+  ]
+}

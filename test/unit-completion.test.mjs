@@ -147,10 +147,7 @@ service:
     const labels = new Set(items.map((i) => i.label));
     assert.ok(labels.has("debug"));
     assert.ok(labels.has("otlp/primary"));
-    assert.ok(
-      !labels.has("otlp"),
-      "receiver 'otlp' should not be suggested in exporters bucket",
-    );
+    assert.ok(!labels.has("otlp"), "receiver 'otlp' should not be suggested in exporters bucket");
   });
 
   it("flow-style brackets work the same as block style", () => {

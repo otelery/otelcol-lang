@@ -1,0 +1,419 @@
+{
+  "slug": "otelcol-otlp",
+  "title": "OpenTelemetry Collector OTLP-only",
+  "description": "Minimal OSS Collector with only OTLP receiver/exporter.",
+  "version": "0.152.0",
+  "manifestVersion": "0.152.0",
+  "distModule": "github.com/open-telemetry/opentelemetry-collector-releases/otlp",
+  "distName": "otelcol-otlp",
+  "manifest": "../opentelemetry-collector-releases/distributions/otelcol-otlp/manifest.yaml",
+  "fileMatch": [
+    "otelcol-otlp*.yaml"
+  ],
+  "components": [
+    {
+      "class": "receiver",
+      "type": "otlp",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/receiver/otlpreceiver",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "static",
+      "displayName": "OTLP Receiver",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Receives data via gRPC or HTTP using OTLP format.",
+      "schema": {
+        "description": "Config defines configuration for the OTLP receiver — accepts OTLP data over gRPC and/or HTTP.",
+        "type": "object",
+        "properties": {
+          "protocols": {
+            "description": "One or both of `grpc` and `http`. At least one must be configured.",
+            "type": "object",
+            "properties": {
+              "grpc": {
+                "description": "gRPC server config. Empty object enables defaults (listen on 0.0.0.0:4317).",
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "description": "Address to listen on. Default 0.0.0.0:4317."
+                  },
+                  "transport": {
+                    "type": "string",
+                    "enum": [
+                      "tcp",
+                      "udp",
+                      "unix"
+                    ],
+                    "description": "Transport. Default tcp."
+                  },
+                  "tls": {
+                    "type": "object",
+                    "description": "TLS server config (cert_file, key_file, ca_file, …)."
+                  },
+                  "keepalive": {
+                    "type": "object"
+                  },
+                  "max_recv_msg_size_mib": {
+                    "type": "integer",
+                    "description": "Maximum receive size in MiB. Default 4."
+                  },
+                  "max_concurrent_streams": {
+                    "type": "integer"
+                  },
+                  "read_buffer_size": {
+                    "type": "integer"
+                  },
+                  "write_buffer_size": {
+                    "type": "integer"
+                  },
+                  "auth": {
+                    "type": "object",
+                    "description": "Authenticator extension config."
+                  },
+                  "include_metadata": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "http": {
+                "description": "HTTP server config. Empty object enables defaults (listen on 0.0.0.0:4318).",
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "description": "Address to listen on. Default 0.0.0.0:4318."
+                  },
+                  "tls": {
+                    "type": "object"
+                  },
+                  "cors": {
+                    "type": "object",
+                    "description": "CORS settings.",
+                    "properties": {
+                      "allowed_origins": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "allowed_headers": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "max_age": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "traces_url_path": {
+                    "type": "string",
+                    "description": "Override the OTLP traces path. Default /v1/traces."
+                  },
+                  "metrics_url_path": {
+                    "type": "string",
+                    "description": "Override the OTLP metrics path. Default /v1/metrics."
+                  },
+                  "logs_url_path": {
+                    "type": "string",
+                    "description": "Override the OTLP logs path. Default /v1/logs."
+                  },
+                  "max_request_body_size": {
+                    "type": "integer"
+                  },
+                  "include_metadata": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "class": "exporter",
+      "type": "otlp",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/exporter/otlpexporter",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "static",
+      "displayName": "OTLP Exporter",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Exports data via gRPC using OTLP format.",
+      "schema": {
+        "$defs": {
+          "tls_client": {
+            "description": "TLS client config. Fields are shared with go.opentelemetry.io/collector/config/configtls.ClientConfig.",
+            "type": "object",
+            "properties": {
+              "insecure": {
+                "description": "Disable TLS entirely. The connection is sent in plaintext. Default false. Mutually exclusive with the cert/ca settings.",
+                "type": "boolean",
+                "default": false
+              },
+              "insecure_skip_verify": {
+                "description": "Skip certificate verification. The TLS connection is still encrypted but vulnerable to MITM. Default false. Set true only in dev.",
+                "type": "boolean",
+                "default": false
+              },
+              "server_name_override": {
+                "description": "Override the server name used in TLS handshake. Useful when connecting via IP or when the cert CN doesn't match the endpoint host.",
+                "type": "string"
+              },
+              "ca_file": {
+                "description": "Path to the CA bundle used to verify the server certificate. If unset, system roots are used.",
+                "type": "string"
+              },
+              "ca_pem": {
+                "description": "PEM-encoded CA bundle inlined directly. Alternative to `ca_file`.",
+                "type": "string"
+              },
+              "cert_file": {
+                "description": "Path to the client certificate (for mTLS).",
+                "type": "string"
+              },
+              "cert_pem": {
+                "description": "PEM-encoded client certificate inlined directly.",
+                "type": "string"
+              },
+              "key_file": {
+                "description": "Path to the client private key (for mTLS).",
+                "type": "string"
+              },
+              "key_pem": {
+                "description": "PEM-encoded client private key inlined directly.",
+                "type": "string"
+              },
+              "min_version": {
+                "description": "Minimum accepted TLS version. e.g. \"1.2\", \"1.3\". Default \"1.2\".",
+                "type": "string"
+              },
+              "max_version": {
+                "description": "Maximum accepted TLS version.",
+                "type": "string"
+              },
+              "reload_interval": {
+                "description": "How often to reload cert files from disk. 0 disables reloading.",
+                "type": "string",
+                "format": "duration"
+              },
+              "include_system_ca_certs_pool": {
+                "description": "When using `ca_file`/`ca_pem`, also include the system roots. Default false.",
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "description": "Config defines configuration for the OTLP gRPC exporter.",
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "properties": {
+          "endpoint": {
+            "description": "gRPC endpoint of the OTLP backend (host:port, with optional scheme).",
+            "type": "string"
+          },
+          "tls": {
+            "$ref": "#/$defs/tls_client"
+          },
+          "compression": {
+            "description": "Compression to apply. Defaults to gzip.",
+            "type": "string",
+            "enum": [
+              "",
+              "none",
+              "gzip",
+              "snappy",
+              "zstd",
+              "deflate",
+              "lz4"
+            ]
+          },
+          "headers": {
+            "description": "Static gRPC metadata sent on every request.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "timeout": {
+            "description": "Per-request timeout. Default 5s.",
+            "type": "string",
+            "format": "duration"
+          },
+          "keepalive": {
+            "type": "object"
+          },
+          "balancer_name": {
+            "description": "gRPC load-balancing policy. e.g. \"round_robin\", \"pick_first\".",
+            "type": "string"
+          },
+          "sending_queue": {
+            "description": "Standard exporterhelper send-queue config.",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "num_consumers": {
+                "type": "integer"
+              },
+              "queue_size": {
+                "type": "integer"
+              },
+              "storage": {
+                "type": "string",
+                "description": "ID of a storage extension to persist the queue."
+              }
+            }
+          },
+          "retry_on_failure": {
+            "description": "Standard exporterhelper retry config.",
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "initial_interval": {
+                "type": "string",
+                "format": "duration"
+              },
+              "randomization_factor": {
+                "type": "number"
+              },
+              "multiplier": {
+                "type": "number"
+              },
+              "max_interval": {
+                "type": "string",
+                "format": "duration"
+              },
+              "max_elapsed_time": {
+                "type": "string",
+                "format": "duration"
+              }
+            }
+          },
+          "auth": {
+            "description": "Authenticator extension config.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "class": "exporter",
+      "type": "otlphttp",
+      "deprecated": false,
+      "modulePath": "go.opentelemetry.io/collector/exporter/otlphttpexporter",
+      "version": "v0.152.0",
+      "vendor": "core",
+      "source": "static",
+      "displayName": "OTLP HTTP Exporter",
+      "signals": [
+        "traces",
+        "metrics",
+        "logs"
+      ],
+      "stability": {
+        "stable": [
+          "traces",
+          "metrics",
+          "logs"
+        ]
+      },
+      "description": "Exports data via HTTP using OTLP protobuf or JSON encoding.",
+      "schema": {
+        "description": "Config defines configuration for the OTLP HTTP exporter.",
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "description": "Base URL of the OTLP HTTP backend. If set, default per-signal paths are appended.",
+            "type": "string"
+          },
+          "traces_endpoint": {
+            "description": "Override the full URL for traces (no path is appended).",
+            "type": "string"
+          },
+          "metrics_endpoint": {
+            "description": "Override the full URL for metrics.",
+            "type": "string"
+          },
+          "logs_endpoint": {
+            "description": "Override the full URL for logs.",
+            "type": "string"
+          },
+          "tls": {
+            "type": "object"
+          },
+          "compression": {
+            "type": "string",
+            "enum": [
+              "",
+              "none",
+              "gzip",
+              "snappy",
+              "zstd",
+              "deflate",
+              "lz4"
+            ]
+          },
+          "encoding": {
+            "description": "Wire format. Default `proto`.",
+            "type": "string",
+            "enum": [
+              "proto",
+              "json"
+            ]
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "timeout": {
+            "type": "string",
+            "format": "duration"
+          },
+          "sending_queue": {
+            "type": "object"
+          },
+          "retry_on_failure": {
+            "type": "object"
+          },
+          "auth": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ]
+}

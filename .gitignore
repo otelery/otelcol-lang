@@ -3,5 +3,4 @@ out/
 *.vsix
 .DS_Store
 dist/
-schemas/
 .vscode-test/

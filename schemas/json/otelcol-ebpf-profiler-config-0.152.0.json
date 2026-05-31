@@ -1,0 +1,2169 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/otelery/otelcol-lang/main/schemas/json/otelcol-ebpf-profiler-config-0.152.0.json",
+  "title": "OpenTelemetry Collector for eBPF Profiling config (v0.152.0)",
+  "description": "OSS Collector with the eBPF profiling receiver bundled. JSON Schema for the configuration of OpenTelemetry Collector for eBPF Profiling version 0.152.0, generated from the distribution's manifest.yaml.",
+  "type": "object",
+  "properties": {
+    "receivers": {
+      "type": "object",
+      "patternProperties": {
+        "^nop(/.+)?$": {
+          "description": "Discards all data; useful for tests.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "^ebpf-profiler(/.+)?$": {
+          "description": "Component from go.opentelemetry.io/ebpf-profiler. Schema not available in this index.",
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "processors": {
+      "type": "object",
+      "patternProperties": {
+        "^batch(/.+)?$": {
+          "description": "Config defines configuration for the batch processor — groups items together before forwarding to the next consumer.",
+          "type": "object",
+          "properties": {
+            "send_batch_size": {
+              "description": "Number of spans, metric data points, or log records after which a batch is sent regardless of timeout. Default 8192. Should be lower than `send_batch_max_size`.",
+              "type": "integer",
+              "minimum": 0,
+              "default": 8192
+            },
+            "send_batch_max_size": {
+              "description": "Maximum allowed batch size. Items beyond this split into multiple batches. 0 = no upper bound. Must be greater than or equal to `send_batch_size`.",
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "timeout": {
+              "description": "Time after which the batch is sent regardless of size. 0 disables time-based batching. Default 200ms.",
+              "type": "string",
+              "format": "duration",
+              "default": "200ms"
+            },
+            "metadata_keys": {
+              "description": "Client metadata keys whose values, when set, isolate batches. Different values create different batches. Empty (default) means client metadata is ignored.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "metadata_cardinality_limit": {
+              "description": "Hard limit on the number of distinct combinations of `metadata_keys` values. Default 1000.",
+              "type": "integer",
+              "minimum": 1,
+              "default": 1000
+            }
+          }
+        },
+        "^memory_limiter(/.+)?$": {
+          "description": "Config defines configuration for the memory_limiter processor — refuses data and forces GC when memory limits are exceeded, protecting the collector from OOM.",
+          "type": "object",
+          "properties": {
+            "check_interval": {
+              "description": "Frequency of memory checks. Default 0 (disabled). Common values 1s–5s. Lower values increase responsiveness at the cost of CPU.",
+              "type": "string",
+              "format": "duration"
+            },
+            "limit_mib": {
+              "description": "Hard memory limit in MiB. When exceeded, the processor refuses data and force-runs GC. Mutually exclusive with `limit_percentage`. 0 = disabled.",
+              "type": "integer",
+              "minimum": 0
+            },
+            "spike_limit_mib": {
+              "description": "Spike allowance subtracted from `limit_mib` to derive the soft limit. Default 20% of `limit_mib`.",
+              "type": "integer",
+              "minimum": 0
+            },
+            "limit_percentage": {
+              "description": "Hard memory limit as a percentage of total system memory (0–100). Used in containerized environments. Mutually exclusive with `limit_mib`.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "spike_limit_percentage": {
+              "description": "Spike allowance as a percentage of total memory. Used with `limit_percentage`.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          }
+        },
+        "^k8s_attributes(/.+)?$": {
+          "description": "Config defines configuration for k8s attributes processor.",
+          "$defs": {
+            "exclude_config": {
+              "description": "ExcludeConfig represent a list of Pods to exclude",
+              "type": "object",
+              "properties": {
+                "pods": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__exclude_pod_config"
+                  }
+                }
+              }
+            },
+            "exclude_pod_config": {
+              "description": "ExcludePodConfig represent a Pod name to ignore",
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              }
+            },
+            "extract_config": {
+              "description": "ExtractConfig section allows specifying extraction rules to extract data from k8s pod specs.",
+              "type": "object",
+              "properties": {
+                "annotations": {
+                  "description": "Annotations allows extracting data from pod annotations and record it as resource attributes. It is a list of FieldExtractConfig type. See FieldExtractConfig documentation for more details.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_extract_config"
+                  }
+                },
+                "deployment_name_from_replicaset": {
+                  "description": "DeploymentNameFromReplicaSet allows extracting deployment name from replicaset name by trimming pod template hash. This will disable watching for replicaset resources.",
+                  "type": "boolean"
+                },
+                "labels": {
+                  "description": "Labels allows extracting data from pod labels and record it as resource attributes. It is a list of FieldExtractConfig type. See FieldExtractConfig documentation for more details.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_extract_config"
+                  }
+                },
+                "metadata": {
+                  "description": "Metadata allows to extract pod/namespace/node metadata from a list of metadata fields. The field accepts a list of strings. Metadata fields supported right now are, k8s.pod.name, k8s.pod.uid, k8s.deployment.name, k8s.node.name, k8s.namespace.name, k8s.pod.start_time, k8s.replicaset.name, k8s.replicaset.uid, k8s.daemonset.name, k8s.daemonset.uid, k8s.job.name, k8s.job.uid, k8s.cronjob.name, k8s.cronjob.uid, k8s.statefulset.name, k8s.statefulset.uid, k8s.container.name, container.id, container.image.name, container.image.tag, container.image.repo_digests k8s.cluster.uid Specifying anything other than these values will result in an error. By default, the following fields are extracted and added to spans, metrics and logs as resource attributes: - k8s.pod.name - k8s.pod.uid - k8s.pod.start_time - k8s.namespace.name - k8s.node.name - k8s.deployment.name (if the pod is controlled by a deployment) - k8s.container.name (requires an additional attribute to be set: container.id) - container.image.name (requires one of the following additional attributes to be set: container.id or k8s.container.name) - container.image.tag (requires one of the following additional attributes to be set: container.id or k8s.container.name)",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "otel_annotations": {
+                  "description": "OtelAnnotations extracts all pod annotations with the prefix \"resource.opentelemetry.io\" as resource attributes E.g. \"resource.opentelemetry.io/foo\" becomes \"foo\"",
+                  "type": "boolean"
+                }
+              }
+            },
+            "field_extract_config": {
+              "description": "FieldExtractConfig allows specifying an extraction rule to extract a resource attribute from pod (or namespace) annotations (or labels).",
+              "type": "object",
+              "properties": {
+                "from": {
+                  "description": "From represents the source of the labels/annotations. Allowed values are \"pod\", \"namespace\", and \"node\". The default is pod.",
+                  "type": "string"
+                },
+                "key": {
+                  "description": "Key represents the annotation (or label) name. This must exactly match an annotation (or label) name.",
+                  "type": "string"
+                },
+                "key_regex": {
+                  "description": "KeyRegex is a regular expression used to extract a Key that matches the regex. Out of Key or KeyRegex, only one option is expected to be configured at a time.",
+                  "type": "string"
+                },
+                "tag_name": {
+                  "description": "TagName represents the name of the resource attribute that will be added to logs, metrics or spans. When not specified, a default tag name will be used of the format: - k8s.pod.annotations.<annotation key>  (or k8s.pod.annotation.<annotation key> when processor.k8sattributes.EmitV1K8sConventions is enabled) - k8s.pod.labels.<label key>  (or k8s.pod.label.<label key> when processor.k8sattributes.EmitV1K8sConventions is enabled) For example, if tag_name is not specified and the key is git_sha, then the attribute name will be `k8s.pod.annotations.git_sha` (or `k8s.pod.annotation.git_sha` with the feature gate). When key_regex is present, tag_name supports back reference to both named capturing and positioned capturing. For example, if your pod spec contains the following labels, app.kubernetes.io/component: mysql app.kubernetes.io/version: 5.7.21 and you'd like to add tags for all labels with prefix app.kubernetes.io/ and also trim the prefix, then you can specify the following extraction rules: extract: labels: - tag_name: $$1 key_regex: kubernetes.io/(.*) this will add the `component` and `version` tags to the spans or metrics. When key_regex is present without tag_name, the default tag name format will be used for each matched key. For example: extract: labels: - key_regex: environment\\.(.*) from: pod If labels like \"environment.prod\" and \"environment.dev\" exist, they will be extracted as k8s.pod.labels.environment.prod and k8s.pod.labels.environment.dev respectively.",
+                  "type": "string"
+                }
+              }
+            },
+            "field_filter_config": {
+              "description": "FieldFilterConfig allows specifying exactly one filter by a field. It can be used to represent a label or generic field filter.",
+              "type": "object",
+              "properties": {
+                "key": {
+                  "description": "Key represents the key or name of the field or labels that a filter can apply on.",
+                  "type": "string"
+                },
+                "op": {
+                  "description": "Op represents the filter operation to apply on the given Key: Value pair. The following operations are supported equals, not-equals, exists, does-not-exist.",
+                  "type": "string"
+                },
+                "value": {
+                  "description": "Value represents the value associated with the key that a filter operation specified by the `Op` field applies on.",
+                  "type": "string"
+                }
+              }
+            },
+            "filter_config": {
+              "description": "FilterConfig section allows specifying filters to filter pods by labels, fields, namespaces, nodes, etc.",
+              "type": "object",
+              "properties": {
+                "fields": {
+                  "description": "Fields allows to filter pods by generic k8s fields. Only the following operations are supported: - equals - not-equals Check FieldFilterConfig for more details.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_filter_config"
+                  }
+                },
+                "labels": {
+                  "description": "Labels allows to filter pods by generic k8s pod labels. Only the following operations are supported: - equals - not-equals - exists - not-exists Check FieldFilterConfig for more details.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_filter_config"
+                  }
+                },
+                "namespace": {
+                  "description": "Namespace filters all pods by the provided namespace. All other pods are ignored.",
+                  "type": "string"
+                },
+                "node": {
+                  "description": "Node represents a k8s node or host. If specified, any pods not running on the specified node will be ignored by the tagger.",
+                  "type": "string"
+                },
+                "node_from_env_var": {
+                  "description": "NodeFromEnv can be used to extract the node name from an environment variable. The value must be the name of the environment variable. This is useful when the node a Otel agent will run on cannot be predicted. In such cases, the Kubernetes downward API can be used to add the node name to each pod as an environment variable. K8s tagger can then read this value and filter pods by it. For example, node name can be passed to each agent with the downward API as follows env: - name: K8S_NODE_NAME valueFrom: fieldRef: fieldPath: spec.nodeName Then the NodeFromEnv field can be set to `K8S_NODE_NAME` to filter all pods by the node that the agent is running on. More on downward API here: https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/",
+                  "type": "string"
+                }
+              }
+            },
+            "pod_association_config": {
+              "description": "PodAssociationConfig contain single rule how to associate Pod metadata with logs, spans and metrics",
+              "type": "object",
+              "properties": {
+                "sources": {
+                  "description": "List of pod association sources which should be taken to identify pod",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__pod_association_source_config"
+                  }
+                }
+              }
+            },
+            "pod_association_source_config": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "description": "From represents the source of the association. Allowed values are \"connection\" and \"resource_attribute\".",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "Name represents extracted key name. e.g. ip, pod_uid, k8s.pod.ip",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "exclude": {
+              "description": "Exclude section allows to define names of pod that should be ignored while tagging.",
+              "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__exclude_config"
+            },
+            "extract": {
+              "description": "Extract section allows specifying extraction rules to extract data from k8s pod specs",
+              "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__extract_config"
+            },
+            "filter": {
+              "description": "Filter section allows specifying filters to filter pods by labels, fields, namespaces, nodes, etc.",
+              "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__filter_config"
+            },
+            "passthrough": {
+              "description": "Passthrough mode only annotates resources with the pod IP and does not try to extract any other metadata. It does not need access to the K8S cluster API. Agent/Collector must receive spans directly from services to be able to correctly detect the pod IPs.",
+              "type": "boolean"
+            },
+            "pod_association": {
+              "description": "Association section allows to define rules for tagging spans, metrics, and logs with Pod metadata.",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__pod_association_config"
+              }
+            },
+            "wait_for_metadata": {
+              "description": "WaitForMetadata is a flag that determines if the processor should wait k8s metadata to be synced when starting.",
+              "type": "boolean"
+            },
+            "wait_for_metadata_timeout": {
+              "description": "WaitForMetadataTimeout is the maximum time the processor will wait for the k8s metadata to be synced.",
+              "type": "string",
+              "format": "duration"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/contrib__internal_k8sconfig__api_config"
+            }
+          ]
+        },
+        "^k8sattributes(/.+)?$": {
+          "description": "Config defines configuration for k8s attributes processor.",
+          "$defs": {
+            "exclude_config": {
+              "description": "ExcludeConfig represent a list of Pods to exclude",
+              "type": "object",
+              "properties": {
+                "pods": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__exclude_pod_config"
+                  }
+                }
+              }
+            },
+            "exclude_pod_config": {
+              "description": "ExcludePodConfig represent a Pod name to ignore",
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              }
+            },
+            "extract_config": {
+              "description": "ExtractConfig section allows specifying extraction rules to extract data from k8s pod specs.",
+              "type": "object",
+              "properties": {
+                "annotations": {
+                  "description": "Annotations allows extracting data from pod annotations and record it as resource attributes. It is a list of FieldExtractConfig type. See FieldExtractConfig documentation for more details.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_extract_config"
+                  }
+                },
+                "deployment_name_from_replicaset": {
+                  "description": "DeploymentNameFromReplicaSet allows extracting deployment name from replicaset name by trimming pod template hash. This will disable watching for replicaset resources.",
+                  "type": "boolean"
+                },
+                "labels": {
+                  "description": "Labels allows extracting data from pod labels and record it as resource attributes. It is a list of FieldExtractConfig type. See FieldExtractConfig documentation for more details.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_extract_config"
+                  }
+                },
+                "metadata": {
+                  "description": "Metadata allows to extract pod/namespace/node metadata from a list of metadata fields. The field accepts a list of strings. Metadata fields supported right now are, k8s.pod.name, k8s.pod.uid, k8s.deployment.name, k8s.node.name, k8s.namespace.name, k8s.pod.start_time, k8s.replicaset.name, k8s.replicaset.uid, k8s.daemonset.name, k8s.daemonset.uid, k8s.job.name, k8s.job.uid, k8s.cronjob.name, k8s.cronjob.uid, k8s.statefulset.name, k8s.statefulset.uid, k8s.container.name, container.id, container.image.name, container.image.tag, container.image.repo_digests k8s.cluster.uid Specifying anything other than these values will result in an error. By default, the following fields are extracted and added to spans, metrics and logs as resource attributes: - k8s.pod.name - k8s.pod.uid - k8s.pod.start_time - k8s.namespace.name - k8s.node.name - k8s.deployment.name (if the pod is controlled by a deployment) - k8s.container.name (requires an additional attribute to be set: container.id) - container.image.name (requires one of the following additional attributes to be set: container.id or k8s.container.name) - container.image.tag (requires one of the following additional attributes to be set: container.id or k8s.container.name)",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "otel_annotations": {
+                  "description": "OtelAnnotations extracts all pod annotations with the prefix \"resource.opentelemetry.io\" as resource attributes E.g. \"resource.opentelemetry.io/foo\" becomes \"foo\"",
+                  "type": "boolean"
+                }
+              }
+            },
+            "field_extract_config": {
+              "description": "FieldExtractConfig allows specifying an extraction rule to extract a resource attribute from pod (or namespace) annotations (or labels).",
+              "type": "object",
+              "properties": {
+                "from": {
+                  "description": "From represents the source of the labels/annotations. Allowed values are \"pod\", \"namespace\", and \"node\". The default is pod.",
+                  "type": "string"
+                },
+                "key": {
+                  "description": "Key represents the annotation (or label) name. This must exactly match an annotation (or label) name.",
+                  "type": "string"
+                },
+                "key_regex": {
+                  "description": "KeyRegex is a regular expression used to extract a Key that matches the regex. Out of Key or KeyRegex, only one option is expected to be configured at a time.",
+                  "type": "string"
+                },
+                "tag_name": {
+                  "description": "TagName represents the name of the resource attribute that will be added to logs, metrics or spans. When not specified, a default tag name will be used of the format: - k8s.pod.annotations.<annotation key>  (or k8s.pod.annotation.<annotation key> when processor.k8sattributes.EmitV1K8sConventions is enabled) - k8s.pod.labels.<label key>  (or k8s.pod.label.<label key> when processor.k8sattributes.EmitV1K8sConventions is enabled) For example, if tag_name is not specified and the key is git_sha, then the attribute name will be `k8s.pod.annotations.git_sha` (or `k8s.pod.annotation.git_sha` with the feature gate). When key_regex is present, tag_name supports back reference to both named capturing and positioned capturing. For example, if your pod spec contains the following labels, app.kubernetes.io/component: mysql app.kubernetes.io/version: 5.7.21 and you'd like to add tags for all labels with prefix app.kubernetes.io/ and also trim the prefix, then you can specify the following extraction rules: extract: labels: - tag_name: $$1 key_regex: kubernetes.io/(.*) this will add the `component` and `version` tags to the spans or metrics. When key_regex is present without tag_name, the default tag name format will be used for each matched key. For example: extract: labels: - key_regex: environment\\.(.*) from: pod If labels like \"environment.prod\" and \"environment.dev\" exist, they will be extracted as k8s.pod.labels.environment.prod and k8s.pod.labels.environment.dev respectively.",
+                  "type": "string"
+                }
+              }
+            },
+            "field_filter_config": {
+              "description": "FieldFilterConfig allows specifying exactly one filter by a field. It can be used to represent a label or generic field filter.",
+              "type": "object",
+              "properties": {
+                "key": {
+                  "description": "Key represents the key or name of the field or labels that a filter can apply on.",
+                  "type": "string"
+                },
+                "op": {
+                  "description": "Op represents the filter operation to apply on the given Key: Value pair. The following operations are supported equals, not-equals, exists, does-not-exist.",
+                  "type": "string"
+                },
+                "value": {
+                  "description": "Value represents the value associated with the key that a filter operation specified by the `Op` field applies on.",
+                  "type": "string"
+                }
+              }
+            },
+            "filter_config": {
+              "description": "FilterConfig section allows specifying filters to filter pods by labels, fields, namespaces, nodes, etc.",
+              "type": "object",
+              "properties": {
+                "fields": {
+                  "description": "Fields allows to filter pods by generic k8s fields. Only the following operations are supported: - equals - not-equals Check FieldFilterConfig for more details.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_filter_config"
+                  }
+                },
+                "labels": {
+                  "description": "Labels allows to filter pods by generic k8s pod labels. Only the following operations are supported: - equals - not-equals - exists - not-exists Check FieldFilterConfig for more details.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_filter_config"
+                  }
+                },
+                "namespace": {
+                  "description": "Namespace filters all pods by the provided namespace. All other pods are ignored.",
+                  "type": "string"
+                },
+                "node": {
+                  "description": "Node represents a k8s node or host. If specified, any pods not running on the specified node will be ignored by the tagger.",
+                  "type": "string"
+                },
+                "node_from_env_var": {
+                  "description": "NodeFromEnv can be used to extract the node name from an environment variable. The value must be the name of the environment variable. This is useful when the node a Otel agent will run on cannot be predicted. In such cases, the Kubernetes downward API can be used to add the node name to each pod as an environment variable. K8s tagger can then read this value and filter pods by it. For example, node name can be passed to each agent with the downward API as follows env: - name: K8S_NODE_NAME valueFrom: fieldRef: fieldPath: spec.nodeName Then the NodeFromEnv field can be set to `K8S_NODE_NAME` to filter all pods by the node that the agent is running on. More on downward API here: https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/",
+                  "type": "string"
+                }
+              }
+            },
+            "pod_association_config": {
+              "description": "PodAssociationConfig contain single rule how to associate Pod metadata with logs, spans and metrics",
+              "type": "object",
+              "properties": {
+                "sources": {
+                  "description": "List of pod association sources which should be taken to identify pod",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__pod_association_source_config"
+                  }
+                }
+              }
+            },
+            "pod_association_source_config": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "description": "From represents the source of the association. Allowed values are \"connection\" and \"resource_attribute\".",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "Name represents extracted key name. e.g. ip, pod_uid, k8s.pod.ip",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "exclude": {
+              "description": "Exclude section allows to define names of pod that should be ignored while tagging.",
+              "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__exclude_config"
+            },
+            "extract": {
+              "description": "Extract section allows specifying extraction rules to extract data from k8s pod specs",
+              "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__extract_config"
+            },
+            "filter": {
+              "description": "Filter section allows specifying filters to filter pods by labels, fields, namespaces, nodes, etc.",
+              "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__filter_config"
+            },
+            "passthrough": {
+              "description": "Passthrough mode only annotates resources with the pod IP and does not try to extract any other metadata. It does not need access to the K8S cluster API. Agent/Collector must receive spans directly from services to be able to correctly detect the pod IPs.",
+              "type": "boolean"
+            },
+            "pod_association": {
+              "description": "Association section allows to define rules for tagging spans, metrics, and logs with Pod metadata.",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__pod_association_config"
+              }
+            },
+            "wait_for_metadata": {
+              "description": "WaitForMetadata is a flag that determines if the processor should wait k8s metadata to be synced when starting.",
+              "type": "boolean"
+            },
+            "wait_for_metadata_timeout": {
+              "description": "WaitForMetadataTimeout is the maximum time the processor will wait for the k8s metadata to be synced.",
+              "type": "string",
+              "format": "duration"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/contrib__internal_k8sconfig__api_config"
+            }
+          ]
+        },
+        "^resourcedetection(/.+)?$": {
+          "description": "Config defines configuration for Resource processor.",
+          "$defs": {
+            "detector_config": {
+              "description": "DetectorConfig contains user-specified configurations unique to all individual detectors",
+              "type": "object",
+              "properties": {
+                "akamai": {
+                  "description": "AkamaiConfig contains user-specified configurations for the akamai detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_akamai__config"
+                },
+                "aks": {
+                  "description": "Aks contains user-specified configurations for the aks detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_azure_aks__config"
+                },
+                "alibaba_ecs": {
+                  "description": "AlibabaECSConfig contains user-specified configurations for the Alibaba Cloud ECS detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_alibaba_ecs__config"
+                },
+                "azure": {
+                  "description": "Azure contains user-specified configurations for the azure detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_azure__config"
+                },
+                "consul": {
+                  "description": "ConsulConfig contains user-specified configurations for the Consul detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_consul__config"
+                },
+                "digitalocean": {
+                  "description": "DigitalOceanConfig contains user-specified configurations for the digitalocean detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_digitalocean__config"
+                },
+                "docker": {
+                  "description": "DockerConfig contains user-specified configurations for the docker detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_docker__config"
+                },
+                "ec2": {
+                  "description": "EC2Config contains user-specified configurations for the EC2 detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_aws_ec2__config"
+                },
+                "ecs": {
+                  "description": "ECSConfig contains user-specified configurations for the ECS detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_aws_ecs__config"
+                },
+                "eks": {
+                  "description": "EKSConfig contains user-specified configurations for the EKS detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_aws_eks__config"
+                },
+                "elasticbeanstalk": {
+                  "description": "Elasticbeanstalk contains user-specified configurations for the elasticbeanstalk detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_aws_elasticbeanstalk__config"
+                },
+                "gcp": {
+                  "description": "GcpConfig contains user-specified configurations for the gcp detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_gcp__config"
+                },
+                "heroku": {
+                  "description": "HerokuConfig contains user-specified configurations for the heroku detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_heroku__config"
+                },
+                "hetzner": {
+                  "description": "HetznerConfig contains user-specified configurations for the hetzner detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_hetzner__config"
+                },
+                "ibmcloud_classic": {
+                  "description": "IBMCloudClassicConfig contains user-specified configurations for the IBM Cloud Classic detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_ibmcloud_classic__config"
+                },
+                "ibmcloud_vpc": {
+                  "description": "IBMCloudVPCConfig contains user-specified configurations for the IBM Cloud VPC detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_ibmcloud_vpc__config"
+                },
+                "k8snode": {
+                  "description": "K8SNode contains user-specified configurations for the K8SNode detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_k8snode__config"
+                },
+                "kubeadm": {
+                  "description": "Kubeadm contains user-specified configurations for the Kubeadm detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_kubeadm__config"
+                },
+                "lambda": {
+                  "description": "Lambda contains user-specified configurations for the lambda detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_aws_lambda__config"
+                },
+                "nova": {
+                  "description": "OpenStackNovaConfig contains user-specified configurations for the OpenStackNova detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_openstack_nova__config"
+                },
+                "openshift": {
+                  "description": "OpenShift contains user-specified configurations for the OpenShift detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_openshift__config"
+                },
+                "oraclecloud": {
+                  "description": "OracleCloud contains user-specified configurations for the OracleCloud detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_oraclecloud__config"
+                },
+                "scaleway": {
+                  "description": "ScalewayConfig contains user-specified configurations for the scaleway detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_scaleway__config"
+                },
+                "system": {
+                  "description": "SystemConfig contains user-specified configurations for the System detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_system__config"
+                },
+                "tencent_cvm": {
+                  "description": "TencentCVMConfig contains user-specified configurations for the Tencent Cloud CVM detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_tencent_cvm__config"
+                },
+                "upcloud": {
+                  "description": "UpcloudConfig contains user-specified configurations for the upcloud detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_upcloud__config"
+                },
+                "vultr": {
+                  "description": "VultrConfig contains user-specified configurations for the vultr detector",
+                  "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_vultr__config"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "detectors": {
+              "description": "Detectors is an ordered list of named detectors that should be run to attempt to detect resource information.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "override": {
+              "description": "Override indicates whether any existing resource attributes should be overridden or preserved. Defaults to true.",
+              "type": "boolean"
+            },
+            "refresh_interval": {
+              "description": "If > 0, periodically re-run detection for all configured detectors. When 0 (default), no periodic refresh occurs.",
+              "type": "string",
+              "format": "duration"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor__detector_config"
+            },
+            {
+              "$ref": "#/$defs/core__config_confighttp__client_config"
+            }
+          ]
+        },
+        "^resource(/.+)?$": {
+          "description": "Config defines configuration for Resource processor.",
+          "type": "object",
+          "properties": {
+            "attributes": {
+              "description": "AttributesActions specifies the list of actions to be applied on resource attributes. The set of actions are {INSERT, UPDATE, UPSERT, DELETE, HASH, EXTRACT}.",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__internal_coreinternal_attraction__action_key_value"
+              }
+            }
+          }
+        },
+        "^transform(/.+)?$": {
+          "description": "Config defines the configuration for the processor.",
+          "type": "object",
+          "properties": {
+            "error_mode": {
+              "description": "ErrorMode determines how the processor reacts to errors that occur while processing a statement. Valid values are `ignore` and `propagate`. `ignore` means the processor ignores errors returned by statements and continues on to the next statement. This is the recommended mode. `propagate` means the processor returns the error up the pipeline.  This will result in the payload being dropped from the collector. The current default value is `propagate`, which will change to `ignore` when the `processor.transform.defaultErrorModeIgnore` feature gate is stable.",
+              "$ref": "#/$defs/contrib__pkg_ottl__error_mode"
+            },
+            "flatten_data": {
+              "type": "boolean"
+            },
+            "log_statements": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__processor_transformprocessor_internal_common__context_statements"
+              }
+            },
+            "metric_statements": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__processor_transformprocessor_internal_common__context_statements"
+              }
+            },
+            "profile_statements": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__processor_transformprocessor_internal_common__context_statements"
+              }
+            },
+            "trace_statements": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/contrib__processor_transformprocessor_internal_common__context_statements"
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "exporters": {
+      "type": "object",
+      "patternProperties": {
+        "^debug(/.+)?$": {
+          "description": "Config defines configuration for the debug exporter — writes telemetry to the collector's own log. Replaces the deprecated logging exporter.",
+          "type": "object",
+          "properties": {
+            "verbosity": {
+              "description": "How verbose the output is. `basic` prints counts only, `normal` prints summary lines, `detailed` prints every record.",
+              "type": "string",
+              "enum": [
+                "basic",
+                "normal",
+                "detailed"
+              ],
+              "default": "basic"
+            },
+            "sampling_initial": {
+              "description": "Number of records logged at the start of each second before sampling kicks in. Default 2.",
+              "type": "integer",
+              "minimum": 0,
+              "default": 2
+            },
+            "sampling_thereafter": {
+              "description": "After `sampling_initial`, log 1 of every N records. Default 1 (log everything).",
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "use_internal_logger": {
+              "description": "If true, route output through the collector's own zap logger (default). If false, write directly to stdout.",
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "^nop(/.+)?$": {
+          "description": "Discards data; useful for performance testing.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "^otlp(/.+)?$": {
+          "description": "Config defines configuration for the OTLP gRPC exporter.",
+          "$defs": {
+            "tls_client": {
+              "description": "TLS client config. Fields are shared with go.opentelemetry.io/collector/config/configtls.ClientConfig.",
+              "type": "object",
+              "properties": {
+                "insecure": {
+                  "description": "Disable TLS entirely. The connection is sent in plaintext. Default false. Mutually exclusive with the cert/ca settings.",
+                  "type": "boolean",
+                  "default": false
+                },
+                "insecure_skip_verify": {
+                  "description": "Skip certificate verification. The TLS connection is still encrypted but vulnerable to MITM. Default false. Set true only in dev.",
+                  "type": "boolean",
+                  "default": false
+                },
+                "server_name_override": {
+                  "description": "Override the server name used in TLS handshake. Useful when connecting via IP or when the cert CN doesn't match the endpoint host.",
+                  "type": "string"
+                },
+                "ca_file": {
+                  "description": "Path to the CA bundle used to verify the server certificate. If unset, system roots are used.",
+                  "type": "string"
+                },
+                "ca_pem": {
+                  "description": "PEM-encoded CA bundle inlined directly. Alternative to `ca_file`.",
+                  "type": "string"
+                },
+                "cert_file": {
+                  "description": "Path to the client certificate (for mTLS).",
+                  "type": "string"
+                },
+                "cert_pem": {
+                  "description": "PEM-encoded client certificate inlined directly.",
+                  "type": "string"
+                },
+                "key_file": {
+                  "description": "Path to the client private key (for mTLS).",
+                  "type": "string"
+                },
+                "key_pem": {
+                  "description": "PEM-encoded client private key inlined directly.",
+                  "type": "string"
+                },
+                "min_version": {
+                  "description": "Minimum accepted TLS version. e.g. \"1.2\", \"1.3\". Default \"1.2\".",
+                  "type": "string"
+                },
+                "max_version": {
+                  "description": "Maximum accepted TLS version.",
+                  "type": "string"
+                },
+                "reload_interval": {
+                  "description": "How often to reload cert files from disk. 0 disables reloading.",
+                  "type": "string",
+                  "format": "duration"
+                },
+                "include_system_ca_certs_pool": {
+                  "description": "When using `ca_file`/`ca_pem`, also include the system roots. Default false.",
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "required": [
+            "endpoint"
+          ],
+          "properties": {
+            "endpoint": {
+              "description": "gRPC endpoint of the OTLP backend (host:port, with optional scheme).",
+              "type": "string"
+            },
+            "tls": {
+              "$ref": "#/$defs/tls_client"
+            },
+            "compression": {
+              "description": "Compression to apply. Defaults to gzip.",
+              "type": "string",
+              "enum": [
+                "",
+                "none",
+                "gzip",
+                "snappy",
+                "zstd",
+                "deflate",
+                "lz4"
+              ]
+            },
+            "headers": {
+              "description": "Static gRPC metadata sent on every request.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "description": "Per-request timeout. Default 5s.",
+              "type": "string",
+              "format": "duration"
+            },
+            "keepalive": {
+              "type": "object"
+            },
+            "balancer_name": {
+              "description": "gRPC load-balancing policy. e.g. \"round_robin\", \"pick_first\".",
+              "type": "string"
+            },
+            "sending_queue": {
+              "description": "Standard exporterhelper send-queue config.",
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "num_consumers": {
+                  "type": "integer"
+                },
+                "queue_size": {
+                  "type": "integer"
+                },
+                "storage": {
+                  "type": "string",
+                  "description": "ID of a storage extension to persist the queue."
+                }
+              }
+            },
+            "retry_on_failure": {
+              "description": "Standard exporterhelper retry config.",
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "initial_interval": {
+                  "type": "string",
+                  "format": "duration"
+                },
+                "randomization_factor": {
+                  "type": "number"
+                },
+                "multiplier": {
+                  "type": "number"
+                },
+                "max_interval": {
+                  "type": "string",
+                  "format": "duration"
+                },
+                "max_elapsed_time": {
+                  "type": "string",
+                  "format": "duration"
+                }
+              }
+            },
+            "auth": {
+              "description": "Authenticator extension config.",
+              "type": "object"
+            }
+          }
+        },
+        "^otlphttp(/.+)?$": {
+          "description": "Config defines configuration for the OTLP HTTP exporter.",
+          "type": "object",
+          "properties": {
+            "endpoint": {
+              "description": "Base URL of the OTLP HTTP backend. If set, default per-signal paths are appended.",
+              "type": "string"
+            },
+            "traces_endpoint": {
+              "description": "Override the full URL for traces (no path is appended).",
+              "type": "string"
+            },
+            "metrics_endpoint": {
+              "description": "Override the full URL for metrics.",
+              "type": "string"
+            },
+            "logs_endpoint": {
+              "description": "Override the full URL for logs.",
+              "type": "string"
+            },
+            "tls": {
+              "type": "object"
+            },
+            "compression": {
+              "type": "string",
+              "enum": [
+                "",
+                "none",
+                "gzip",
+                "snappy",
+                "zstd",
+                "deflate",
+                "lz4"
+              ]
+            },
+            "encoding": {
+              "description": "Wire format. Default `proto`.",
+              "type": "string",
+              "enum": [
+                "proto",
+                "json"
+              ]
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "timeout": {
+              "type": "string",
+              "format": "duration"
+            },
+            "sending_queue": {
+              "type": "object"
+            },
+            "retry_on_failure": {
+              "type": "object"
+            },
+            "auth": {
+              "type": "object"
+            }
+          }
+        },
+        "^file(/.+)?$": {
+          "description": "Config defines configuration for file exporter.",
+          "$defs": {
+            "group_by": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "description": "Enables group_by. Default is false.",
+                  "type": "boolean"
+                },
+                "max_open_files": {
+                  "description": "MaxOpenFiles specifies the maximum number of open file descriptors for the output files. The default is 100.",
+                  "type": "integer"
+                },
+                "resource_attribute": {
+                  "description": "ResourceAttribute specifies the name of the resource attribute that contains the path segment of the file to write to. The final path will be the Path config value, with the * replaced with the value of this resource attribute. Default is \"fileexporter.path_segment\".",
+                  "type": "string"
+                }
+              }
+            },
+            "rotation": {
+              "description": "Rotation an option to rolling log files",
+              "type": "object",
+              "properties": {
+                "localtime": {
+                  "description": "LocalTime determines if the time used for formatting the timestamps in backup files is the computer's local time.  The default is to use UTC time.",
+                  "type": "boolean"
+                },
+                "max_backups": {
+                  "description": "MaxBackups is the maximum number of old log files to retain. The default is to 100 files.",
+                  "type": "integer"
+                },
+                "max_days": {
+                  "description": "MaxDays is the maximum number of days to retain old log files based on the timestamp encoded in their filename.  Note that a day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc. The default is not to remove old log files based on age.",
+                  "type": "integer"
+                },
+                "max_megabytes": {
+                  "description": "MaxMegabytes is the maximum size in megabytes of the file before it gets rotated. It defaults to 100 megabytes.",
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "append": {
+              "description": "Mode defines whether the exporter should append to the file. Options: - false[default]:  truncates the file - true:  appends to the file.",
+              "type": "boolean"
+            },
+            "compression": {
+              "description": "Compression Codec used to export telemetry data Supported compression algorithms:`zstd`",
+              "type": "string"
+            },
+            "create_directory": {
+              "description": "CreateDirectory specifies that the parent directory of the output file should be created automatically on start.",
+              "type": "boolean"
+            },
+            "directory_permissions": {
+              "description": "DirectoryPermissions specifies permissions used when creating directories (minus process umask). Value must be an octal string like \"0755\".",
+              "type": "string"
+            },
+            "encoding": {
+              "description": "Encoding defines the encoding of the telemetry data. If specified, it overrides `FormatType` and applies an encoding extension.",
+              "x-pointer": true,
+              "type": "string",
+              "x-customType": "go.opentelemetry.io/collector/component.ID"
+            },
+            "flush_interval": {
+              "description": "FlushInterval is the duration between flushes. See time.ParseDuration for valid values.",
+              "type": "string",
+              "format": "duration"
+            },
+            "format": {
+              "description": "FormatType define the data format of encoded telemetry data Options: - json[default]:  OTLP json bytes. - proto:  OTLP binary protobuf bytes.",
+              "type": "string"
+            },
+            "group_by": {
+              "description": "GroupBy enables writing to separate files based on a resource attribute.",
+              "x-pointer": true,
+              "$ref": "#/$defs/contrib__exporter_fileexporter__group_by"
+            },
+            "path": {
+              "description": "Path of the file to write to. Path is relative to current directory.",
+              "type": "string"
+            },
+            "rotation": {
+              "description": "Rotation defines an option about rotation of telemetry files.",
+              "x-pointer": true,
+              "$ref": "#/$defs/contrib__exporter_fileexporter__rotation"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "connectors": {
+      "type": "object",
+      "patternProperties": {},
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "patternProperties": {
+        "^opamp(/.+)?$": {
+          "description": "Config contains the configuration for the opamp extension. Trying to mirror the OpAMP supervisor config for some consistency.",
+          "$defs": {
+            "agent_description": {
+              "type": "object",
+              "properties": {
+                "include_resource_attributes": {
+                  "description": "IncludeResourceAttributes determines whether the agent should copy its resource attributes to the non identifying attributes. (default: false)",
+                  "type": "boolean"
+                },
+                "non_identifying_attributes": {
+                  "description": "NonIdentifyingAttributes are a map of key-value pairs that may be specified to provide extra information about the agent to the OpAMP server.",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "capabilities": {
+              "type": "object",
+              "properties": {
+                "accepts_restart_command": {
+                  "description": "AcceptsRestartCommand enables the OpAMP AcceptsRestartCommand Capability (default: false)",
+                  "type": "boolean"
+                },
+                "reports_available_components": {
+                  "description": "ReportsAvailableComponents enables the OpAMP ReportsAvailableComponents Capability (default: true)",
+                  "type": "boolean"
+                },
+                "reports_effective_config": {
+                  "description": "ReportsEffectiveConfig enables the OpAMP ReportsEffectiveConfig Capability. (default: true)",
+                  "type": "boolean"
+                },
+                "reports_health": {
+                  "description": "ReportsHealth enables the OpAMP ReportsHealth Capability. (default: true)",
+                  "type": "boolean"
+                }
+              }
+            },
+            "op_amp_server": {
+              "description": "OpAMPServer contains the OpAMP transport configuration.",
+              "type": "object",
+              "properties": {
+                "http": {
+                  "x-pointer": true,
+                  "type": "object",
+                  "properties": {
+                    "auth": {
+                      "type": "string",
+                      "x-customType": "go.opentelemetry.io/collector/component.ID"
+                    },
+                    "endpoint": {
+                      "type": "string"
+                    },
+                    "headers": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "$ref": "#/$defs/core__config_configopaque__string"
+                      }
+                    },
+                    "polling_interval": {
+                      "type": "string",
+                      "format": "duration"
+                    },
+                    "tls": {
+                      "$ref": "#/$defs/core__config_configtls__client_config"
+                    }
+                  }
+                },
+                "ws": {
+                  "x-pointer": true,
+                  "type": "object",
+                  "properties": {
+                    "auth": {
+                      "type": "string",
+                      "x-customType": "go.opentelemetry.io/collector/component.ID"
+                    },
+                    "endpoint": {
+                      "type": "string"
+                    },
+                    "headers": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "$ref": "#/$defs/core__config_configopaque__string"
+                      }
+                    },
+                    "tls": {
+                      "$ref": "#/$defs/core__config_configtls__client_config"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "type": "object",
+          "properties": {
+            "agent_description": {
+              "description": "Agent descriptions contains options to modify the AgentDescription message",
+              "$ref": "#/$defs/contrib__extension_opampextension__agent_description"
+            },
+            "capabilities": {
+              "description": "Capabilities contains options to enable a particular OpAMP capability",
+              "$ref": "#/$defs/contrib__extension_opampextension__capabilities"
+            },
+            "instance_uid": {
+              "description": "InstanceUID is a UUID formatted as a 36 character string in canonical representation. Auto-generated on start if missing.",
+              "type": "string"
+            },
+            "ppid": {
+              "description": "PPID is the process ID of the parent for the collector. If the PPID is specified, the extension will continuously poll for the status of the parent process, and emit a fatal error when the parent process is no longer running. If unspecified, the orphan detection logic does not run.",
+              "type": "integer",
+              "x-customType": "int32"
+            },
+            "ppid_poll_interval": {
+              "description": "PPIDPollInterval is the time between polling for whether PPID is running.",
+              "type": "string",
+              "format": "duration"
+            },
+            "server": {
+              "x-pointer": true,
+              "$ref": "#/$defs/contrib__extension_opampextension__op_amp_server"
+            }
+          }
+        },
+        "^health_check(/.+)?$": {
+          "description": "Config wraps the shared healthcheck.Config to add extension-specific validation.",
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/$defs/contrib__internal_healthcheck__config"
+            }
+          ]
+        },
+        "^pprof(/.+)?$": {
+          "description": "Config has the configuration for the extension enabling the golang net/http/pprof (Performance Profiler) extension.",
+          "type": "object",
+          "properties": {
+            "block_profile_fraction": {
+              "description": "Fraction of blocking events that are profiled. A value <= 0 disables profiling. See https://golang.org/pkg/runtime/#SetBlockProfileRate for details.",
+              "type": "integer"
+            },
+            "mutex_profile_fraction": {
+              "description": "Fraction of mutex contention events that are profiled. A value <= 0 disables profiling. See https://golang.org/pkg/runtime/#SetMutexProfileFraction for details.",
+              "type": "integer"
+            },
+            "save_to_file": {
+              "description": "Optional file name to save the CPU profile to. The profiling starts when the Collector starts and is saved to the file when the Collector is terminated.",
+              "type": "string"
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/$defs/core__config_confignet__tcp_addr_config"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "service": {
+      "$ref": "_shared/service.json#/definitions/service"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "contrib__processor_k8sattributesprocessor__exclude_pod_config": {
+      "description": "ExcludePodConfig represent a Pod name to ignore",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "contrib__processor_k8sattributesprocessor__field_extract_config": {
+      "description": "FieldExtractConfig allows specifying an extraction rule to extract a resource attribute from pod (or namespace) annotations (or labels).",
+      "type": "object",
+      "properties": {
+        "from": {
+          "description": "From represents the source of the labels/annotations. Allowed values are \"pod\", \"namespace\", and \"node\". The default is pod.",
+          "type": "string"
+        },
+        "key": {
+          "description": "Key represents the annotation (or label) name. This must exactly match an annotation (or label) name.",
+          "type": "string"
+        },
+        "key_regex": {
+          "description": "KeyRegex is a regular expression used to extract a Key that matches the regex. Out of Key or KeyRegex, only one option is expected to be configured at a time.",
+          "type": "string"
+        },
+        "tag_name": {
+          "description": "TagName represents the name of the resource attribute that will be added to logs, metrics or spans. When not specified, a default tag name will be used of the format: - k8s.pod.annotations.<annotation key>  (or k8s.pod.annotation.<annotation key> when processor.k8sattributes.EmitV1K8sConventions is enabled) - k8s.pod.labels.<label key>  (or k8s.pod.label.<label key> when processor.k8sattributes.EmitV1K8sConventions is enabled) For example, if tag_name is not specified and the key is git_sha, then the attribute name will be `k8s.pod.annotations.git_sha` (or `k8s.pod.annotation.git_sha` with the feature gate). When key_regex is present, tag_name supports back reference to both named capturing and positioned capturing. For example, if your pod spec contains the following labels, app.kubernetes.io/component: mysql app.kubernetes.io/version: 5.7.21 and you'd like to add tags for all labels with prefix app.kubernetes.io/ and also trim the prefix, then you can specify the following extraction rules: extract: labels: - tag_name: $$1 key_regex: kubernetes.io/(.*) this will add the `component` and `version` tags to the spans or metrics. When key_regex is present without tag_name, the default tag name format will be used for each matched key. For example: extract: labels: - key_regex: environment\\.(.*) from: pod If labels like \"environment.prod\" and \"environment.dev\" exist, they will be extracted as k8s.pod.labels.environment.prod and k8s.pod.labels.environment.dev respectively.",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__processor_k8sattributesprocessor__field_filter_config": {
+      "description": "FieldFilterConfig allows specifying exactly one filter by a field. It can be used to represent a label or generic field filter.",
+      "type": "object",
+      "properties": {
+        "key": {
+          "description": "Key represents the key or name of the field or labels that a filter can apply on.",
+          "type": "string"
+        },
+        "op": {
+          "description": "Op represents the filter operation to apply on the given Key: Value pair. The following operations are supported equals, not-equals, exists, does-not-exist.",
+          "type": "string"
+        },
+        "value": {
+          "description": "Value represents the value associated with the key that a filter operation specified by the `Op` field applies on.",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__processor_k8sattributesprocessor__pod_association_source_config": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "description": "From represents the source of the association. Allowed values are \"connection\" and \"resource_attribute\".",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name represents extracted key name. e.g. ip, pod_uid, k8s.pod.ip",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__processor_k8sattributesprocessor__exclude_config": {
+      "description": "ExcludeConfig represent a list of Pods to exclude",
+      "type": "object",
+      "properties": {
+        "pods": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__exclude_pod_config"
+          }
+        }
+      }
+    },
+    "contrib__processor_k8sattributesprocessor__extract_config": {
+      "description": "ExtractConfig section allows specifying extraction rules to extract data from k8s pod specs.",
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "description": "Annotations allows extracting data from pod annotations and record it as resource attributes. It is a list of FieldExtractConfig type. See FieldExtractConfig documentation for more details.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_extract_config"
+          }
+        },
+        "deployment_name_from_replicaset": {
+          "description": "DeploymentNameFromReplicaSet allows extracting deployment name from replicaset name by trimming pod template hash. This will disable watching for replicaset resources.",
+          "type": "boolean"
+        },
+        "labels": {
+          "description": "Labels allows extracting data from pod labels and record it as resource attributes. It is a list of FieldExtractConfig type. See FieldExtractConfig documentation for more details.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_extract_config"
+          }
+        },
+        "metadata": {
+          "description": "Metadata allows to extract pod/namespace/node metadata from a list of metadata fields. The field accepts a list of strings. Metadata fields supported right now are, k8s.pod.name, k8s.pod.uid, k8s.deployment.name, k8s.node.name, k8s.namespace.name, k8s.pod.start_time, k8s.replicaset.name, k8s.replicaset.uid, k8s.daemonset.name, k8s.daemonset.uid, k8s.job.name, k8s.job.uid, k8s.cronjob.name, k8s.cronjob.uid, k8s.statefulset.name, k8s.statefulset.uid, k8s.container.name, container.id, container.image.name, container.image.tag, container.image.repo_digests k8s.cluster.uid Specifying anything other than these values will result in an error. By default, the following fields are extracted and added to spans, metrics and logs as resource attributes: - k8s.pod.name - k8s.pod.uid - k8s.pod.start_time - k8s.namespace.name - k8s.node.name - k8s.deployment.name (if the pod is controlled by a deployment) - k8s.container.name (requires an additional attribute to be set: container.id) - container.image.name (requires one of the following additional attributes to be set: container.id or k8s.container.name) - container.image.tag (requires one of the following additional attributes to be set: container.id or k8s.container.name)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "otel_annotations": {
+          "description": "OtelAnnotations extracts all pod annotations with the prefix \"resource.opentelemetry.io\" as resource attributes E.g. \"resource.opentelemetry.io/foo\" becomes \"foo\"",
+          "type": "boolean"
+        }
+      }
+    },
+    "contrib__processor_k8sattributesprocessor__filter_config": {
+      "description": "FilterConfig section allows specifying filters to filter pods by labels, fields, namespaces, nodes, etc.",
+      "type": "object",
+      "properties": {
+        "fields": {
+          "description": "Fields allows to filter pods by generic k8s fields. Only the following operations are supported: - equals - not-equals Check FieldFilterConfig for more details.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_filter_config"
+          }
+        },
+        "labels": {
+          "description": "Labels allows to filter pods by generic k8s pod labels. Only the following operations are supported: - equals - not-equals - exists - not-exists Check FieldFilterConfig for more details.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__field_filter_config"
+          }
+        },
+        "namespace": {
+          "description": "Namespace filters all pods by the provided namespace. All other pods are ignored.",
+          "type": "string"
+        },
+        "node": {
+          "description": "Node represents a k8s node or host. If specified, any pods not running on the specified node will be ignored by the tagger.",
+          "type": "string"
+        },
+        "node_from_env_var": {
+          "description": "NodeFromEnv can be used to extract the node name from an environment variable. The value must be the name of the environment variable. This is useful when the node a Otel agent will run on cannot be predicted. In such cases, the Kubernetes downward API can be used to add the node name to each pod as an environment variable. K8s tagger can then read this value and filter pods by it. For example, node name can be passed to each agent with the downward API as follows env: - name: K8S_NODE_NAME valueFrom: fieldRef: fieldPath: spec.nodeName Then the NodeFromEnv field can be set to `K8S_NODE_NAME` to filter all pods by the node that the agent is running on. More on downward API here: https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__processor_k8sattributesprocessor__pod_association_config": {
+      "description": "PodAssociationConfig contain single rule how to associate Pod metadata with logs, spans and metrics",
+      "type": "object",
+      "properties": {
+        "sources": {
+          "description": "List of pod association sources which should be taken to identify pod",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contrib__processor_k8sattributesprocessor__pod_association_source_config"
+          }
+        }
+      }
+    },
+    "contrib__internal_k8sconfig__api_config": {
+      "description": "APIConfig contains options relevant to connecting to the K8s API",
+      "type": "object",
+      "properties": {
+        "auth_type": {
+          "description": "How to authenticate to the K8s API server.  This can be one of `none` (for no auth), `serviceAccount` (to use the standard service account token provided to the agent pod), or `kubeConfig` to use credentials from `~/.kube/config`.",
+          "$ref": "#/$defs/contrib__internal_k8sconfig__auth_type"
+        },
+        "context": {
+          "description": "When using auth_type `kubeConfig`, override the current context.",
+          "type": "string"
+        },
+        "kube_api_burst": {
+          "description": "KubeAPIBurst is the maximum burst of requests to the Kubernetes API. Uses client-go's default (10) if unset. Increase if you see client-side throttling warnings.",
+          "type": "integer"
+        },
+        "kube_api_qps": {
+          "description": "KubeAPIQPS is the maximum number of queries per second to the Kubernetes API. Uses client-go's default (5) if unset. Increase if you see client-side throttling warnings.",
+          "type": "number",
+          "x-customType": "float32"
+        }
+      }
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_akamai__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_akamai__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_azure_aks__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_azure_aks__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_alibaba_ecs__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_alibaba_ecs__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_azure__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_azure__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_consul__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_consul__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_digitalocean__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_digitalocean__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_docker__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_docker__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_aws_ec2__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_aws_ec2__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_aws_ecs__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_aws_ecs__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_aws_eks__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_aws_eks__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_aws_elasticbeanstalk__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_aws_elasticbeanstalk__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_gcp__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_gcp__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_heroku__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_heroku__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_hetzner__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_hetzner__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_ibmcloud_classic__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_ibmcloud_classic__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_ibmcloud_vpc__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_ibmcloud_vpc__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_k8snode__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_k8snode__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_kubeadm__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_kubeadm__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_aws_lambda__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_aws_lambda__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_openstack_nova__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_openstack_nova__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_openshift__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_openshift__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_oraclecloud__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_oraclecloud__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_scaleway__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_scaleway__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_system__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_system__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_tencent_cvm__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_tencent_cvm__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_upcloud__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_upcloud__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor_internal_vultr__config": {
+      "description": "Unresolved reference: contrib__processor_resourcedetectionprocessor_internal_vultr__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__processor_resourcedetectionprocessor__detector_config": {
+      "description": "DetectorConfig contains user-specified configurations unique to all individual detectors",
+      "type": "object",
+      "properties": {
+        "akamai": {
+          "description": "AkamaiConfig contains user-specified configurations for the akamai detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_akamai__config"
+        },
+        "aks": {
+          "description": "Aks contains user-specified configurations for the aks detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_azure_aks__config"
+        },
+        "alibaba_ecs": {
+          "description": "AlibabaECSConfig contains user-specified configurations for the Alibaba Cloud ECS detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_alibaba_ecs__config"
+        },
+        "azure": {
+          "description": "Azure contains user-specified configurations for the azure detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_azure__config"
+        },
+        "consul": {
+          "description": "ConsulConfig contains user-specified configurations for the Consul detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_consul__config"
+        },
+        "digitalocean": {
+          "description": "DigitalOceanConfig contains user-specified configurations for the digitalocean detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_digitalocean__config"
+        },
+        "docker": {
+          "description": "DockerConfig contains user-specified configurations for the docker detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_docker__config"
+        },
+        "ec2": {
+          "description": "EC2Config contains user-specified configurations for the EC2 detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_aws_ec2__config"
+        },
+        "ecs": {
+          "description": "ECSConfig contains user-specified configurations for the ECS detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_aws_ecs__config"
+        },
+        "eks": {
+          "description": "EKSConfig contains user-specified configurations for the EKS detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_aws_eks__config"
+        },
+        "elasticbeanstalk": {
+          "description": "Elasticbeanstalk contains user-specified configurations for the elasticbeanstalk detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_aws_elasticbeanstalk__config"
+        },
+        "gcp": {
+          "description": "GcpConfig contains user-specified configurations for the gcp detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_gcp__config"
+        },
+        "heroku": {
+          "description": "HerokuConfig contains user-specified configurations for the heroku detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_heroku__config"
+        },
+        "hetzner": {
+          "description": "HetznerConfig contains user-specified configurations for the hetzner detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_hetzner__config"
+        },
+        "ibmcloud_classic": {
+          "description": "IBMCloudClassicConfig contains user-specified configurations for the IBM Cloud Classic detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_ibmcloud_classic__config"
+        },
+        "ibmcloud_vpc": {
+          "description": "IBMCloudVPCConfig contains user-specified configurations for the IBM Cloud VPC detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_ibmcloud_vpc__config"
+        },
+        "k8snode": {
+          "description": "K8SNode contains user-specified configurations for the K8SNode detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_k8snode__config"
+        },
+        "kubeadm": {
+          "description": "Kubeadm contains user-specified configurations for the Kubeadm detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_kubeadm__config"
+        },
+        "lambda": {
+          "description": "Lambda contains user-specified configurations for the lambda detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_aws_lambda__config"
+        },
+        "nova": {
+          "description": "OpenStackNovaConfig contains user-specified configurations for the OpenStackNova detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_openstack_nova__config"
+        },
+        "openshift": {
+          "description": "OpenShift contains user-specified configurations for the OpenShift detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_openshift__config"
+        },
+        "oraclecloud": {
+          "description": "OracleCloud contains user-specified configurations for the OracleCloud detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_oraclecloud__config"
+        },
+        "scaleway": {
+          "description": "ScalewayConfig contains user-specified configurations for the scaleway detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_scaleway__config"
+        },
+        "system": {
+          "description": "SystemConfig contains user-specified configurations for the System detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_system__config"
+        },
+        "tencent_cvm": {
+          "description": "TencentCVMConfig contains user-specified configurations for the Tencent Cloud CVM detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_tencent_cvm__config"
+        },
+        "upcloud": {
+          "description": "UpcloudConfig contains user-specified configurations for the upcloud detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_upcloud__config"
+        },
+        "vultr": {
+          "description": "VultrConfig contains user-specified configurations for the vultr detector",
+          "$ref": "#/$defs/contrib__processor_resourcedetectionprocessor_internal_vultr__config"
+        }
+      }
+    },
+    "core__config_confighttp__client_config": {
+      "description": "ClientConfig defines settings for creating an HTTP client.",
+      "type": "object",
+      "properties": {
+        "auth": {
+          "description": "Auth configuration for outgoing HTTP calls.",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_configauth__config"
+        },
+        "compression": {
+          "description": "The compression key for supported compression types within collector.",
+          "$ref": "#/$defs/core__config_configcompression__type"
+        },
+        "compression_params": {
+          "description": "Advanced configuration options for the Compression",
+          "$ref": "#/$defs/core__config_configcompression__compression_params"
+        },
+        "cookies": {
+          "description": "Cookies configures the cookie management of the HTTP client.",
+          "x-optional": true,
+          "$ref": "#/$defs/core__config_confighttp__cookies_config"
+        },
+        "disable_keep_alives": {
+          "description": "DisableKeepAlives, if true, disables HTTP keep-alives and will only use the connection to the server for a single HTTP request. WARNING: enabling this option can result in significant overhead establishing a new HTTP(S) connection for every request. Before enabling this option please consider whether changes to idle connection settings can achieve your goal.",
+          "type": "boolean"
+        },
+        "endpoint": {
+          "description": "The target URL to send data to (e.g.: http://some.url:9411/v1/traces).",
+          "type": "string"
+        },
+        "force_attempt_http2": {
+          "description": "Enabling ForceAttemptHTTP2 forces the HTTP transport to use the HTTP/2 protocol. By default, this is set to true. NOTE: HTTP/2 does not support settings such as MaxConnsPerHost, MaxIdleConnsPerHost and MaxIdleConns.",
+          "type": "boolean"
+        },
+        "headers": {
+          "description": "Additional headers attached to each HTTP request sent by the client. Existing header values are overwritten if collision happens. Header values are opaque since they may be sensitive.",
+          "$ref": "#/$defs/core__config_configopaque__map_list"
+        },
+        "http2_ping_timeout": {
+          "description": "HTTP2PingTimeout if there's no response to the ping within the configured value, the connection will be closed. If not set or set to 0, it defaults to 15s.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "http2_read_idle_timeout": {
+          "description": "This is needed in case you run into https://github.com/golang/go/issues/59690 https://github.com/golang/go/issues/36026 HTTP2ReadIdleTimeout if the connection has been idle for the configured value send a ping frame for health check 0s means no health check will be performed.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "idle_conn_timeout": {
+          "description": "IdleConnTimeout is the maximum amount of time a connection will remain open before closing itself. By default, it is set to 90 seconds.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "max_conns_per_host": {
+          "description": "MaxConnsPerHost limits the total number of connections per host, including connections in the dialing, active, and idle states. Default is 0 (unlimited).",
+          "type": "integer"
+        },
+        "max_idle_conns": {
+          "description": "MaxIdleConns is used to set a limit to the maximum idle HTTP connections the client can keep open. By default, it is set to 100. Zero means no limit.",
+          "type": "integer"
+        },
+        "max_idle_conns_per_host": {
+          "description": "MaxIdleConnsPerHost is used to set a limit to the maximum idle HTTP connections the host can keep open. If zero, [net/http.DefaultMaxIdleConnsPerHost] is used.",
+          "type": "integer"
+        },
+        "middlewares": {
+          "description": "Middlewares are used to add custom functionality to the HTTP client. Middleware handlers are called in the order they appear in this list, with the first middleware becoming the outermost handler.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/core__config_configmiddleware__config"
+          }
+        },
+        "proxy_url": {
+          "description": "ProxyURL setting for the collector",
+          "type": "string"
+        },
+        "read_buffer_size": {
+          "description": "ReadBufferSize for HTTP client. See http.Transport.ReadBufferSize. Default is 0.",
+          "type": "integer"
+        },
+        "timeout": {
+          "description": "Timeout parameter configures `http.Client.Timeout`. Default is 0 (unlimited).",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "tls": {
+          "description": "TLS struct exposes TLS client configuration.",
+          "$ref": "#/$defs/core__config_configtls__client_config"
+        },
+        "write_buffer_size": {
+          "description": "WriteBufferSize for HTTP client. See http.Transport.WriteBufferSize. Default is 0.",
+          "type": "integer"
+        }
+      }
+    },
+    "contrib__internal_coreinternal_attraction__action_key_value": {
+      "description": "ActionKeyValue specifies the attribute key to act upon.",
+      "type": "object",
+      "properties": {
+        "action": {
+          "description": "Action specifies the type of action to perform. The set of values are {INSERT, UPDATE, UPSERT, DELETE, HASH}. Both lower case and upper case are supported. INSERT -  Inserts the key/value to attributes when the key does not exist. No action is applied to attributes where the key already exists. Either Value, FromAttribute or FromContext must be set. UPDATE -  Updates an existing key with a value. No action is applied to attributes where the key does not exist. Either Value, FromAttribute or FromContext must be set. UPSERT -  Performs insert or update action depending on the attributes containing the key. The key/value is inserted to attributes that did not originally have the key. The key/value is updated for attributes where the key already existed. Either Value, FromAttribute or FromContext must be set. DELETE  - Deletes the attribute. If the key doesn't exist, no action is performed. HASH    - Calculates the SHA-1 hash of an existing value and overwrites the value with its SHA-1 hash result. If the feature gate `coreinternal.attraction.hash.sha256` is enabled, it uses SHA2-256 instead. EXTRACT - Extracts values using a regular expression rule from the input 'key' to target keys specified in the 'rule'. If a target key already exists, it will be overridden. CONVERT  - converts the type of an existing attribute, if convertable This is a required field.",
+          "$ref": "#/$defs/contrib__internal_coreinternal_attraction__action"
+        },
+        "converted_type": {
+          "description": "ConvertedType specifies the target type of an attribute to be converted If the key doesn't exist, no action is performed. If the value cannot be converted, the original value will be left as-is",
+          "type": "string"
+        },
+        "default_value": {
+          "description": "DefaultValue specifies the value to use if Value/FromAttribute/FromContext doesn't provide a value (e.g., environment variable not set, attribute doesn't exist). Only used with INSERT, UPDATE, and UPSERT actions.",
+          "x-customType": "any"
+        },
+        "from_attribute": {
+          "description": "FromAttribute specifies the attribute to use to populate the value. If the attribute doesn't exist, no action is performed.",
+          "type": "string"
+        },
+        "from_context": {
+          "description": "FromContext specifies the context value to use to populate the value. The values would be searched in client.Info.Metadata. If the key doesn't exist, no action is performed. If the key has multiple values the values will be joined with `;` separator.",
+          "type": "string"
+        },
+        "key": {
+          "description": "Key specifies the attribute to act upon. This is a required field.",
+          "type": "string"
+        },
+        "pattern": {
+          "description": "A regex pattern must be specified for the action EXTRACT. It uses the attribute specified by `key' to extract values from The target keys are inferred based on the names of the matcher groups provided and the names will be inferred based on the values of the matcher group. Note: All subexpressions must have a name. Note: The value type of the source key must be a string. If it isn't, no extraction will occur.",
+          "type": "string"
+        },
+        "value": {
+          "description": "Value specifies the value to populate for the key. The type of the value is inferred from the configuration.",
+          "x-customType": "any"
+        }
+      }
+    },
+    "contrib__pkg_ottl__error_mode": {
+      "description": "ErrorMode is the way OTTL should handle errors.",
+      "type": "string"
+    },
+    "contrib__processor_transformprocessor_internal_common__context_statements": {
+      "type": "object",
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "context": {
+          "$ref": "#/$defs/contrib__processor_transformprocessor_internal_common__context_id"
+        },
+        "error_mode": {
+          "description": "ErrorMode determines how the processor reacts to errors that occur while processing this group of statements. When provided, it overrides the default Config ErrorMode.",
+          "$ref": "#/$defs/contrib__pkg_ottl__error_mode"
+        },
+        "statements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tls_client": {
+      "description": "Unresolved reference: tls_client",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "contrib__exporter_fileexporter__group_by": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Enables group_by. Default is false.",
+          "type": "boolean"
+        },
+        "max_open_files": {
+          "description": "MaxOpenFiles specifies the maximum number of open file descriptors for the output files. The default is 100.",
+          "type": "integer"
+        },
+        "resource_attribute": {
+          "description": "ResourceAttribute specifies the name of the resource attribute that contains the path segment of the file to write to. The final path will be the Path config value, with the * replaced with the value of this resource attribute. Default is \"fileexporter.path_segment\".",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__exporter_fileexporter__rotation": {
+      "description": "Rotation an option to rolling log files",
+      "type": "object",
+      "properties": {
+        "localtime": {
+          "description": "LocalTime determines if the time used for formatting the timestamps in backup files is the computer's local time.  The default is to use UTC time.",
+          "type": "boolean"
+        },
+        "max_backups": {
+          "description": "MaxBackups is the maximum number of old log files to retain. The default is to 100 files.",
+          "type": "integer"
+        },
+        "max_days": {
+          "description": "MaxDays is the maximum number of days to retain old log files based on the timestamp encoded in their filename.  Note that a day is defined as 24 hours and may not exactly correspond to calendar days due to daylight savings, leap seconds, etc. The default is not to remove old log files based on age.",
+          "type": "integer"
+        },
+        "max_megabytes": {
+          "description": "MaxMegabytes is the maximum size in megabytes of the file before it gets rotated. It defaults to 100 megabytes.",
+          "type": "integer"
+        }
+      }
+    },
+    "core__config_configopaque__string": {
+      "description": "String alias that is marshaled and printed in an opaque way. To recover the original value, cast it to a string.",
+      "type": "string"
+    },
+    "core__config_configtls__client_config": {
+      "description": "ClientConfig contains TLS configurations that are specific to client connections in addition to the common configurations. This should be used by components configuring TLS client connections.",
+      "type": "object",
+      "properties": {
+        "insecure": {
+          "description": "In gRPC and HTTP when set to true, this is used to disable the client transport security. See https://godoc.org/google.golang.org/grpc#WithInsecure for gRPC. Please refer to https://godoc.org/crypto/tls#Config for more information. (optional, default false)",
+          "type": "boolean"
+        },
+        "insecure_skip_verify": {
+          "description": "InsecureSkipVerify will enable TLS but not verify the certificate.",
+          "type": "boolean"
+        },
+        "server_name_override": {
+          "description": "ServerName requested by client for virtual hosting. This sets the ServerName in the TLSConfig. Please refer to https://godoc.org/crypto/tls#Config for more information. (optional)",
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/core__config_configtls__config"
+        }
+      ]
+    },
+    "contrib__extension_opampextension__agent_description": {
+      "type": "object",
+      "properties": {
+        "include_resource_attributes": {
+          "description": "IncludeResourceAttributes determines whether the agent should copy its resource attributes to the non identifying attributes. (default: false)",
+          "type": "boolean"
+        },
+        "non_identifying_attributes": {
+          "description": "NonIdentifyingAttributes are a map of key-value pairs that may be specified to provide extra information about the agent to the OpAMP server.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "contrib__extension_opampextension__capabilities": {
+      "type": "object",
+      "properties": {
+        "accepts_restart_command": {
+          "description": "AcceptsRestartCommand enables the OpAMP AcceptsRestartCommand Capability (default: false)",
+          "type": "boolean"
+        },
+        "reports_available_components": {
+          "description": "ReportsAvailableComponents enables the OpAMP ReportsAvailableComponents Capability (default: true)",
+          "type": "boolean"
+        },
+        "reports_effective_config": {
+          "description": "ReportsEffectiveConfig enables the OpAMP ReportsEffectiveConfig Capability. (default: true)",
+          "type": "boolean"
+        },
+        "reports_health": {
+          "description": "ReportsHealth enables the OpAMP ReportsHealth Capability. (default: true)",
+          "type": "boolean"
+        }
+      }
+    },
+    "contrib__extension_opampextension__op_amp_server": {
+      "description": "OpAMPServer contains the OpAMP transport configuration.",
+      "type": "object",
+      "properties": {
+        "http": {
+          "x-pointer": true,
+          "type": "object",
+          "properties": {
+            "auth": {
+              "type": "string",
+              "x-customType": "go.opentelemetry.io/collector/component.ID"
+            },
+            "endpoint": {
+              "type": "string"
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/core__config_configopaque__string"
+              }
+            },
+            "polling_interval": {
+              "type": "string",
+              "format": "duration"
+            },
+            "tls": {
+              "$ref": "#/$defs/core__config_configtls__client_config"
+            }
+          }
+        },
+        "ws": {
+          "x-pointer": true,
+          "type": "object",
+          "properties": {
+            "auth": {
+              "type": "string",
+              "x-customType": "go.opentelemetry.io/collector/component.ID"
+            },
+            "endpoint": {
+              "type": "string"
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/core__config_configopaque__string"
+              }
+            },
+            "tls": {
+              "$ref": "#/$defs/core__config_configtls__client_config"
+            }
+          }
+        }
+      }
+    },
+    "contrib__internal_healthcheck__config": {
+      "description": "Unresolved reference: contrib__internal_healthcheck__config",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "core__config_confignet__tcp_addr_config": {
+      "description": "TCPAddrConfig represents a TCP endpoint address.",
+      "type": "object",
+      "properties": {
+        "dialer": {
+          "description": "DialerConfig contains options for connecting to an address.",
+          "$ref": "#/$defs/core__config_confignet__dialer_config"
+        },
+        "endpoint": {
+          "description": "Endpoint configures the address for this network connection. The address has the form \"host:port\". The host must be a literal IP address, or a host name that can be resolved to IP addresses. The port must be a literal port number or a service name. If the host is a literal IPv6 address it must be enclosed in square brackets, as in \"[2001:db8::1]:80\" or \"[fe80::1%zone]:80\". The zone specifies the scope of the literal IPv6 address as defined in RFC 4007.",
+          "type": "string"
+        }
+      }
+    },
+    "contrib__internal_k8sconfig__auth_type": {
+      "description": "AuthType describes the type of authentication to use for the K8s API",
+      "type": "string"
+    },
+    "core__config_configauth__config": {
+      "description": "Config defines the auth settings for the receiver.",
+      "type": "object",
+      "properties": {
+        "authenticator": {
+          "description": "AuthenticatorID specifies the name of the extension to use in order to authenticate the incoming data point.",
+          "type": "string",
+          "x-customType": "go.opentelemetry.io/collector/component.ID"
+        }
+      }
+    },
+    "core__config_configcompression__type": {
+      "description": "Type represents a compression method",
+      "type": "string"
+    },
+    "core__config_configcompression__compression_params": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/core__config_configcompression__level"
+        }
+      }
+    },
+    "core__config_confighttp__cookies_config": {
+      "description": "CookiesConfig defines the configuration of the HTTP client regarding cookies served by the server."
+    },
+    "core__config_configopaque__map_list": {
+      "description": "MapList is a replacement for map[string]configopaque.String with a similar API, which can also be unmarshalled from (and is stored as) a list of name/value pairs. Pairs are assumed to have distinct names. This is checked during config validation.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/core__config_configopaque__pair"
+      }
+    },
+    "core__config_configmiddleware__config": {
+      "description": "Middleware defines the extension ID for a middleware component.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "ID specifies the name of the extension to use.",
+          "type": "string",
+          "x-customType": "go.opentelemetry.io/collector/component.ID"
+        }
+      }
+    },
+    "contrib__internal_coreinternal_attraction__action": {
+      "description": "Action is the enum to capture the four types of actions to perform on an attribute.",
+      "type": "string"
+    },
+    "contrib__processor_transformprocessor_internal_common__context_id": {
+      "type": "string"
+    },
+    "core__config_configtls__config": {
+      "description": "Config exposes the common client and server TLS configurations. Note: Since there isn't anything specific to a server connection. Components with server connections should use Config.",
+      "type": "object",
+      "properties": {
+        "ca_file": {
+          "description": "Path to the CA cert. For a client this verifies the server certificate. For a server this verifies client certificates. If empty uses system root CA. (optional)",
+          "type": "string"
+        },
+        "ca_pem": {
+          "description": "In memory PEM encoded cert. (optional)",
+          "$ref": "#/$defs/core__config_configopaque__string"
+        },
+        "cert_file": {
+          "description": "Path to the TLS cert to use for TLS required connections. (optional)",
+          "type": "string"
+        },
+        "cert_pem": {
+          "description": "In memory PEM encoded TLS cert to use for TLS required connections. (optional)",
+          "$ref": "#/$defs/core__config_configopaque__string"
+        },
+        "cipher_suites": {
+          "description": "CipherSuites is a list of TLS cipher suites that the TLS transport can use. If left blank, a safe default list is used. See https://go.dev/src/crypto/tls/cipher_suites.go for a list of supported cipher suites.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "curve_preferences": {
+          "description": "contains the elliptic curves that will be used in an ECDHE handshake, in preference order Defaults to empty list and \"crypto/tls\" defaults are used, internally.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "include_system_ca_certs_pool": {
+          "description": "If true, load system CA certificates pool in addition to the certificates configured in this struct.",
+          "type": "boolean"
+        },
+        "key_file": {
+          "description": "Path to the TLS key to use for TLS required connections. (optional)",
+          "type": "string"
+        },
+        "key_pem": {
+          "description": "In memory PEM encoded TLS key to use for TLS required connections. (optional)",
+          "$ref": "#/$defs/core__config_configopaque__string"
+        },
+        "max_version": {
+          "description": "MaxVersion sets the maximum TLS version that is acceptable. If not set, refer to crypto/tls for defaults. (optional)",
+          "type": "string"
+        },
+        "min_version": {
+          "description": "MinVersion sets the minimum TLS version that is acceptable. If not set, TLS 1.2 will be used. (optional)",
+          "type": "string"
+        },
+        "reload_interval": {
+          "description": "ReloadInterval specifies the duration after which the certificate will be reloaded If not set, it will never be reloaded (optional)",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        },
+        "tpm": {
+          "description": "Trusted platform module configuration",
+          "$ref": "#/$defs/core__config_configtls__tpm_config"
+        }
+      }
+    },
+    "core__config_confignet__dialer_config": {
+      "description": "DialerConfig contains options for connecting to an address.",
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "description": "Timeout is the maximum amount of time a dial will wait for a connect to complete. The default is no timeout.",
+          "type": "string",
+          "x-customType": "time.Duration",
+          "format": "duration"
+        }
+      }
+    },
+    "core__config_configcompression__level": {
+      "type": "integer"
+    },
+    "core__config_configopaque__pair": {
+      "description": "Pair is an element of a MapList, and consists of a name and an opaque value.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/core__config_configopaque__string"
+        }
+      }
+    },
+    "core__config_configtls__tpm_config": {
+      "description": "TPMConfig defines trusted platform module configuration for storing TLS keys.",
+      "type": "object",
+      "properties": {
+        "auth": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "owner_auth": {
+          "type": "string"
+        },
+        "path": {
+          "description": "The path to the TPM device or Unix domain socket. For instance /dev/tpm0 or /dev/tpmrm0.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

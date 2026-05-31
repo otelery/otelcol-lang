@@ -15,8 +15,7 @@
   "publisher": "otelery",
   "main": "./dist/extension/extension.js",
   "scripts": {
-    "sync-schemas": "node scripts/sync-schemas.mjs",
-    "build": "npm run sync-schemas && tsc -p . && node scripts/copy-schemas.mjs",
+    "build": "tsc -p . && node scripts/copy-schemas.mjs",
     "watch": "node esbuild.js --watch",
     "compile": "node esbuild.js",
     "package": "node esbuild.js --production",
@@ -33,7 +32,7 @@
     "audit": "npm audit --omit=dev",
     "package-check": "vsce ls",
     "check": "npm run lint && npm run format-check && npm run check-types && npm run audit && npm test && npm run test:integration && npm run package-check",
-    "vscode:prepublish": "npm run sync-schemas && npm run package && node scripts/copy-schemas.mjs --outDir=dist",
+    "vscode:prepublish": "npm run package && node scripts/copy-schemas.mjs --outDir=dist",
     "package:vsix": "vsce package"
   },
   "dependencies": {
