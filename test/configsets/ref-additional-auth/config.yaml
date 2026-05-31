@@ -1,0 +1,28 @@
+extensions:
+  bearertokenauth/primary:
+    token: secret
+  headers_setter/inject:
+    headers:
+      - action: insert
+        key: X-Tenant
+        value: acme
+    additional_auth: bearertokenauth/primary
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+exporters:
+  otlphttp:
+    endpoint: https://collector.example.com
+    auth:
+      authenticator: headers_setter/inject
+
+service:
+  extensions: [bearertokenauth/primary, headers_setter/inject]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlphttp]

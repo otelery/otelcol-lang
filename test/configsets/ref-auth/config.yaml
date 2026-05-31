@@ -1,0 +1,24 @@
+extensions:
+  oauth2client/primary:
+    client_id: abc
+    client_secret: xyz
+    token_url: https://login.example.com/token
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+exporters:
+  otlphttp:
+    endpoint: https://collector.example.com
+    auth:
+      authenticator: oauth2client/primary
+
+service:
+  extensions: [oauth2client/primary]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlphttp]

@@ -1,0 +1,23 @@
+extensions:
+  file_storage/queue:
+    directory: /var/lib/otelcol/queue
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+exporters:
+  otlp/queued:
+    endpoint: collector:4317
+    sending_queue:
+      enabled: true
+      storage: file_storage/queue
+
+service:
+  extensions: [file_storage/queue]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp/queued]

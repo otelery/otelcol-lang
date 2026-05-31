@@ -1,0 +1,24 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+exporters:
+  debug:
+    verbosity: detailed
+
+connectors:
+  routing/by-tenant:
+    # `traces/ghost` is not defined below — should error.
+    default_pipelines: [traces/ghost]
+    table: []
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [routing/by-tenant]
+    traces/main:
+      receivers: [routing/by-tenant]
+      exporters: [debug]

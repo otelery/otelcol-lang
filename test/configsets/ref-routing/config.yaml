@@ -1,0 +1,37 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+exporters:
+  otlp/acme:
+    endpoint: acme.example.com:4317
+  otlp/globex:
+    endpoint: globex.example.com:4317
+  debug:
+    verbosity: detailed
+
+connectors:
+  routing/by-tenant:
+    default_pipelines: [traces/general]
+    table:
+      - statement: route() where resource.attributes["tenant.id"] == "acme"
+        pipelines: [traces/acme]
+      - statement: route() where resource.attributes["tenant.id"] == "globex"
+        pipelines: [traces/globex]
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [routing/by-tenant]
+    traces/acme:
+      receivers: [routing/by-tenant]
+      exporters: [otlp/acme]
+    traces/globex:
+      receivers: [routing/by-tenant]
+      exporters: [otlp/globex]
+    traces/general:
+      receivers: [routing/by-tenant]
+      exporters: [debug]

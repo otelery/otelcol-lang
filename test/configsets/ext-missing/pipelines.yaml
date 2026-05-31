@@ -1,0 +1,7 @@
+service:
+  # `ghost` is not defined in any extensions: block — should error.
+  extensions: [health_check, ghost]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug]

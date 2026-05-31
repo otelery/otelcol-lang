@@ -1,0 +1,80 @@
+# Pipelines + connectors. Routes traces by tenant, derives R.E.D
+# metrics from spans via spanmetrics, forwards logs through a
+# normalization stage.
+
+connectors:
+  # Split traces into per-tenant pipelines based on a resource attribute,
+  # using an OTTL condition per route.
+  routing/by-tenant:
+    default_pipelines: [traces/general]
+    error_mode: ignore
+    table:
+      - statement: route() where resource.attributes["tenant.id"] == "acme"
+        pipelines: [traces/acme]
+      - statement: route() where resource.attributes["tenant.id"] == "globex"
+        pipelines: [traces/globex]
+      - condition: resource.attributes["deployment.environment"] == "canary"
+        pipelines: [traces/canary]
+
+  # R.E.D metrics derived from traces.
+  spanmetrics:
+    histogram:
+      explicit:
+        buckets: [2ms, 8ms, 50ms, 100ms, 200ms, 500ms, 1s, 5s, 10s]
+    dimensions:
+      - name: http.method
+      - name: http.status_code
+      - name: deployment.environment
+        default: unknown
+    exemplars:
+      enabled: true
+    metrics_flush_interval: 30s
+    namespace: span_stats
+
+  forward/logs:
+
+service:
+  pipelines:
+    # ------ Trace fan-in → router ------
+    traces:
+      receivers: [otlp, kafka]
+      processors: [memory_limiter]
+      exporters: [routing/by-tenant, spanmetrics]
+
+    # ------ Per-tenant trace pipelines ------
+    traces/acme:
+      receivers: [routing/by-tenant]
+      processors: [batch, filter/spans, transform/redact-and-enrich, attributes/tenant]
+      exporters: [otlp/primary, kafka/dr]
+
+    traces/globex:
+      receivers: [routing/by-tenant]
+      processors: [batch, transform/redact-and-enrich, attributes/tenant]
+      exporters: [otlphttp/secondary, kafka/dr]
+
+    traces/canary:
+      receivers: [routing/by-tenant]
+      processors: [batch, filter/spans]
+      exporters: [otlp/primary, debug]
+
+    traces/general:
+      receivers: [routing/by-tenant]
+      processors: [batch, filter/spans, transform/redact-and-enrich]
+      exporters: [otlp/primary, kafka/dr]
+
+    # ------ Metrics: spanmetrics-derived + host + scrape ------
+    metrics:
+      receivers: [otlp, host_metrics, prometheus, spanmetrics]
+      processors: [memory_limiter, batch, resource/cluster, transform/redact-and-enrich]
+      exporters: [otlp/primary, prometheus, kafka/dr]
+
+    # ------ Logs split into a forward connector ------
+    logs:
+      receivers: [otlp, filelog]
+      processors: [memory_limiter, filter/logs, transform/redact-and-enrich]
+      exporters: [forward/logs]
+
+    logs/sink:
+      receivers: [forward/logs]
+      processors: [batch/large, resource/cluster]
+      exporters: [otlp/primary, kafka/dr, debug]

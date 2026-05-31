@@ -1,0 +1,5 @@
+{
+  "editor.stablePeek": false,
+  "editor.semanticHighlighting.enabled": true,
+  "otelcol.trace.server": "off"
+}

@@ -1,0 +1,100 @@
+# Processors. Heavy OTTL inside transform + filter to exercise the
+# embedded language injection and the OTTL forwarder.
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+
+  batch:
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+    timeout: 5s
+
+  batch/large:
+    send_batch_size: 8192
+    timeout: 30s
+
+  # Drop noisy health-check spans and obviously synthetic traffic; redact
+  # any header that looks like a credential. Each `conditions:` / `statements:`
+  # entry is an OTTL string.
+  filter/spans:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["http.route"] == "/healthz"'
+        - 'attributes["http.route"] == "/readyz"'
+        - 'attributes["http.user_agent"] != nil and IsMatch(attributes["http.user_agent"], "kube-probe/.*")'
+      spanevent:
+        - 'name == "exception" and attributes["exception.type"] == "java.lang.InterruptedException"'
+
+  filter/logs:
+    error_mode: ignore
+    logs:
+      log_record:
+        - 'severity_number < SEVERITY_NUMBER_WARN and resource.attributes["deployment.environment"] == "production"'
+        - 'IsMatch(body, "(?i)password|secret|token") and not IsMatch(body, "^redacted:")'
+
+  # Big OTTL block: redact + enrich traces/metrics/logs.
+  transform/redact-and-enrich:
+    error_mode: propagate
+    trace_statements:
+      - context: resource
+        statements:
+          - set(attributes["cloud.region"], "eu-central-1") where attributes["cloud.region"] == nil
+          - set(attributes["service.namespace"], "platform") where attributes["service.namespace"] == nil
+      - context: span
+        conditions:
+          - kind == SPAN_KIND_SERVER
+        statements:
+          - set(attributes["http.route_pattern"], attributes["http.route"])
+          - replace_pattern(attributes["http.url"], "([?&])(api_key|token|auth)=[^&]+", "$$1$$2=REDACTED")
+          - delete_key(attributes, "http.request.header.authorization")
+          - delete_matching_keys(attributes, ".*[Ss]ecret.*")
+          - set(status.code, STATUS_CODE_ERROR) where attributes["http.status_code"] >= 500
+      - context: spanevent
+        statements:
+          - keep_keys(attributes, ["exception.type", "exception.message", "exception.stacktrace"])
+
+    metric_statements:
+      - context: resource
+        statements:
+          - set(attributes["collector.tier"], "ingest") where attributes["collector.tier"] == nil
+      - context: datapoint
+        statements:
+          - set(attributes["http.host"], ExtractGrokPatterns(attributes["http.url"], "%{URIHOST:host}")["host"]) where attributes["http.url"] != nil
+          - limit(attributes, 50, ["service.name", "service.namespace", "http.route", "http.status_code"])
+
+    log_statements:
+      - context: resource
+        statements:
+          - set(attributes["service.instance.id"], attributes["host.name"]) where attributes["service.instance.id"] == nil
+      - context: log
+        conditions:
+          - severity_number >= SEVERITY_NUMBER_INFO
+        statements:
+          - set(severity_text, ConvertCase(severity_text, "upper"))
+          - set(attributes["log.body.length"], Len(body))
+          - replace_all_patterns(attributes, "value", "\\b\\d{16}\\b", "REDACTED-CC")
+          - merge_maps(attributes, ExtractPatterns(body, "(?P<latency_ms>\\d+)ms"), "upsert") where body != nil
+
+  attributes/tenant:
+    actions:
+      - key: tenant.id
+        from_attribute: x.tenant.id
+        action: upsert
+      - key: x.tenant.id
+        action: delete
+      - key: collector.version
+        value: "0.110.0"
+        action: insert
+
+  resource/cluster:
+    attributes:
+      - key: k8s.cluster.name
+        value: "${env:K8S_CLUSTER_NAME:-local}"
+        action: upsert
+      - key: deployment.environment
+        from_attribute: env
+        action: upsert

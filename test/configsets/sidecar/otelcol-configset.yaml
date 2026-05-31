@@ -1,0 +1,6 @@
+# Explicit config-set declaration. Members are merged in this order (confmap
+# semantics). Anchor must appear in the list (must also contain service.pipelines).
+members:
+  - base.yaml
+  - exporters.yaml
+  - pipelines.yaml

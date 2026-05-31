@@ -1,0 +1,8 @@
+# Intentionally duplicates `otlp` (also defined in base.yaml). Both files
+# should receive a "duplicate receiver id" error, and the pipeline reference
+# to `otlp` should error as ambiguous until the conflict is resolved.
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318

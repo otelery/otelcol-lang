@@ -1,0 +1,26 @@
+extensions:
+  jaeger_encoding/v1:
+    foo: bar
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+exporters:
+  # `encoding` referencing an extension id (resolves).
+  file/sink:
+    path: /var/log/spans.log
+    encoding: jaeger_encoding/v1
+  # `encoding` with a built-in format name (does NOT resolve — soft ref, no diagnostic).
+  file/raw:
+    path: /var/log/raw.log
+    encoding: json
+
+service:
+  extensions: [jaeger_encoding/v1]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [file/sink, file/raw]
