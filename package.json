@@ -1,0 +1,175 @@
+{
+  "name": "vscode-otelcol",
+  "displayName": "OpenTelemetry Collector",
+  "description": "Syntax highlighting, completion, hover, diagnostics and embedded OTTL for OpenTelemetry Collector configs.",
+  "version": "0.1.0",
+  "publisher": "otelery",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/otelery/otelcol-lang"
+  },
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=18"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "main": "./dist/extension/extension.js",
+  "activationEvents": [
+    "onLanguage:otelcol",
+    "onLanguage:yaml"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "otelcol",
+        "aliases": [
+          "OpenTelemetry Collector",
+          "otelcol"
+        ],
+        "extensions": [],
+        "firstLine": "^#\\s*(otelcol|opentelemetry-collector)\\b",
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "ottl",
+        "aliases": [
+          "OTTL",
+          "OpenTelemetry Transformation Language"
+        ],
+        "extensions": [
+          ".ottl"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "otelcol",
+        "scopeName": "source.yaml.otelcol",
+        "path": "./syntaxes/otelcol-yaml.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.ottl": "ottl"
+        }
+      },
+      {
+        "language": "ottl",
+        "scopeName": "source.ottl",
+        "path": "./syntaxes/ottl.tmLanguage.json"
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "otelcol",
+        "scopes": {
+          "class": ["entity.name.type.class"],
+          "class.declaration": ["entity.name.type.class.declaration"],
+          "class.declaration.deprecated": ["invalid.deprecated"],
+          "namespace": ["entity.name.namespace"],
+          "namespace.declaration": ["entity.name.namespace.declaration"]
+        }
+      }
+    ],
+    "configurationDefaults": {
+      "[otelcol]": {
+        "editor.semanticHighlighting.enabled": true
+      },
+      "editor.semanticTokenColorCustomizations": {
+        "enabled": true,
+        "rules": {
+          "class.declaration:otelcol": { "foreground": "#E5C07B", "bold": true },
+          "class:otelcol": { "foreground": "#E5C07B" },
+          "class.declaration.deprecated:otelcol": { "foreground": "#5C6370", "strikethrough": true },
+          "namespace.declaration:otelcol": { "foreground": "#C678DD", "bold": true },
+          "namespace:otelcol": { "foreground": "#C678DD" }
+        }
+      }
+    },
+    "configuration": {
+      "title": "OpenTelemetry Collector",
+      "properties": {
+        "otelcol.distribution": {
+          "type": "string",
+          "enum": [
+            "otelcol",
+            "otelcol-contrib",
+            "otelcol-k8s",
+            "otelcol-otlp",
+            "otelcol-ebpf-profiler",
+            "datadog-otelcol",
+            "elastic-otelcol"
+          ],
+          "default": "otelcol-contrib",
+          "description": "Which Collector distribution to validate against. Determines which components are 'known' and which schemas are used. Defaults to otelcol-contrib."
+        },
+        "otelcol.schemaSource": {
+          "type": "string",
+          "default": "",
+          "description": "Reserved for future use. Will allow loading schemas from an HTTPS URL or a pinned release tag of otelcol-schemas instead of the bundled copy. No effect in v0.1.0."
+        },
+        "otelcol.contribPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional path to a local opentelemetry-collector-contrib checkout. Used to look up README docs on hover."
+        },
+        "otelcol.ottlLspPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional path to the ottl-lsp executable for embedded OTTL diagnostics."
+        },
+        "otelcol.configSets.autoDiscover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically group YAML files into config sets by searching the workspace for `service.pipelines:` anchors. An anchor at directory D owns fragments in D and its subdirectories, stopping at any nested anchor. Disable to require an explicit `otelcol-configset.yaml` sidecar or `# otelcol-configset:` directive."
+        },
+        "otelcol.configSets.maxFilesScanned": {
+          "type": "integer",
+          "default": 2000,
+          "description": "Safety bound on the workspace scan for config-set discovery."
+        },
+        "otelcol.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace LSP communication."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "sync-schemas": "node scripts/sync-schemas.mjs",
+    "build": "npm run sync-schemas && tsc -p . && node scripts/copy-schemas.mjs",
+    "watch": "node esbuild.js --watch",
+    "compile": "node esbuild.js",
+    "package": "node esbuild.js --production",
+    "check-types": "tsc --noEmit -p .",
+    "check-paths": "node scripts/check-runtime-paths.mjs",
+    "check": "npm run check-types && npm run check-paths",
+    "build:all": "npm run build",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "npm run build && npm run check-paths && node --test test/run-tests.mjs",
+    "vscode:prepublish": "npm run sync-schemas && npm run package && node scripts/copy-schemas.mjs --outDir=dist",
+    "package:vsix": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.11",
+    "vscode-uri": "^3.0.8",
+    "yaml": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.9.1",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.4.0"
+  }
+}

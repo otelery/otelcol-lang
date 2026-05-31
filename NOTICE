@@ -1,0 +1,56 @@
+otelcol-lang
+============
+
+VS Code extension and Language Server for OpenTelemetry Collector configs.
+Licensed under Apache-2.0.
+
+This NOTICE documents the third-party software used by the extension and
+language server, and the relationship to the upstream collector
+distributions.
+
+
+Schemas
+-------
+
+The JSON Schemas the LSP consumes for validation, hover and completion
+are produced by a separate project:
+
+  https://github.com/otelery/otelcol-schemas   (Apache-2.0)
+
+They are bundled into the published .vsix at build time (see
+`scripts/sync-schemas.mjs`). The `otelcol-schemas` repo's NOTICE
+documents the upstream sources (opentelemetry-collector-contrib, the
+collector core modules, vendor distributions) and the components for
+which no resolvable schema exists.
+
+A future release of this extension will gain the ability to fetch
+schemas from a pinned release tag of `otelcol-schemas` at runtime; the
+`otelcol.schemaSource` setting is reserved for that purpose.
+
+
+Third-party runtime dependencies
+--------------------------------
+
+The extension and language server ship with the following npm packages:
+
+  vscode-languageclient            (MIT)
+  vscode-languageserver            (MIT)
+  vscode-languageserver-textdocument (MIT)
+  vscode-uri                       (MIT)
+  yaml                             (ISC)
+
+
+OTTL grammar
+------------
+
+`syntaxes/ottl.tmLanguage.json` is vendored from the `ottl-lang` project
+(Apache-2.0) and injected into the `source.yaml.otelcol` scope.
+
+
+Component metadata
+------------------
+
+Hover content for receivers, processors, exporters, connectors and
+extensions (display name, signals, stability, codeowners, feature
+gates, descriptions) is derived from each component's `metadata.yaml`
+in opentelemetry-collector-contrib (Apache-2.0).
