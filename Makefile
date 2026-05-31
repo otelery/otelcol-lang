@@ -28,11 +28,11 @@ lint: ## Run oxlint
 lint-fix: ## Run oxlint with --fix
 	npx oxlint --fix
 
-format: ## Auto-format files in place (prettier --write)
-	npx prettier --write .
+format: ## Auto-format files in place (oxfmt --write)
+	npx oxfmt --write .
 
-format-check: ## Verify formatting (prettier --check); non-zero on diff
-	npx prettier --check .
+format-check: ## Verify formatting (oxfmt --check); non-zero on diff
+	npx oxfmt --check .
 
 typecheck: ## TypeScript type check (tsc --noEmit)
 	npm run check-types

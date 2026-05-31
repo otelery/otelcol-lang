@@ -1,27 +1,61 @@
 {
   "name": "vscode-otelcol",
   "displayName": "OpenTelemetry Collector",
-  "description": "Syntax highlighting, completion, hover, diagnostics and embedded OTTL for OpenTelemetry Collector configs.",
   "version": "0.1.0",
-  "publisher": "otelery",
+  "description": "Syntax highlighting, completion, hover, diagnostics and embedded OTTL for OpenTelemetry Collector configs.",
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/otelery/otelcol-lang"
   },
-  "engines": {
-    "vscode": "^1.85.0",
-    "node": ">=18"
-  },
-  "categories": [
-    "Programming Languages",
-    "Linters"
-  ],
+  "publisher": "otelery",
   "main": "./dist/extension/extension.js",
-  "activationEvents": [
-    "onLanguage:otelcol",
-    "onLanguage:yaml"
-  ],
+  "scripts": {
+    "sync-schemas": "node scripts/sync-schemas.mjs",
+    "build": "npm run sync-schemas && tsc -p . && node scripts/copy-schemas.mjs",
+    "watch": "node esbuild.js --watch",
+    "compile": "node esbuild.js",
+    "package": "node esbuild.js --production",
+    "check-types": "tsc --noEmit -p .",
+    "check-paths": "node scripts/check-runtime-paths.mjs",
+    "build:all": "npm run build",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "npm run build && npm run check-paths && node --test test/run-tests.mjs test/unit-yaml-model.test.mjs test/unit-completion.test.mjs test/unit-hover.test.mjs",
+    "test:integration": "tsc -p tsconfig.test.json && vscode-test",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt --write .",
+    "format-check": "oxfmt --check .",
+    "audit": "npm audit --omit=dev",
+    "package-check": "vsce ls",
+    "check": "npm run lint && npm run format-check && npm run check-types && npm run audit && npm test && npm run test:integration && npm run package-check",
+    "vscode:prepublish": "npm run sync-schemas && npm run package && node scripts/copy-schemas.mjs --outDir=dist",
+    "package:vsix": "vsce package"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.11",
+    "vscode-uri": "^3.0.8",
+    "yaml": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.9.1",
+    "esbuild": "^0.28.0",
+    "mocha": "^11.0.1",
+    "oxfmt": "^0.52.0",
+    "oxlint": "^0.15.0",
+    "typescript": "^5.4.0"
+  },
   "contributes": {
     "languages": [
       {
@@ -166,46 +200,12 @@
       }
     }
   },
-  "scripts": {
-    "sync-schemas": "node scripts/sync-schemas.mjs",
-    "build": "npm run sync-schemas && tsc -p . && node scripts/copy-schemas.mjs",
-    "watch": "node esbuild.js --watch",
-    "compile": "node esbuild.js",
-    "package": "node esbuild.js --production",
-    "check-types": "tsc --noEmit -p .",
-    "check-paths": "node scripts/check-runtime-paths.mjs",
-    "build:all": "npm run build",
-    "smoke": "node scripts/smoke.mjs",
-    "test": "npm run build && npm run check-paths && node --test test/run-tests.mjs test/unit-yaml-model.test.mjs test/unit-completion.test.mjs test/unit-hover.test.mjs",
-    "test:integration": "tsc -p tsconfig.test.json && vscode-test",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "format": "prettier --write .",
-    "format-check": "prettier --check .",
-    "audit": "npm audit --omit=dev",
-    "package-check": "vsce ls",
-    "check": "npm run lint && npm run format-check && npm run check-types && npm run audit && npm test && npm run test:integration && npm run package-check",
-    "vscode:prepublish": "npm run sync-schemas && npm run package && node scripts/copy-schemas.mjs --outDir=dist",
-    "package:vsix": "vsce package"
-  },
-  "dependencies": {
-    "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver": "^9.0.1",
-    "vscode-languageserver-textdocument": "^1.0.11",
-    "vscode-uri": "^3.0.8",
-    "yaml": "^2.4.5"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^20.0.0",
-    "@types/vscode": "^1.85.0",
-    "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.4.1",
-    "@vscode/vsce": "^3.9.1",
-    "esbuild": "^0.28.0",
-    "mocha": "^11.0.1",
-    "oxlint": "^0.15.0",
-    "prettier": "^3.4.0",
-    "typescript": "^5.4.0"
+  "activationEvents": [
+    "onLanguage:otelcol",
+    "onLanguage:yaml"
+  ],
+  "engines": {
+    "node": ">=18",
+    "vscode": "^1.85.0"
   }
 }

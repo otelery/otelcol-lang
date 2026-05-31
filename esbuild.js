@@ -53,7 +53,9 @@ async function main() {
     await extension.dispose();
     await server.rebuild();
     await server.dispose();
-    execSync("node scripts/copy-schemas.mjs --outDir=dist", { stdio: "inherit" });
+    execSync("node scripts/copy-schemas.mjs --outDir=dist", {
+      stdio: "inherit",
+    });
   }
 }
 
