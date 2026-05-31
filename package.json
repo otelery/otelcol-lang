@@ -151,10 +151,17 @@
     "package": "node esbuild.js --production",
     "check-types": "tsc --noEmit -p .",
     "check-paths": "node scripts/check-runtime-paths.mjs",
-    "check": "npm run check-types && npm run check-paths",
     "build:all": "npm run build",
     "smoke": "node scripts/smoke.mjs",
     "test": "npm run build && npm run check-paths && node --test test/run-tests.mjs",
+    "test:integration": "tsc -p tsconfig.test.json && vscode-test",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "prettier --write .",
+    "format-check": "prettier --check .",
+    "audit": "npm audit --omit=dev",
+    "package-check": "vsce ls",
+    "check": "npm run lint && npm run format-check && npm run check-types && npm run audit && npm test && npm run test:integration && npm run package-check",
     "vscode:prepublish": "npm run sync-schemas && npm run package && node scripts/copy-schemas.mjs --outDir=dist",
     "package:vsix": "vsce package"
   },
@@ -166,10 +173,16 @@
     "yaml": "^2.4.5"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.85.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.9.1",
     "esbuild": "^0.28.0",
+    "mocha": "^11.0.1",
+    "oxlint": "^0.15.0",
+    "prettier": "^3.4.0",
     "typescript": "^5.4.0"
   }
 }
