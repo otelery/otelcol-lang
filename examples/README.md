@@ -11,12 +11,12 @@ plausibly run, not minimal regression-pinning shapes.
 
 ## Index
 
-| Example                                          | What it shows                                                                                                                                                                                                           |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`simple/`](./simple/)                           | Single-file config with OTLP receivers, batch/memory-limiter, OTLP/debug exporters, health-check extension. The smallest "real" collector config.                                                                       |
-| [`complex/`](./complex/)                         | Production-shaped multi-file: many receivers, OTTL inside `transform` + `filter`, the `routing` connector, `spanmetrics` deriving R.E.D metrics, multiple exporters. Exercises every LSP feature.                       |
-| [`configset-sidecar/`](./configset-sidecar/)     | Multi-file config-set declared by an `otelcol-configset.yaml` sidecar. Use when you want explicit control over the member list and merge order.                                                                         |
-| [`configset-directive/`](./configset-directive/) | Multi-file config-set declared by a first-line `# otelcol-configset:` directive in the anchor file. Use when you want a single self-contained declaration.                                                              |
+| Example                                          | What it shows                                                                                                                                                                                                            |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`simple/`](./simple/)                           | Single-file config with OTLP receivers, batch/memory-limiter, OTLP/debug exporters, health-check extension. The smallest "real" collector config.                                                                        |
+| [`complex/`](./complex/)                         | Production-shaped multi-file: many receivers, OTTL inside `transform` + `filter`, the `routing` connector, `spanmetrics` deriving R.E.D metrics, multiple exporters. Exercises every LSP feature.                        |
+| [`configset-sidecar/`](./configset-sidecar/)     | Multi-file config-set declared by an `otelcol-configset.yaml` sidecar. Use when you want explicit control over the member list and merge order.                                                                          |
+| [`configset-directive/`](./configset-directive/) | Multi-file config-set declared by a first-line `# otelcol-configset:` directive in the anchor file. Use when you want a single self-contained declaration.                                                               |
 | [`diagnostics/`](./diagnostics/)                 | Deliberately broken single-file config (`diagnostics/broken.yaml`). Demonstrates the extension's diagnostics: undefined reference, unknown component type, invalid pipeline signal. Open it and read the Problems panel. |
 
 ## Running a config locally
