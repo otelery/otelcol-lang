@@ -149,6 +149,45 @@ describe("vscode-otelcol extension", () => {
     });
   });
 
+  describe("completion provider", () => {
+    it("suggests defined receiver IDs inside service.pipelines.<sig>.receivers", async () => {
+      const fixturePath = path.resolve(__dirname, "../../../test/simple/otelcol-config.yaml");
+      const uri = vscode.Uri.file(fixturePath);
+      const doc = await vscode.workspace.openTextDocument(uri);
+      await vscode.window.showTextDocument(doc);
+
+      // Find the `traces:` pipeline's `receivers: [otlp]` line; the existing
+      // 'otlp' token is a valid cursor position for completion.
+      const text = doc.getText();
+      const servicePipelines = text.indexOf("pipelines:");
+      assert.ok(servicePipelines > 0, "fixture must contain service.pipelines");
+      const receiversIdx = text.indexOf("receivers: [", servicePipelines);
+      assert.ok(receiversIdx > 0, "fixture must contain a pipeline receivers list");
+      const otlpRefIdx = text.indexOf("otlp", receiversIdx);
+      const position = doc.positionAt(otlpRefIdx + 1);
+
+      const result = await waitFor(
+        async () => {
+          const r = (await vscode.commands.executeCommand(
+            "vscode.executeCompletionItemProvider",
+            uri,
+            position,
+          )) as vscode.CompletionList;
+          return r && r.items && r.items.length > 0 ? r : undefined;
+        },
+        { timeoutMs: 10000, intervalMs: 200 },
+      );
+
+      const labels = result.items
+        .map((i) => i.label)
+        .map((l) => (typeof l === "string" ? l : l.label));
+      assert.ok(
+        labels.includes("otlp"),
+        `expected 'otlp' among completion items; got: ${labels.slice(0, 15).join(", ")}`,
+      );
+    });
+  });
+
   describe("hover provider", () => {
     it("returns hover content on a known receiver type", async () => {
       const fixturePath = path.resolve(__dirname, "../../../test/simple/otelcol-config.yaml");

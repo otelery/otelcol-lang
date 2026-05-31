@@ -26,6 +26,41 @@ describe("cross-file features (complex workspace)", () => {
     await ext.activate();
   });
 
+  describe("references provider (Shift-F12)", () => {
+    it("finds all pipeline refs for a receiver defined in base.yaml", async () => {
+      const baseUri = vscode.Uri.file(path.join(REPO_ROOT, "test/complex/base.yaml"));
+      const pipelinesUri = vscode.Uri.file(path.join(REPO_ROOT, "test/complex/pipelines.yaml"));
+
+      // Open both files so the config-set has full context.
+      await vscode.workspace.openTextDocument(pipelinesUri);
+      const baseDoc = await vscode.workspace.openTextDocument(baseUri);
+      await vscode.window.showTextDocument(baseDoc);
+
+      // Position the cursor on the `otlp:` declaration in base.yaml.
+      const text = baseDoc.getText();
+      const otlpDefIdx = text.indexOf("\n  otlp:");
+      assert.ok(otlpDefIdx > 0, "fixture must define `otlp:` as a receiver in base.yaml");
+      const position = baseDoc.positionAt(otlpDefIdx + 3); // inside `otlp`
+
+      const refs = await waitFor(async () => {
+        const result = (await vscode.commands.executeCommand(
+          "vscode.executeReferenceProvider",
+          baseUri,
+          position,
+        )) as vscode.Location[];
+        return Array.isArray(result) && result.length > 0 ? result : undefined;
+      });
+
+      // All references should live in pipelines.yaml (the only file that
+      // references `otlp` from a pipeline bucket in test/complex/).
+      const inPipelines = refs.filter((r) => r.uri.fsPath.endsWith("/pipelines.yaml"));
+      assert.ok(
+        inPipelines.length >= 1,
+        `expected at least one ref in pipelines.yaml; got ${refs.map((r) => r.uri.fsPath).join(", ")}`,
+      );
+    });
+  });
+
   describe("definition provider (F12)", () => {
     it("jumps from a pipeline ref in pipelines.yaml to the receiver def in base.yaml", async () => {
       const pipelinesUri = vscode.Uri.file(path.join(REPO_ROOT, "test/complex/pipelines.yaml"));

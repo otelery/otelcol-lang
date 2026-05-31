@@ -176,7 +176,7 @@
     "check-paths": "node scripts/check-runtime-paths.mjs",
     "build:all": "npm run build",
     "smoke": "node scripts/smoke.mjs",
-    "test": "npm run build && npm run check-paths && node --test test/run-tests.mjs",
+    "test": "npm run build && npm run check-paths && node --test test/run-tests.mjs test/unit-yaml-model.test.mjs test/unit-completion.test.mjs test/unit-hover.test.mjs",
     "test:integration": "tsc -p tsconfig.test.json && vscode-test",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
