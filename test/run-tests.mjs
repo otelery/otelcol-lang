@@ -48,6 +48,10 @@ function memberUri(set, basename) {
   return set.members.find((u) => u.endsWith("/" + basename));
 }
 
+function wordAt(text, line, char, len) {
+  return text.split("\n")[line].substring(char, char + len);
+}
+
 // ─── discovery ────────────────────────────────────────────────────────────
 
 describe("ConfigSetIndex discovery", () => {
@@ -810,9 +814,6 @@ describe("semantic tokens", () => {
     const model = buildFor(set);
     const uri = memberUri(set, basename);
     return computeSemanticTokens(model, uri);
-  }
-  function wordAt(text, line, char, len) {
-    return text.split("\n")[line].substring(char, char + len);
   }
   function textOf(set, basename) {
     return readFileSync(memberUri(set, basename).replace(/^file:\/\//, ""), "utf8");

@@ -9,5 +9,10 @@
   "env": {
     "node": true
   },
+  "rules": {
+    "no-underscore-dangle": ["warn", { "allow": ["__dirname"] }],
+    "no-await-in-loop": "off",
+    "unicorn/no-array-sort": "off"
+  },
   "ignorePatterns": ["node_modules", "dist", "out", "schemas", "syntaxes", "test/configsets"]
 }

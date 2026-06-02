@@ -81,16 +81,16 @@ for (const d of diags) {
   console.log(`  [${sev}] L${d.diagnostic.range.start.line + 1}: ${d.diagnostic.message}`);
 }
 
-function summarize(model) {
-  const c = model.components;
+function summarize(m) {
+  const c = m.components;
   console.log(
     `components: receivers=${c.receiver.size} processors=${c.processor.size} exporters=${c.exporter.size} connectors=${c.connector.size} extensions=${c.extension.size}`,
   );
-  console.log(`pipelines: ${model.pipelines.length}`);
-  for (const p of model.pipelines) {
+  console.log(`pipelines: ${m.pipelines.length}`);
+  for (const p of m.pipelines) {
     console.log(
       `  ${p.id}: receivers=[${p.receivers.map((r) => r.id).join(", ")}] processors=[${p.processors.map((r) => r.id).join(", ")}] exporters=[${p.exporters.map((r) => r.id).join(", ")}]`,
     );
   }
-  console.log(`ottl blocks: ${model.ottlBlocks.length}`);
+  console.log(`ottl blocks: ${m.ottlBlocks.length}`);
 }
