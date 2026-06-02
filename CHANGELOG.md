@@ -5,6 +5,22 @@ server) are documented in this file. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Build is now driven from the Makefile. CLI tooling
+  (`oxlint`, `oxfmt`, `vsce`, `typescript`, `@vscode/test-cli`) is
+  version-pinned at the top of the Makefile and invoked via
+  `npx --package=<name>@$(VAR) <bin>`, so version bumps are explicit
+  rather than picked up through `devDependencies` ranges. Run
+  `make check-versions` to see pinned vs. latest releases on npm.
+  `make publish-patch/minor/major` bumps and publishes in one step.
+- `package.json` scripts reduced from 24 to 3 (`watch`, `compile`,
+  `smoke` remain for local dev). `devDependencies` reduced from 11
+  to 5 — CLI-only tools (`oxlint`, `oxfmt`, `typescript`,
+  `@vscode/vsce`, `mocha`) no longer appear there; the Makefile's
+  `npx --package=` pins are the source of truth.
+
 ## [0.1.0] — 2026-05-31
 
 Initial release.

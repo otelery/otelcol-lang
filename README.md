@@ -97,18 +97,23 @@ copy. In v0.1.0 the setting has no behaviour.
 ## Build
 
 ```sh
-npm install
-npm run build
+make install
+make build
 # = tsc + copy-schemas
 ```
 
-| script                    | does                                              |
+Common targets (run `make help` for the full list):
+
+| target                    | does                                              |
 | ------------------------- | ------------------------------------------------- |
-| `npm run build`           | `tsc` + copy schemas into `out/` (for unit tests) |
-| `npm run package`         | production esbuild bundle into `dist/`            |
-| `npm run package:vsix`    | produce a `.vsix` (requires `vsce`)               |
+| `make build`              | `tsc` + copy schemas into `out/` (for unit tests) |
+| `make bundle`             | production esbuild bundle into `dist/`            |
+| `make package`            | produce a local `.vsix`                           |
 | `npm run smoke -- <file>` | parse a yaml, print model + diagnostics           |
-| `npm run test`            | full LSP fixture suite                            |
+| `make test-unit`          | full LSP fixture suite (fast)                     |
+| `make test`               | unit + integration tests                          |
+| `make check`              | all quality gates (CI entry-point)                |
+| `make check-versions`     | pinned vs latest npm versions for CLI tools       |
 
 ## Publishing to the VS Code Marketplace
 
@@ -133,10 +138,10 @@ export VSCE_PAT=<token>
 
 ```sh
 make publish              # current package.json version
-# or via npm directly, with optional version bump:
-npm run publish:vsix:patch  # 0.1.0 → 0.1.1
-npm run publish:vsix:minor  # 0.1.0 → 0.2.0
-npm run publish:vsix:major  # 0.1.0 → 1.0.0
+# or bump and publish in one step:
+make publish-patch        # 0.1.0 → 0.1.1
+make publish-minor        # 0.1.0 → 0.2.0
+make publish-major        # 0.1.0 → 1.0.0
 ```
 
 `vsce publish` automatically runs `vscode:prepublish` (sync schemas

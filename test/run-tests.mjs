@@ -2,8 +2,8 @@
 // pipeline validation, find-references, and hover "used in" across every
 // fixture in test/configsets/ plus the production-shape test/complex/.
 //
-// Runs with Node's built-in test runner — no external deps. Build first:
-//   npm run build && npm test
+// Runs with Node's built-in test runner — no external deps. Invoke via:
+//   make test-unit
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
