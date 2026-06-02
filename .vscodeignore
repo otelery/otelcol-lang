@@ -1,4 +1,6 @@
 .vscode
+.vscode-test
+.vscode-test.mjs
 node_modules
 src/**
 scripts/**
@@ -8,11 +10,14 @@ schemas/**
 out/**
 package-lock.json
 tsconfig.json
+tsconfig.test.json
 esbuild.js
+Makefile
+.editorconfig
+.gitignore
+.oxlintrc.json
+.oxfmtrc.json
 **/*.map
 .claude/**
-.regal/**
-.github/**
-docs/**
-website/**
-NOTES
+NEXT-TASKS
+RELEASE_BUCKETS.md

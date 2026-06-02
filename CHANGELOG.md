@@ -7,6 +7,15 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- `.vscodeignore` now excludes dev-only files (`Makefile`,
+  `tsconfig.test.json`, `.vscode-test.mjs`, `.oxlintrc.json`,
+  `.oxfmtrc.json`, `.editorconfig`, `.gitignore`, `NEXT-TASKS`,
+  `RELEASE_BUCKETS.md`) that were previously shipping inside the
+  published `.vsix`. The bundle now contains only the manifest,
+  README, LICENSE, NOTICE, CHANGELOG, grammars, language config,
+  and the compiled `dist/`.
+
 ### Changed
 - Build is now driven from the Makefile. CLI tooling
   (`oxlint`, `oxfmt`, `vsce`, `typescript`, `@vscode/test-cli`) is
