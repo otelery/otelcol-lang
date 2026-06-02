@@ -54,8 +54,10 @@ Initial release.
     OTTL diagnostics.
 - TextMate grammars (`syntaxes/`) for `otelcol` YAML with OTTL
   language injection into OTTL-bearing keys.
-- Schema integration shim (`scripts/sync-schemas.mjs`) pulling schemas
-  from a sibling `otelcol-schemas` checkout at build time.
+- JSON Schemas + per-distribution component indexes vendored under
+  `schemas/` (snapshot from `otelery/otelcol-schemas`); copied next
+  to the compiled server at build time by `scripts/copy-schemas.mjs`
+  so clone-and-build works with no external dependency.
 - Reserved `otelcol.schemaSource` setting for future HTTPS / release-
   tag schema fetching (no effect in v0.1.0).
 - User-facing settings for distribution choice, config-set discovery,

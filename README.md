@@ -81,7 +81,7 @@ Refreshing the vendored schemas (when upstream OTel distributions
 release new versions):
 
 ```sh
-# from a sibling otelcol-schemas checkout that has run `npm run build:all`:
+# from a sibling otelcol-schemas checkout (after running its build):
 cp -r ../otelcol-schemas/schemas/distributions/* schemas/distributions/
 cp -r ../otelcol-schemas/schemas/json/*           schemas/json/
 ```
