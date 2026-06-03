@@ -11,6 +11,41 @@ const OTELCOL_ANCHOR = /^service:\s*(#.*)?\n(?:[ \t]+\S.*\n){0,200}?[ \t]+pipeli
 const DIRECTIVE_RE = /^#\s*otelcol-configset:\s*(.+)$/m;
 const SIDECAR_NAME = "otelcol-configset.yaml";
 const SIBLING_SCAN_LIMIT = 50;
+const MAX_SEARCH_DEPTH = 5; // Prevent runaway recursion
+
+const SERVICE_PIPELINES_RE =
+  /^service:\s*(#.*)?\n(?:[ \t]+\S.*\n){0,200}?[ \t]+pipelines:\s*(#.*)?(?:\n|$)/m;
+
+// Check if a directory or any of its parent directories contains `service.pipelines`.
+function directoryOrParentHasAnchor(dir: string, depth = 0): boolean {
+  if (depth >= MAX_SEARCH_DEPTH) return false;
+
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const ent of entries) {
+      if (!ent.isFile()) continue;
+      if (!/\.(ya?ml)$/i.test(ent.name)) continue;
+
+      try {
+        const fullPath = path.join(dir, ent.name);
+        const fd = fs.openSync(fullPath, "r");
+        const buf = Buffer.alloc(16 * 1024);
+        const n = fs.readSync(fd, buf, 0, buf.length, 0);
+        fs.closeSync(fd);
+        if (SERVICE_PIPELINES_RE.test(buf.subarray(0, n).toString("utf8"))) return true;
+      } catch {
+        continue;
+      }
+    }
+
+    // Recurse to parent if not found
+    const parent = path.dirname(dir);
+    if (parent !== dir) return directoryOrParentHasAnchor(parent, depth + 1);
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
 
 // A file is treated as an otelcol document if any of these hold:
 //   (a) it's an anchor (`service:` + indented `pipelines:`), OR
@@ -18,13 +53,8 @@ const SIBLING_SCAN_LIMIT = 50;
 //   (c) it has an `# otelcol-configset:` first-line directive, OR
 //   (d) a sibling `otelcol-configset.yaml` sidecar exists, OR
 //   (e) a sibling YAML in the same directory carries an `# otelcol-configset:`
-//       directive that names this file. Covers single-section fragments like
-//       `base.yaml` that only declare `receivers:` but are pulled into a set
-//       by a directive in `pipelines.yaml`.
-//   (f) any sibling YAML in the same directory is itself an otelcol anchor
-//       (has `service:` + indented `pipelines:`). Covers the implicit grouping
-//       case: a one-key fragment like `base.yaml`/`exporters.yaml` sitting
-//       next to a `pipelines.yaml` anchor, with no directive or sidecar.
+//       directive that names this file.
+//   (f) any YAML in this or a parent directory contains `service.pipelines`.
 export function looksLikeOtelcol(text: string, fsPath: string | null): boolean {
   const head = text.slice(0, 16 * 1024);
   if (/^#\s*otelcol-configset:/m.test(head)) return true;
@@ -37,15 +67,18 @@ export function looksLikeOtelcol(text: string, fsPath: string | null): boolean {
     if (found.size >= 2) return true;
   }
   if (!fsPath) return false;
+
   const dir = path.dirname(fsPath);
   try {
     if (fs.existsSync(path.join(dir, SIDECAR_NAME))) return true;
   } catch {
     /* ignore */
   }
-  // (e)+(f) Scan sibling YAMLs once: any one that either lists this file
-  // in an `# otelcol-configset:` directive, or is itself an anchor with
-  // `service:` + indented `pipelines:`, is enough to retag.
+
+  // Check new directory or parent based anchor
+  if (directoryOrParentHasAnchor(dir)) return true;
+
+  // Existing sibling scan for directives
   try {
     const self = path.basename(fsPath);
     const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -53,12 +86,12 @@ export function looksLikeOtelcol(text: string, fsPath: string | null): boolean {
     for (const ent of entries) {
       if (scanned >= SIBLING_SCAN_LIMIT) break;
       if (!ent.isFile()) continue;
-      if (ent.name === self) continue;
       if (!/\.(ya?ml)$/i.test(ent.name)) continue;
-      scanned++;
+
       let head2: string;
       try {
-        const fd = fs.openSync(path.join(dir, ent.name), "r");
+        const fullPath = path.join(dir, ent.name);
+        const fd = fs.openSync(fullPath, "r");
         const buf = Buffer.alloc(16 * 1024);
         const n = fs.readSync(fd, buf, 0, buf.length, 0);
         fs.closeSync(fd);
@@ -66,14 +99,17 @@ export function looksLikeOtelcol(text: string, fsPath: string | null): boolean {
       } catch {
         continue;
       }
-      // (e) directive that names this file
-      const dm = DIRECTIVE_RE.exec(head2);
-      if (dm) {
-        const members = dm[1].trim().split(/\s+/);
-        if (members.includes(self)) return true;
+      scanned++;
+
+      // Existing sibling directives
+      if (ent.name !== self) {
+        const dm = DIRECTIVE_RE.exec(head2);
+        if (dm) {
+          const members = dm[1].trim().split(/\s+/);
+          if (members.includes(self)) return true;
+        }
+        if (OTELCOL_ANCHOR.test(head2)) return true;
       }
-      // (f) sibling is an anchor
-      if (OTELCOL_ANCHOR.test(head2)) return true;
     }
   } catch {
     /* ignore */

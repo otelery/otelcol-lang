@@ -82,6 +82,17 @@ async function showReferencesCmd(
 
 export function activate(context: ExtensionContext) {
   context.subscriptions.push(commands.registerCommand("otelcol.showReferences", showReferencesCmd));
+
+  // Watch for changes to all YAML files to trigger retagging.
+  const watcher = workspace.createFileSystemWatcher("**/*.{yaml,yml}");
+  const retag = (uri: Uri) => {
+    const doc = workspace.textDocuments.find((d) => d.uri.toString() === uri.toString());
+    if (doc) void maybeRetagYaml(doc);
+  };
+  context.subscriptions.push(watcher.onDidCreate(retag));
+  context.subscriptions.push(watcher.onDidChange(retag));
+  context.subscriptions.push(watcher);
+
   for (const doc of workspace.textDocuments) void maybeRetagYaml(doc);
   context.subscriptions.push(workspace.onDidOpenTextDocument(maybeRetagYaml));
 
