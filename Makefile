@@ -101,8 +101,8 @@ check-versions: ## Show pinned vs latest npm versions (copy/paste to bump)
 	  fi; \
 	done
 
-clean: ## Remove build artefacts (dist/, out/, .vscode-test cache). Keeps node_modules and committed schemas.
-	rm -rf dist out .vscode-test
+clean: ## Remove build artefacts (dist/, out/, .vscode-test cache, *.vsix). Keeps node_modules and committed schemas.
+	rm -rf dist out .vscode-test *.vsix
 
 distclean: clean ## Full reset: clean + remove node_modules (forces re-install on next build)
 	rm -rf node_modules

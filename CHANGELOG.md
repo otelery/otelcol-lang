@@ -7,7 +7,26 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- New `otelcol.sniffer.trace` setting. When enabled, the sniffer logs
+  per-file YAML → `otelcol` retag decisions (which rule matched, which
+  siblings were scanned, why a file did or did not retag) to the
+  "Otelcol Sniffer" output channel. Useful for diagnosing why a
+  configset fragment is or isn't being detected as a collector config.
+- `test/configsets/blank-line-anchor/` fixture exercising the anchor
+  detection regression below.
+
 ### Fixed
+- Anchor detection no longer rejects files that contain a blank line
+  inside the top-level `service:` block (between e.g. `telemetry:` and
+  `pipelines:`). The previous regex-based check silently broke
+  multi-file configsets — neither the extension-side sniffer nor the
+  server-side `ConfigSetIndex` would classify such a file as an
+  anchor, leaving every sibling fragment ungrouped and every pipeline
+  component reference (`memory_limiter`, etc.) flagged as undefined.
+  Both layers now parse YAML structurally via `yaml.parseDocument` and
+  share a single classifier at `src/common/yaml-classify.ts`, so the
+  rule cannot drift between extension and server again.
 - `.vscodeignore` now excludes dev-only files (`Makefile`,
   `tsconfig.test.json`, `.vscode-test.mjs`, `.oxlintrc.json`,
   `.oxfmtrc.json`, `.editorconfig`, `.gitignore`, `NEXT-TASKS`,

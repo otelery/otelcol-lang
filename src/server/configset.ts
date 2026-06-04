@@ -22,6 +22,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { parse as parseYaml } from "yaml";
+import { classifyYaml, HEAD_BYTES, SIDECAR_NAME } from "../common/yaml-classify";
 
 export interface ConfigSet {
   anchorUri: string;
@@ -38,16 +39,7 @@ interface FileClass {
   directive: string[] | null;
 }
 
-const SIDECAR_NAME = "otelcol-configset.yaml";
 const SKIP_DIRS = new Set(["node_modules", ".git", "out", "dist", ".vscode", "build"]);
-const SCAN_HEAD_BYTES = 16 * 1024;
-
-// Matches `service:` at column 0 followed (within ~40 lines) by `<indent>pipelines:` at
-// the same indent depth. Tolerant — the YAML parser is invoked on hits to confirm.
-const SERVICE_PIPELINES_RE =
-  /^service:\s*(#.*)?\n(?:[ \t]+\S.*\n){0,200}?[ \t]+pipelines:\s*(#.*)?(?:\n|$)/m;
-const FRAGMENT_KEY_RE = /^(receivers|processors|exporters|connectors|extensions):\s*(#.*)?$/m;
-const DIRECTIVE_RE = /^#\s*otelcol-configset:\s*(.+)$/;
 
 export interface ConfigSetIndexOptions {
   autoDiscover: boolean;
@@ -214,8 +206,8 @@ function classifyFile(fsPath: string): FileClass {
   try {
     const fd = fs.openSync(fsPath, "r");
     try {
-      const buf = Buffer.alloc(SCAN_HEAD_BYTES);
-      const n = fs.readSync(fd, buf, 0, SCAN_HEAD_BYTES, 0);
+      const buf = Buffer.alloc(HEAD_BYTES);
+      const n = fs.readSync(fd, buf, 0, HEAD_BYTES, 0);
       head = buf.toString("utf8", 0, n);
     } finally {
       fs.closeSync(fd);
@@ -224,33 +216,14 @@ function classifyFile(fsPath: string): FileClass {
     return { uri, fsPath, hasPipelines: false, hasFragmentKeys: false, directive: null };
   }
 
-  const directive = parseDirective(head);
-  const hasFragmentKeys = FRAGMENT_KEY_RE.test(head);
-
-  let hasPipelines = false;
-  if (SERVICE_PIPELINES_RE.test(head)) {
-    // Confirm with a real parse — regex can match indented service: inside a string etc.
-    try {
-      const parsed = parseYaml(head);
-      hasPipelines = !!(
-        parsed &&
-        typeof parsed === "object" &&
-        parsed.service &&
-        parsed.service.pipelines
-      );
-    } catch {
-      hasPipelines = false;
-    }
-  }
-  return { uri, fsPath, hasPipelines, hasFragmentKeys, directive };
-}
-
-function parseDirective(head: string): string[] | null {
-  const firstNewline = head.indexOf("\n");
-  const firstLine = firstNewline === -1 ? head : head.slice(0, firstNewline);
-  const m = DIRECTIVE_RE.exec(firstLine);
-  if (!m) return null;
-  return m[1].trim().split(/\s+/).filter(Boolean);
+  const c = classifyYaml(head);
+  return {
+    uri,
+    fsPath,
+    hasPipelines: c.hasPipelines,
+    hasFragmentKeys: c.hasFragmentKeys,
+    directive: c.directive,
+  };
 }
 
 function parseSidecar(sidecarPath: string, dir: string): string[] | null {

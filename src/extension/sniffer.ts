@@ -1,82 +1,129 @@
 // File-content sniffer that decides whether a `yaml` document should be
 // retagged as `otelcol`. Lives outside extension.ts so it can be unit-tested
-// without pulling in the `vscode` module.
+// without pulling in the `vscode` module. The core "what does this YAML
+// look like?" question is delegated to `src/common/yaml-classify` so the
+// server side (ConfigSetIndex) and this sniffer can't drift.
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import {
+  classifyYaml,
+  DIRECTIVE_MARKER_RE,
+  HEAD_BYTES,
+  SIDECAR_NAME,
+} from "../common/yaml-classify";
 
-const OTELCOL_KEY_LINE =
-  /^(service|receivers|exporters|processors|connectors|extensions):\s*(#.*)?$/gm;
-const OTELCOL_ANCHOR = /^service:\s*(#.*)?\n(?:[ \t]+\S.*\n){0,200}?[ \t]+pipelines:/m;
-const DIRECTIVE_RE = /^#\s*otelcol-configset:\s*(.+)$/m;
-const SIDECAR_NAME = "otelcol-configset.yaml";
 const SIBLING_SCAN_LIMIT = 50;
 
-// A file is treated as an otelcol document if any of these hold:
-//   (a) it's an anchor (`service:` + indented `pipelines:`), OR
-//   (b) it has two or more of {service, receivers, processors, exporters, connectors, extensions} at column 0, OR
-//   (c) it has an `# otelcol-configset:` first-line directive, OR
-//   (d) a sibling `otelcol-configset.yaml` sidecar exists, OR
-//   (e) a sibling YAML in the same directory carries an `# otelcol-configset:`
-//       directive that names this file. Covers single-section fragments like
-//       `base.yaml` that only declare `receivers:` but are pulled into a set
-//       by a directive in `pipelines.yaml`.
-//   (f) any sibling YAML in the same directory is itself an otelcol anchor
-//       (has `service:` + indented `pipelines:`). Covers the implicit grouping
-//       case: a one-key fragment like `base.yaml`/`exporters.yaml` sitting
-//       next to a `pipelines.yaml` anchor, with no directive or sidecar.
-export function looksLikeOtelcol(text: string, fsPath: string | null): boolean {
-  const head = text.slice(0, 16 * 1024);
-  if (/^#\s*otelcol-configset:/m.test(head)) return true;
-  if (OTELCOL_ANCHOR.test(head)) return true;
-  const found = new Set<string>();
-  OTELCOL_KEY_LINE.lastIndex = 0;
-  let m: RegExpExecArray | null;
-  while ((m = OTELCOL_KEY_LINE.exec(head))) {
-    found.add(m[1]);
-    if (found.size >= 2) return true;
-  }
-  if (!fsPath) return false;
-  const dir = path.dirname(fsPath);
+export type SnifferLogger = (msg: string) => void;
+
+function readHead(p: string): string | null {
   try {
-    if (fs.existsSync(path.join(dir, SIDECAR_NAME))) return true;
+    const fd = fs.openSync(p, "r");
+    const buf = Buffer.alloc(HEAD_BYTES);
+    const n = fs.readSync(fd, buf, 0, buf.length, 0);
+    fs.closeSync(fd);
+    return buf.subarray(0, n).toString("utf8");
   } catch {
-    /* ignore */
+    return null;
   }
-  // (e)+(f) Scan sibling YAMLs once: any one that either lists this file
-  // in an `# otelcol-configset:` directive, or is itself an anchor with
-  // `service:` + indented `pipelines:`, is enough to retag.
+}
+
+// A file is treated as an otelcol document if any of these hold, in order:
+//   1. it carries an `# otelcol-configset:` directive marker, OR
+//   2. it IS the `otelcol-configset.yaml` sidecar (by filename), OR
+//   3. its parsed structure has either `service.pipelines` (anchor) or ≥2
+//      top-level otelcol keys, OR
+//   4. a sibling `otelcol-configset.yaml` sidecar exists in the same dir, OR
+//   5. a sibling YAML in the same dir either names this file via an
+//      `# otelcol-configset:` directive or is itself an anchor.
+//
+// `log` is an optional diagnostic callback. When supplied, the sniffer
+// emits one line per decision point so the caller can trace why a file did
+// or didn't retag. Unit tests omit it (no `vscode` dependency); the
+// extension wires it to an OutputChannel.
+export function looksLikeOtelcol(
+  text: string,
+  fsPath: string | null,
+  log?: SnifferLogger,
+): boolean {
+  const tag = fsPath ?? "<unsaved>";
+  const head = text.length > HEAD_BYTES ? text.slice(0, HEAD_BYTES) : text;
+
+  if (DIRECTIVE_MARKER_RE.test(head)) {
+    log?.(`${tag}: match rule 1 (directive marker comment)`);
+    return true;
+  }
+
+  const selfName = fsPath ? path.basename(fsPath) : null;
+  if (selfName === SIDECAR_NAME) {
+    log?.(`${tag}: match rule 2 (filename is ${SIDECAR_NAME})`);
+    return true;
+  }
+
+  const self = classifyYaml(text);
+  log?.(
+    `${tag}: parsed shape — service.pipelines=${self.hasPipelines}, otelcolKeys=${self.otelcolKeys}`,
+  );
+  if (self.hasPipelines) {
+    log?.(`${tag}: match rule 3a (service.pipelines anchor)`);
+    return true;
+  }
+  if (self.otelcolKeys >= 2) {
+    log?.(`${tag}: match rule 3b (${self.otelcolKeys} top-level otelcol keys)`);
+    return true;
+  }
+  if (self.otelcolKeys === 0) {
+    log?.(`${tag}: no match — zero otelcol top-level keys, skipping sibling scan`);
+    return false;
+  }
+
+  if (!fsPath || !selfName) {
+    log?.(`${tag}: no match — single-key fragment but no fsPath, can't check siblings`);
+    return false;
+  }
+  const dir = path.dirname(fsPath);
+
   try {
-    const self = path.basename(fsPath);
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    let scanned = 0;
-    for (const ent of entries) {
-      if (scanned >= SIBLING_SCAN_LIMIT) break;
-      if (!ent.isFile()) continue;
-      if (ent.name === self) continue;
-      if (!/\.(ya?ml)$/i.test(ent.name)) continue;
-      scanned++;
-      let head2: string;
-      try {
-        const fd = fs.openSync(path.join(dir, ent.name), "r");
-        const buf = Buffer.alloc(16 * 1024);
-        const n = fs.readSync(fd, buf, 0, buf.length, 0);
-        fs.closeSync(fd);
-        head2 = buf.subarray(0, n).toString("utf8");
-      } catch {
-        continue;
-      }
-      // (e) directive that names this file
-      const dm = DIRECTIVE_RE.exec(head2);
-      if (dm) {
-        const members = dm[1].trim().split(/\s+/);
-        if (members.includes(self)) return true;
-      }
-      // (f) sibling is an anchor
-      if (OTELCOL_ANCHOR.test(head2)) return true;
+    if (fs.existsSync(path.join(dir, SIDECAR_NAME))) {
+      log?.(`${tag}: match rule 4 (sibling sidecar ${SIDECAR_NAME} exists in ${dir})`);
+      return true;
     }
   } catch {
     /* ignore */
   }
+
+  try {
+    let scanned = 0;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    log?.(`${tag}: sibling scan in ${dir} — ${entries.length} entries`);
+    for (const ent of entries) {
+      if (scanned >= SIBLING_SCAN_LIMIT) break;
+      if (!ent.isFile()) continue;
+      if (!/\.(ya?ml)$/i.test(ent.name)) continue;
+      if (ent.name === selfName) continue;
+      scanned++;
+
+      const h = readHead(path.join(dir, ent.name));
+      if (h === null) {
+        log?.(`${tag}: sibling ${ent.name} — could not read`);
+        continue;
+      }
+
+      const sib = classifyYaml(h);
+      if (sib.directive && sib.directive.includes(selfName)) {
+        log?.(`${tag}: match rule 5a (sibling ${ent.name} directive names ${selfName})`);
+        return true;
+      }
+      if (sib.hasPipelines) {
+        log?.(`${tag}: match rule 5b (sibling ${ent.name} is anchor)`);
+        return true;
+      }
+    }
+    log?.(`${tag}: no match — scanned ${scanned} sibling(s), none qualified`);
+  } catch (err) {
+    log?.(`${tag}: sibling scan threw — ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   return false;
 }
