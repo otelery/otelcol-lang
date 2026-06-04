@@ -4,3 +4,15 @@ out/
 .DS_Store
 dist/
 .vscode-test/
+
+# .vscode/ — allowlist only the shared workflow files. Everything else is
+# ignored by default, which keeps potentially sensitive files out of the
+# repo: settings.json (API keys, tokens, license keys), sftp.json /
+# ftp-sync.json (plaintext passwords), mcp.json (MCP auth tokens),
+# *.code-workspace (personal absolute paths), extension caches, etc.
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+# Local History extension snapshots — can resurrect previously deleted secrets.
+.history/
