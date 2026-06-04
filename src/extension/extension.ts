@@ -4,6 +4,7 @@ import {
   ExtensionContext,
   languages,
   Location,
+  OutputChannel,
   Position,
   Range,
   Selection,
@@ -22,12 +23,26 @@ import {
 import { looksLikeOtelcol } from "./sniffer";
 
 let client: LanguageClient | undefined;
+let snifferLog: OutputChannel | undefined;
+
+// Set `otelcol.sniffer.trace` to true in settings to see per-file decisions in
+// the "Otelcol Sniffer" output channel. Cheap when disabled — no work happens
+// because the logger callback is undefined.
+function snifferTraceEnabled(): boolean {
+  return workspace.getConfiguration("otelcol").get<boolean>("sniffer.trace", false);
+}
 
 async function maybeRetagYaml(doc: TextDocument): Promise<void> {
   if (doc.languageId !== "yaml") return;
   if (doc.uri.scheme !== "file") return;
   const fsPath = doc.uri.fsPath;
-  if (!looksLikeOtelcol(doc.getText(), fsPath)) return;
+  const trace = snifferTraceEnabled() ? (m: string) => snifferLog?.appendLine(m) : undefined;
+  trace?.(`evaluate ${fsPath} (current languageId=yaml)`);
+  if (!looksLikeOtelcol(doc.getText(), fsPath, trace)) {
+    trace?.(`${fsPath}: stays as yaml`);
+    return;
+  }
+  trace?.(`${fsPath}: retag → otelcol`);
   await languages.setTextDocumentLanguage(doc, "otelcol");
 }
 
@@ -81,6 +96,8 @@ async function showReferencesCmd(
 }
 
 export function activate(context: ExtensionContext) {
+  snifferLog = window.createOutputChannel("Otelcol Sniffer");
+  context.subscriptions.push(snifferLog);
   context.subscriptions.push(commands.registerCommand("otelcol.showReferences", showReferencesCmd));
 
   // Watch for changes to all YAML files to trigger retagging.

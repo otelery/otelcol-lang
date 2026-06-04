@@ -7,7 +7,7 @@
 
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -130,6 +130,27 @@ describe("ConfigSetIndex discovery", () => {
     const sets = discoverSets("test/configsets/duplicates").allSets();
     assert.equal(sets.length, 1);
     assert.equal(sets[0].members.length, 3);
+  });
+
+  // Regression: an anchor with a blank line inside the `service:` block
+  // (between `telemetry:` and `pipelines:`) used to be rejected by the
+  // regex-based detector. The fragments alongside it ended up standalone,
+  // so pipeline references like `memory_limiter` showed up as "not
+  // defined". The shared classifier parses YAML structurally and tolerates
+  // blank lines. Fixture: test/configsets/blank-line-anchor/.
+  it("blank-line-anchor: 3 fragments + anchor form one auto-discovered set", () => {
+    const sets = discoverSets("test/configsets/blank-line-anchor").allSets();
+    assert.equal(sets.length, 1, `expected 1 set, got ${sets.length}`);
+    const [s] = sets;
+    assert.equal(s.explicit, null, "should be auto-discovered (no sidecar, no directive)");
+    assert.equal(s.members.length, 4, `expected 4 members, got ${s.members.length}`);
+    assert.ok(s.anchorUri.endsWith("/pipelines.yaml"), `anchor should be pipelines.yaml, got ${s.anchorUri}`);
+    for (const name of ["receivers.yaml", "processors.yaml", "exporters.yaml"]) {
+      assert.ok(
+        s.members.some((m) => m.endsWith("/" + name)),
+        `set missing member ${name}`,
+      );
+    }
   });
 
   it("unused: anchor + one fragment", () => {
@@ -780,6 +801,75 @@ describe("looksLikeOtelcol sniffer", () => {
   it("fixture: test/complex/base.yaml → true via (b)", () => {
     const p = resolve(root, "test/complex/base.yaml");
     assert.equal(looksLikeOtelcol(readFileSync(p, "utf8"), p), true);
+  });
+
+  // Sidecar marker recognised by filename — the sidecar file itself contains
+  // only `members:`, so the parsed-structure rule alone can't catch it.
+  it("the `otelcol-configset.yaml` sidecar file itself is recognised by filename", () => {
+    fresh();
+    const f = mk("otelcol-configset.yaml", "members:\n  - base.yaml\n  - pipelines.yaml\n");
+    assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
+  });
+  it("fixture: test/configsets/sidecar/otelcol-configset.yaml → true via filename", () => {
+    const p = resolve(root, "test/configsets/sidecar/otelcol-configset.yaml");
+    assert.equal(looksLikeOtelcol(readFileSync(p, "utf8"), p), true);
+  });
+
+  // Regression for the blank-line anchor bug: an anchor file with a blank
+  // line inside its `service:` block (between `telemetry:` and `pipelines:`)
+  // used to be rejected by the regex detector, taking all its sibling
+  // fragments down with it. Fixture: test/configsets/blank-line-anchor/.
+  it("fixture: blank-line-anchor/pipelines.yaml retags despite blank line before `pipelines:`", () => {
+    const p = resolve(root, "test/configsets/blank-line-anchor/pipelines.yaml");
+    assert.equal(looksLikeOtelcol(readFileSync(p, "utf8"), p), true);
+  });
+  for (const f of ["receivers.yaml", "processors.yaml", "exporters.yaml"]) {
+    it(`fixture: blank-line-anchor/${f} retags via sibling-anchor`, () => {
+      const p = resolve(root, "test/configsets/blank-line-anchor", f);
+      assert.equal(looksLikeOtelcol(readFileSync(p, "utf8"), p), true);
+    });
+  }
+
+  // Tolerance: parseDocument returns a usable AST even when the input has
+  // syntax errors. A clean anchor block at the top followed by garbage still
+  // classifies correctly — preserves the regex-era tolerance.
+  it("tolerates malformed YAML when the anchor block at the top is valid", () => {
+    fresh();
+    const f = mk(
+      "x.yaml",
+      "service:\n  pipelines:\n    traces:\n      receivers: [otlp]\n" +
+        "broken: [unclosed list\n  not: indented properly\n",
+    );
+    assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
+  });
+  it("totally unparseable garbage returns false", () => {
+    fresh();
+    const f = mk("x.yaml", "\t\t\t::: [[[ {{{ \n");
+    assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), false);
+  });
+  it("string value containing `service:` and `pipelines:` does NOT false-positive", () => {
+    // The old regex matched on raw text and could be fooled by these inside a
+    // scalar. parseDocument correctly sees this as one top-level `note:` key.
+    fresh();
+    const f = mk(
+      "x.yaml",
+      'note: |\n  service:\n    pipelines:\n      traces: [otlp]\n',
+    );
+    assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), false);
+  });
+
+  // Negative regression for the dropped parent-directory walk: a fragment
+  // sitting in a SUBDIRECTORY of an anchor must NOT auto-detect. This was
+  // intentional behaviour in fc8d961 but caused too many false positives
+  // in unrelated repos. Same-dir scope only now.
+  it("fragment in a SUBDIRECTORY of an anchor is NOT retagged (parent-walk removed)", () => {
+    fresh();
+    const subDir = join(tmp, "exporters");
+    mkdirSync(subDir);
+    mk("pipelines.yaml", "service:\n  pipelines:\n    traces: { receivers: [otlp] }\n");
+    const fragmentPath = join(subDir, "fragment.yaml");
+    writeFileSync(fragmentPath, "exporters:\n  debug:\n");
+    assert.equal(looksLikeOtelcol(readFileSync(fragmentPath, "utf8"), fragmentPath), false);
   });
 
   // Cleanup the last tmp dir.
