@@ -144,7 +144,10 @@ describe("ConfigSetIndex discovery", () => {
     const [s] = sets;
     assert.equal(s.explicit, null, "should be auto-discovered (no sidecar, no directive)");
     assert.equal(s.members.length, 4, `expected 4 members, got ${s.members.length}`);
-    assert.ok(s.anchorUri.endsWith("/pipelines.yaml"), `anchor should be pipelines.yaml, got ${s.anchorUri}`);
+    assert.ok(
+      s.anchorUri.endsWith("/pipelines.yaml"),
+      `anchor should be pipelines.yaml, got ${s.anchorUri}`,
+    );
     for (const name of ["receivers.yaml", "processors.yaml", "exporters.yaml"]) {
       assert.ok(
         s.members.some((m) => m.endsWith("/" + name)),
@@ -851,10 +854,7 @@ describe("looksLikeOtelcol sniffer", () => {
     // The old regex matched on raw text and could be fooled by these inside a
     // scalar. parseDocument correctly sees this as one top-level `note:` key.
     fresh();
-    const f = mk(
-      "x.yaml",
-      'note: |\n  service:\n    pipelines:\n      traces: [otlp]\n',
-    );
+    const f = mk("x.yaml", "note: |\n  service:\n    pipelines:\n      traces: [otlp]\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), false);
   });
 
