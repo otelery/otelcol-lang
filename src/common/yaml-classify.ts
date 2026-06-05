@@ -90,9 +90,7 @@ export function classifyYaml(text: string): YamlClassification {
   }
   const service = obj.service;
   const hasPipelines =
-    !!service &&
-    typeof service === "object" &&
-    "pipelines" in (service as Record<string, unknown>);
+    !!service && typeof service === "object" && "pipelines" in (service as Record<string, unknown>);
 
   return { hasPipelines, otelcolKeys, hasFragmentKeys, directive };
 }
