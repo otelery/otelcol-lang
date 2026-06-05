@@ -42,7 +42,7 @@ test: test-unit test-integration ## Run both test dimensions
 
 test-unit: build ## LSP modules in isolation (node --test, fast)
 	node scripts/check-runtime-paths.mjs
-	node --test test/run-tests.mjs test/unit-yaml-model.test.mjs test/unit-completion.test.mjs test/unit-hover.test.mjs
+	node --test test/run-tests.mjs test/unit-yaml-model.test.mjs test/unit-completion.test.mjs test/unit-hover.test.mjs test/unit-grammar.test.mjs
 
 test-integration: bundle ## Integration tests in real VS Code Extension Host (~30s)
 	$(TSC) -p tsconfig.test.json
