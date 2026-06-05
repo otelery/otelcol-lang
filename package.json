@@ -32,7 +32,9 @@
     "@types/vscode": "^1.85.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
-    "esbuild": "^0.28.0"
+    "esbuild": "^0.28.0",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2"
   },
   "contributes": {
     "languages": [
@@ -71,6 +73,13 @@
         "language": "ottl",
         "scopeName": "source.ottl",
         "path": "./syntaxes/ottl.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.yaml.otelcol.substitution",
+        "path": "./syntaxes/otelcol-substitution.injection.json",
+        "injectTo": [
+          "source.yaml.otelcol"
+        ]
       }
     ],
     "semanticTokenScopes": [
@@ -98,6 +107,60 @@
     "configurationDefaults": {
       "[otelcol]": {
         "editor.semanticHighlighting.enabled": true
+      },
+      "editor.tokenColorCustomizations": {
+        "textMateRules": [
+          {
+            "scope": "meta.variable.substitution.otelcol support.function.builtin.otelcol",
+            "settings": {
+              "foreground": "#C678DD",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "scope": "meta.variable.substitution.otelcol variable.other.otelcol",
+            "settings": {
+              "foreground": "#E06C75"
+            }
+          },
+          {
+            "scope": "meta.variable.substitution.otelcol keyword.operator.default.otelcol",
+            "settings": {
+              "foreground": "#56B6C2"
+            }
+          },
+          {
+            "scope": "meta.variable.substitution.otelcol string.unquoted.default.otelcol",
+            "settings": {
+              "foreground": "#98C379"
+            }
+          },
+          {
+            "scope": "meta.variable.substitution.otelcol punctuation.definition.variable.begin.otelcol",
+            "settings": {
+              "foreground": "#ABB2BF"
+            }
+          },
+          {
+            "scope": "meta.variable.substitution.otelcol punctuation.definition.variable.end.otelcol",
+            "settings": {
+              "foreground": "#ABB2BF"
+            }
+          },
+          {
+            "scope": "meta.variable.substitution.otelcol punctuation.separator.key-value.otelcol",
+            "settings": {
+              "foreground": "#ABB2BF"
+            }
+          },
+          {
+            "scope": "invalid.deprecated.otelcol",
+            "settings": {
+              "foreground": "#5C6370",
+              "fontStyle": "strikethrough"
+            }
+          }
+        ]
       },
       "editor.semanticTokenColorCustomizations": {
         "enabled": true,

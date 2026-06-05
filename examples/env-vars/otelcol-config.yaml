@@ -1,0 +1,47 @@
+# Showcases the confmap substitution forms supported by the OTel Collector.
+# See: https://opentelemetry.io/docs/collector/configuration/#environment-variables
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        # Quote values that contain a literal `:` between two substitutions.
+        # The YAML grammar (used as the highlighter's base) interprets the
+        # `:` as part of a plain-scalar context, which can make themes paint
+        # the second `${...}` with their generic "string" colour. Wrapping
+        # the value in double quotes keeps the whole expression in one
+        # consistent quoted-string scope so each substitution highlights
+        # identically.
+        endpoint: "${env:OTLP_GRPC_HOST}:${env:OTLP_GRPC_PORT}"
+      http:
+        # With default value.
+        endpoint: "${env:OTLP_HTTP_HOST:-0.0.0.0}:${env:OTLP_HTTP_PORT:-4318}"
+
+processors:
+  attributes:
+    actions:
+      - key: deployment.environment
+        action: insert
+        value: "${env:DEPLOY_ENV:-development}"
+
+exporters:
+  otlphttp:
+    endpoint: "${env:BACKEND_URL}"
+    headers:
+      # The file: provider reads a secret from disk at startup.
+      authorization: "Bearer ${file:/etc/otel/token}"
+
+extensions:
+  # Legacy bare ${VAR} form — still accepted by the Collector but deprecated.
+  # The grammar marks it with the 'invalid.deprecated' scope so themes can
+  # render it visibly different.
+  bearertokenauth:
+    token: ${LEGACY_TOKEN}
+
+service:
+  extensions: [bearertokenauth]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [attributes]
+      exporters: [otlphttp]

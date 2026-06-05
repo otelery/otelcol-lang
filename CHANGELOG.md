@@ -8,6 +8,27 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Confmap substitution highlighting for `${env:VAR}`,
+  `${env:VAR:-default}` and `${file:path}` expressions in collector
+  YAML, plus the legacy bare `${VAR}` form rendered as deprecated
+  (strikethrough). Implemented as a TextMate injection grammar
+  (`syntaxes/otelcol-substitution.injection.json`) so it fires inside
+  both quoted and unquoted YAML scalars without disturbing the host
+  grammar. Default token colours ship under
+  `editor.tokenColorCustomizations` using descendant selectors, so the
+  injection paints consistently even when YAML pushes its
+  plain-scalar string scope onto the stack.
+- `examples/env-vars/otelcol-config.yaml` exercises every supported
+  substitution form (env, env-with-default, file, legacy) for quick
+  visual verification in the dev host.
+- Tokenizer regression suite `test/unit-grammar.test.mjs` runs through
+  `vscode-textmate` + `vscode-oniguruma` to assert scope stacks across
+  the full `otelcol-yaml` grammar — confmap substitutions, OTTL block
+  sequences (`statements:`, `conditions:`, …), inline `condition:` /
+  `statement:` scalars, embedded OTTL primitives (editor & converter
+  functions, enums, paths, comparison/logical/where keywords, numeric
+  literals, booleans, nil, comments) and the env-var injection
+  composing inside embedded OTTL. Wired into `make test-unit`.
 - New `otelcol.sniffer.trace` setting. When enabled, the sniffer logs
   per-file YAML → `otelcol` retag decisions (which rule matched, which
   siblings were scanned, why a file did or did not retag) to the
