@@ -1,0 +1,36 @@
+name = "OpenTelemetry Collector"
+grammar = "yaml"
+path_suffixes = [
+  # Zed matches these as path tails. Covers explicit naming conventions plus
+  # the sniffer's rule-2 sidecar filename. For ambiguous YAML (e.g.
+  # `examples/simple/otelcol-config.yaml` shape but a generic name),
+  # users add a `file_types` block to .zed/settings.json — see README — or
+  # enable server-side sniffing via `otelcol.attachToYaml`.
+  "otelcol.yaml",
+  "otelcol.yml",
+  "otelcol-configset.yaml",
+  "otelcol-config.yaml",
+  "otelcol-config.yml",
+]
+first_line_pattern = "^#\\s*(otelcol|opentelemetry-collector|otelcol-configset:)\\b"
+line_comments = ["# "]
+autoclose_before = ":,]}"
+
+[[brackets]]
+start = "{"
+end = "}"
+close = true
+newline = true
+
+[[brackets]]
+start = "["
+end = "]"
+close = true
+newline = true
+
+[[brackets]]
+start = "\""
+end = "\""
+close = true
+newline = false
+not_in = ["string"]
