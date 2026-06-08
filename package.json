@@ -13,28 +13,36 @@
     "url": "https://github.com/otelery/otelcol-lang"
   },
   "publisher": "otelery",
+  "bin": {
+    "otelcol-language-server": "./bin/otelcol-language-server.js"
+  },
   "main": "./dist/extension/extension.js",
   "scripts": {
     "watch": "node esbuild.js --watch",
     "compile": "node esbuild.js",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "smoke:stdio": "node scripts/smoke-stdio.mjs"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver": "^9.0.1",
-    "vscode-languageserver-textdocument": "^1.0.11",
-    "vscode-uri": "^3.0.8",
-    "yaml": "^2.4.5"
+    "vscode-languageclient": "^10.0.0",
+    "vscode-languageserver": "^10.0.0",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-uri": "^3.1.0",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^20.0.0",
-    "@types/vscode": "^1.85.0",
+    "@types/node": "^25.0.0",
+    "@types/vscode": "^1.91.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "esbuild": "^0.28.0",
     "vscode-oniguruma": "^2.0.1",
     "vscode-textmate": "^9.3.2"
+  },
+  "overrides": {
+    "diff": "^8.0.3",
+    "serialize-javascript": "^7.0.5"
   },
   "contributes": {
     "languages": [
@@ -46,7 +54,7 @@
         ],
         "extensions": [],
         "firstLine": "^#\\s*(otelcol|opentelemetry-collector)\\b",
-        "configuration": "./language-configuration.json"
+        "configuration": "./editors/vscode/language-configuration.json"
       },
       {
         "id": "ottl",
@@ -57,7 +65,7 @@
         "extensions": [
           ".ottl"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./editors/vscode/language-configuration.json"
       }
     ],
     "grammars": [
@@ -242,6 +250,11 @@
           "type": "boolean",
           "default": false,
           "description": "Log per-file YAML → otelcol retag decisions to the 'Otelcol Sniffer' output channel. Useful for diagnosing why a configset fragment is or isn't being detected."
+        },
+        "otelcol.attachToYaml": {
+          "type": "boolean",
+          "default": false,
+          "description": "Server-side sniffer fallback. When true, the LSP runs the same content-based detection that VSCode uses client-side on any 'yaml' document the client sends, and emits diagnostics/semantic-tokens only for matches. Off by default in VSCode (the extension's sniffer already retags). Recommended for Zed and other editors that can't retag documents based on content."
         }
       }
     }
@@ -251,7 +264,7 @@
     "onLanguage:yaml"
   ],
   "engines": {
-    "node": ">=18",
-    "vscode": "^1.85.0"
+    "node": ">=22",
+    "vscode": "^1.91.0"
   }
 }

@@ -41,6 +41,7 @@ import {
   SEMTOK_MODIFIERS,
   SEMTOK_TYPES,
 } from "./semantic-tokens";
+import { looksLikeOtelcol } from "../common/yaml-sniff";
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
@@ -53,7 +54,21 @@ let settings = {
   distribution: "otelcol-contrib",
   autoDiscover: true,
   maxFilesScanned: 2000,
+  // When true, the server runs the shared YAML sniffer on incoming
+  // `languageId: "yaml"` documents and only treats matching ones as
+  // otelcol. Off by default — VSCode does client-side retagging instead.
+  // Zed users opt in by setting
+  //   "lsp": { "otelcol": { "settings": { "attachToYaml": true } } }
+  // in their .zed/settings.json, since Zed has no client-side hook.
+  attachToYaml: false,
 };
+// URIs the server has accepted as otelcol via the server-side sniffer.
+// Populated only when `settings.attachToYaml` is true. Tracked so
+// semantic-tokens and references handlers (which see only the
+// `vscode-languageserver` document objects, no languageId hint) can
+// distinguish "yaml the client opened for some other reason" from
+// "yaml we sniffed and adopted".
+const adoptedYamlUris = new Set<string>();
 let ottl: OttlForwarder | null = null;
 const configSetIndex = new ConfigSetIndex({ autoDiscover: true, maxFilesScanned: 2000 });
 
@@ -134,6 +149,7 @@ function applySettings(cfg: any) {
     distribution: newDistribution,
     autoDiscover: cfg?.configSets?.autoDiscover ?? true,
     maxFilesScanned: cfg?.configSets?.maxFilesScanned ?? 2000,
+    attachToYaml: !!cfg?.attachToYaml,
   };
   if (newDistribution) {
     componentsIndex = loadComponents(__dirname, newDistribution);
@@ -160,13 +176,34 @@ const validateTimers = new Map<string, NodeJS.Timeout>();
 const VALIDATE_DEBOUNCE_MS = 150;
 
 documents.onDidChangeContent((e) => {
+  if (!shouldServeDocument(e.document)) return;
   invalidateSetFor(e.document.uri);
   scheduleValidate(e.document.uri);
 });
 documents.onDidOpen((e) => {
+  if (!shouldServeDocument(e.document)) return;
   ensureRootFor(e.document.uri);
   validate(e.document);
 });
+
+// Server-side equivalent of the VSCode sniffer. When the client binds this
+// server to plain `yaml` (Zed via `attachToYaml`), filter out non-otelcol
+// docs so we don't pollute the user's diagnostics with collector errors on
+// every random yaml file.
+//
+// Returns true for any document the server should treat as otelcol. Docs
+// already classed as `otelcol` by the client (the VSCode path) pass
+// through unconditionally so the existing behaviour is preserved.
+function shouldServeDocument(doc: TextDocument): boolean {
+  if (doc.languageId === "otelcol") return true;
+  if (doc.languageId !== "yaml") return false;
+  if (!settings.attachToYaml) return false;
+  if (adoptedYamlUris.has(doc.uri)) return true;
+  const fsPath = doc.uri.startsWith("file://") ? uriToFs(doc.uri) : null;
+  if (!looksLikeOtelcol(doc.getText(), fsPath)) return false;
+  adoptedYamlUris.add(doc.uri);
+  return true;
+}
 
 // When the client opens a file outside any known workspace root, fall back to
 // using the file's enclosing directory (walking up to the nearest dir that

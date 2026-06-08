@@ -1,0 +1,50 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "OpenTelemetry Collector confmap substitutions",
+  "scopeName": "source.yaml.otelcol.substitution",
+  "injectionSelector": "L:source.yaml.otelcol",
+  "patterns": [
+    { "include": "#scheme-substitution" },
+    { "include": "#legacy-substitution" }
+  ],
+  "repository": {
+    "scheme-substitution": {
+      "comment": "OTel Collector confmap providers currently shipped in mainstream distributions: ${env:VAR}[:-default] and ${file:path}.",
+      "begin": "(\\$\\{)(env|file)(:)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.variable.begin.otelcol" },
+        "2": { "name": "support.function.builtin.otelcol" },
+        "3": { "name": "punctuation.separator.key-value.otelcol" }
+      },
+      "end": "(\\})",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.variable.end.otelcol" }
+      },
+      "name": "meta.variable.substitution.otelcol",
+      "patterns": [
+        {
+          "comment": "Default-value clause: :-<literal>",
+          "match": "(:-)([^}]*)",
+          "captures": {
+            "1": { "name": "keyword.operator.default.otelcol" },
+            "2": { "name": "string.unquoted.default.otelcol" }
+          }
+        },
+        {
+          "comment": "Variable name or URI body up to the default operator or closing brace.",
+          "match": "[^}:]+",
+          "name": "variable.other.otelcol"
+        }
+      ]
+    },
+    "legacy-substitution": {
+      "comment": "Legacy bare form ${VAR} — deprecated by the OTel Collector but still accepted; flag visibly.",
+      "match": "(\\$\\{)([A-Za-z_][A-Za-z0-9_]*)(\\})",
+      "captures": {
+        "1": { "name": "punctuation.definition.variable.begin.otelcol" },
+        "2": { "name": "invalid.deprecated.otelcol" },
+        "3": { "name": "punctuation.definition.variable.end.otelcol" }
+      }
+    }
+  }
+}

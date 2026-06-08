@@ -1,10 +1,26 @@
 # `otelcol-lang`
 
 Editor tooling for [OpenTelemetry Collector][otelcol] configurations:
-a VS Code extension with syntax highlighting, completion, hover docs,
-diagnostics, and embedded OTTL support.
+syntax highlighting, completion, hover docs, diagnostics, cross-file
+references, and embedded OTTL support — delivered through a shared
+LSP server plus one integration per supported editor.
 
 [otelcol]: https://github.com/open-telemetry/opentelemetry-collector
+
+## Supported editors
+
+| Editor    | Status   | Integration                                          | Per-editor README                                    |
+| --------- | -------- | ---------------------------------------------------- | ---------------------------------------------------- |
+| VS Code   | original | Bundled extension (TextMate grammar + LSP)           | [`editors/vscode/`](editors/vscode/README.md)        |
+| Zed       | v0.1     | Rust → WASM extension; LSP via PATH                  | [`editors/zed/`](editors/zed/README.md)              |
+| Helix     | v0.1     | `languages.toml` + tree-sitter queries; LSP via PATH | [`editors/helix/`](editors/helix/README.md)          |
+| JetBrains | v0.1     | LSP4IJ-based plugin; TextMate grammar bundle         | [`editors/jetbrains/`](editors/jetbrains/README.md)  |
+| Neovim    | sketch   | Notes only — no shipped integration yet              | [`editors/neovim/NOTES.md`](editors/neovim/NOTES.md) |
+
+The LSP server (`src/server/`), shared YAML classifier (`src/common/`),
+TextMate grammars (`syntaxes/`), and test fixtures (`test/`) live at
+the repo root and are reused across every editor. Cross-editor design
+notes: [`editors/SHARED.md`](editors/SHARED.md).
 
 ## Schemas
 
@@ -25,8 +41,9 @@ The current bundle covers seven distributions: `otelcol`,
 
 ## Installation
 
-Install the latest `vscode-otelcol-<version>.vsix` from the project's
-GitHub Releases, or via the VS Code Marketplace once published.
+Per editor, install the artefact produced by `make package-<editor>`
+(see [Build & test as a local package](#build--test-as-a-local-package-per-editor)
+below), or grab a pre-built one from the project's GitHub Releases.
 
 ## Usage
 
@@ -50,22 +67,30 @@ receivers:
 
 ```
 otelcol-lang/
-├── package.json                              VS Code extension manifest
-├── language-configuration.json
+├── package.json                              VS Code extension manifest + npm bin for the LSP server
 ├── syntaxes/
-│   ├── otelcol-yaml.tmLanguage.json          YAML + OTTL injection
+│   ├── otelcol-yaml.tmLanguage.json          YAML + OTTL injection (VS Code + JetBrains)
 │   └── ottl.tmLanguage.json                  vendored from ottl-lang
+├── src/
+│   ├── common/                               shared YAML classifier (sniffer)
+│   └── server/                               LSP server (transport-agnostic)
+├── bin/
+│   └── otelcol-language-server                stdio shim used by Zed/Helix/JetBrains/Neovim
+├── editors/
+│   ├── vscode/                               VS Code extension (client + tests + language-configuration)
+│   ├── zed/                                  Rust → WASM extension + language config + queries
+│   ├── helix/                                languages.toml + runtime/queries/
+│   ├── jetbrains/                            Gradle/Kotlin LSP4IJ plugin
+│   └── neovim/                               notes (no shipped integration)
+├── schemas/                                  vendored from otelcol-schemas
+│   ├── distributions/                         per-distribution component metadata index
+│   └── json/                                  publishable JSON Schemas + catalog
 ├── scripts/
 │   ├── copy-schemas.mjs                      copies schemas into out/ or dist/ at build time
 │   ├── check-runtime-paths.mjs               build-time sanity check
 │   ├── smoke.mjs                             headless validator
-│   └── hover-probe.mjs                       hover diagnostic tool
-├── schemas/                                  vendored from otelcol-schemas; committed
-│   ├── distributions/                         per-distribution component metadata index
-│   └── json/                                  publishable JSON Schemas + catalog
-└── src/
-    ├── extension/extension.ts                VS Code client
-    └── server/                               LSP
+│   └── smoke-stdio.mjs                       end-to-end stdio handshake smoke
+└── test/                                     shared fixture workspaces (simple/, complex/, configsets/)
 ```
 
 ## Schema source
@@ -96,24 +121,138 @@ copy. In v0.1.0 the setting has no behaviour.
 
 ## Build
 
+One-time setup:
+
 ```sh
-make install
-make build
-# = tsc + copy-schemas
+make install        # npm install
+make build          # tsc + copy schemas into out/ (powers unit tests)
+make bundle         # esbuild → dist/extension + dist/server + dist/schemas
 ```
 
-Common targets (run `make help` for the full list):
+Common shared targets (run `make help` for the full list):
 
-| target                    | does                                              |
-| ------------------------- | ------------------------------------------------- |
-| `make build`              | `tsc` + copy schemas into `out/` (for unit tests) |
-| `make bundle`             | production esbuild bundle into `dist/`            |
-| `make package`            | produce a local `.vsix`                           |
-| `npm run smoke -- <file>` | parse a yaml, print model + diagnostics           |
-| `make test-unit`          | full LSP fixture suite (fast)                     |
-| `make test`               | unit + integration tests                          |
-| `make check`              | all quality gates (CI entry-point)                |
-| `make check-versions`     | pinned vs latest npm versions for CLI tools       |
+| target                    | does                                                     |
+| ------------------------- | -------------------------------------------------------- |
+| `make build`              | `tsc` + copy schemas into `out/` (for unit tests)        |
+| `make bundle`             | production esbuild bundle into `dist/`                   |
+| `make test-unit`          | LSP modules in isolation (node --test, fast)             |
+| `make test-stdio`         | end-to-end LSP handshake over stdio (`bin/` smoke)       |
+| `make test-editors`       | every per-editor suite + the stdio smoke                 |
+| `make test`               | `test-unit` + `test-editors`                             |
+| `make check`              | all quality gates (CI entry-point)                       |
+| `make package`            | build every editor's distributable into `dist/packages/` |
+| `npm run smoke -- <file>` | parse a yaml, print model + diagnostics                  |
+
+### Per-editor build / test / package
+
+| Editor    | Build                  | Test                                              | Package (writes to `dist/packages/`)                |
+| --------- | ---------------------- | ------------------------------------------------- | --------------------------------------------------- |
+| VS Code   | `make bundle`          | `make test-vscode`                                | `make package-vscode` → `.vsix`                     |
+| Zed       | `make build-zed`       | `make test-zed`                                   | `make package-zed` → `.tar.gz` (WASM + config)      |
+| Helix     | (config only)          | `make test-helix` / `make test-helix-integration` | `make package-helix` → `.tar.gz` (config + queries) |
+| JetBrains | `make build-jetbrains` | `make test-jetbrains`                             | `make package-jetbrains` → plugin `.zip`            |
+
+`make package` runs all four package targets at once.
+
+## Build & test as a local package per editor
+
+Every editor can be installed from the artefacts in `dist/packages/`
+without touching the Marketplace, JetBrains repository, or any other
+remote registry. The pattern is always: `make package-<editor>` →
+install the resulting file into the editor.
+
+### VS Code
+
+```sh
+make package-vscode
+# → dist/packages/vscode-otelcol-<version>.vsix
+
+# install into your local VS Code:
+code --install-extension dist/packages/vscode-otelcol-*.vsix
+# or: Extensions view → "…" menu → "Install from VSIX…"
+```
+
+To iterate without packaging, run the extension straight from the
+checkout (no install needed):
+
+```sh
+make bundle
+code --extensionDevelopmentPath="$(pwd)" examples/
+```
+
+### Zed
+
+Zed's "Install Dev Extension" loads the source directory; it does not
+consume a packaged archive. Use it for iteration:
+
+1. Open Zed → `Extensions` (`cmd/ctrl-shift-x`) →
+   `Install Dev Extension` → pick `editors/zed/`.
+2. Zed compiles the Rust crate to WASM and registers the language.
+
+For a reproducible artefact (release WASM + config bundle) suitable
+for sharing or attaching to a release:
+
+```sh
+make package-zed
+# → dist/packages/otelcol-zed-<version>.tar.gz
+```
+
+The Zed extension shells out to `otelcol-language-server` on `PATH`,
+so first install the server locally:
+
+```sh
+npm pack                                  # → vscode-otelcol-<version>.tgz
+npm i -g ./vscode-otelcol-*.tgz           # exposes otelcol-language-server
+which otelcol-language-server
+```
+
+### Helix
+
+Helix has no plugin format — the "package" is a tarball of config and
+queries that the user extracts into `~/.config/helix/`:
+
+```sh
+make package-helix
+# → dist/packages/otelcol-helix-<version>.tar.gz
+
+# install:
+tar xzf dist/packages/otelcol-helix-*.tar.gz -C ~/.config/helix/
+```
+
+The server also needs to be on `PATH` (same `npm i -g ./vscode-otelcol-*.tgz`
+step as for Zed). See [`editors/helix/README.md`](editors/helix/README.md)
+for the symlink-based dev variant that lets query edits flow through
+without re-packaging.
+
+### JetBrains
+
+```sh
+make package-jetbrains
+# → dist/packages/<plugin-id>-<version>.zip
+```
+
+Install in the IDE: `Settings → Plugins → ⚙ → Install Plugin from
+Disk…` → pick the `.zip`. The plugin depends on **LSP4IJ**, which
+the IDE will offer to install on first launch if it isn't already
+present. The `otelcol-language-server` binary must be on `PATH` (same
+`npm i -g ./vscode-otelcol-*.tgz` step as above), or pass the path via
+`-Dotelcol.lsp.command=…`.
+
+For iteration without packaging:
+
+```sh
+cd editors/jetbrains
+./gradlew runIde     # boots a sandbox IDE with the plugin loaded
+```
+
+### Sanity check across editors
+
+After installing in any editor, the same smoke applies: open
+`examples/simple/otelcol-config.yaml` (or copy it to
+`otelcol-config.otelcol.yaml` if the editor lacks content sniffing —
+see each per-editor README for the detection caveats), hover on a
+`receivers:` key, and confirm Markdown component docs come back. A
+broken pipeline reference should produce a diagnostic.
 
 ## Publishing to the VS Code Marketplace
 

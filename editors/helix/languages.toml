@@ -1,0 +1,37 @@
+# Helix integration for OpenTelemetry Collector configs.
+#
+# Install:
+#   1. Install the language server:
+#        npm pack && npm i -g ./vscode-otelcol-*.tgz
+#      (or from the published npm package once available)
+#   2. Merge this file into ~/.config/helix/languages.toml
+#   3. Symlink the queries directory:
+#        ln -s "$(pwd)/runtime/queries/otelcol" \
+#              ~/.config/helix/runtime/queries/otelcol
+#
+# Detection is glob-only (no content sniffing): files matching the
+# `file-types` patterns below get the otelcol language. A plain
+# foo.yaml with a `# otelcol-configset:` directive will NOT be
+# auto-detected — rename to *.otelcol.yaml or use `:set-language otelcol`.
+
+[language-server.otelcol]
+command = "otelcol-language-server"
+args = ["--stdio"]
+config = { otelcol = { distribution = "otelcol-contrib", configSets = { autoDiscover = true, maxFilesScanned = 2000 } } }
+
+[[language]]
+name = "otelcol"
+scope = "source.otelcol"
+injection-regex = "otelcol"
+file-types = [
+  { glob = "*.otelcol.yaml" },
+  { glob = "*.otelcol.yml" },
+  { glob = "otelcol-configset.yaml" },
+]
+roots = ["otelcol-configset.yaml", ".git"]
+comment-token = "#"
+indent = { tab-width = 2, unit = "  " }
+language-servers = ["otelcol"]
+# Reuse Helix's bundled tree-sitter-yaml parser. No external grammar
+# repo to fetch/build.
+grammar = "yaml"

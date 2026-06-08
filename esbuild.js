@@ -36,7 +36,7 @@ const shared = {
 async function main() {
   const extension = await esbuild.context({
     ...shared,
-    entryPoints: ["src/extension/extension.ts"],
+    entryPoints: ["editors/vscode/src/extension.ts"],
     outfile: "dist/extension/extension.js",
   });
 

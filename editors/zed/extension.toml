@@ -1,0 +1,21 @@
+id = "otelcol"
+name = "OpenTelemetry Collector"
+version = "0.1.0"
+schema_version = 1
+description = "Syntax + LSP for OpenTelemetry Collector configs and OTTL"
+authors = ["otelery"]
+repository = "https://github.com/otelery/otelcol-lang"
+
+[language_servers.otelcol]
+name = "OpenTelemetry Collector"
+languages = ["OpenTelemetry Collector"]
+
+# Zed's core YAML grammar is not visible to extensions — they must
+# declare every tree-sitter grammar they reference in
+# `languages/<lang>/config.toml`. Without this block, `grammar = "yaml"`
+# in our language config resolves to nothing, the parse tree is empty,
+# no highlight captures fire, and the document renders as plain white
+# text. Pinned to the same commit zed-ansible uses (verified working).
+[grammars.yaml]
+repository = "https://github.com/zed-industries/tree-sitter-yaml"
+commit = "baff0b51c64ef6a1fb1f8390f3ad6015b83ec13a"
