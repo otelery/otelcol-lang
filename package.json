@@ -263,6 +263,7 @@
     "onLanguage:otelcol",
     "onLanguage:yaml"
   ],
+  "icon": "docs/assets/otel-logo.png",
   "engines": {
     "node": ">=22",
     "vscode": "^1.91.0"

@@ -22,6 +22,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   label all follow the new name.
 
 ### Added
+- Marketplace/plugin icon for both the VS Code extension and the
+  JetBrains plugin, sourced from `docs/assets/otel-logo.png` (referenced
+  via `package.json#icon`) and `editors/jetbrains/src/main/resources/META-INF/pluginIcon.png`.
 - Confmap substitution highlighting for `${env:VAR}`,
   `${env:VAR:-default}` and `${file:path}` expressions in collector
   YAML, plus the legacy bare `${VAR}` form rendered as deprecated
