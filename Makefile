@@ -301,7 +301,14 @@ $(DIST_PKG):
 package: package-vscode package-jetbrains package-zed package-helix ## Build every editor's distributable into dist/packages/
 
 package-vscode: bundle | $(DIST_PKG) ## VS Code .vsix → dist/packages/
-	$(VSCE) package --out $(DIST_PKG)/
+	# vsce reads README.md from the package root. Swap in the
+	# Marketplace-specific README.vscode.md for the duration of the
+	# packaging, then restore. `trap` guarantees restore on Ctrl-C / fail.
+	@set -e; \
+	  cp README.md .README.md.vsce-bak; \
+	  trap 'mv .README.md.vsce-bak README.md' EXIT INT TERM; \
+	  cp README.vscode.md README.md; \
+	  $(VSCE) package --out $(DIST_PKG)/
 
 package-jetbrains: .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) | $(DIST_PKG) ## JetBrains plugin .zip → dist/packages/
 	# buildSearchableOptions launches a headless IDE to build a search index;
@@ -339,10 +346,22 @@ publish: publish-vscode publish-npm ## Publish to both VS Code Marketplace and n
 	@echo "      make publish-helix       # tarball is for end-users to extract"
 
 publish-vscode: check ## Publish current version to the VS Code Marketplace (requires VSCE_PAT or `vsce login otelery`)
-	$(VSCE) publish
+	# Same README swap as package-vscode — vsce publish re-packages internally.
+	@set -e; \
+	  cp README.md .README.md.vsce-bak; \
+	  trap 'mv .README.md.vsce-bak README.md' EXIT INT TERM; \
+	  cp README.vscode.md README.md; \
+	  $(VSCE) publish
 
 publish-npm: check ## Publish the otelcol-language-server binary to npm (requires NPM_TOKEN or `npm login`)
-	$(NPM) publish
+	# npm always reads README.md from the package root. Swap in the LSP-
+	# specific README.npm.md for the duration of the publish, then restore.
+	# `trap` guarantees restore even on Ctrl-C or publish failure.
+	@set -e; \
+	  cp README.md .README.md.publish-bak; \
+	  trap 'mv .README.md.publish-bak README.md' EXIT INT TERM; \
+	  cp README.npm.md README.md; \
+	  $(NPM) publish
 
 publish-jetbrains: package-jetbrains ## Print manual upload steps for the JetBrains Marketplace
 	@echo "Upload $(DIST_PKG)/*.zip to https://plugins.jetbrains.com/plugin/edit"

@@ -41,3 +41,11 @@ editors/vscode/.vscode-test.mjs
 editors/vscode/tsconfig.json
 editors/vscode/tsconfig.test.json
 editors/vscode/README.md
+
+# README.vscode.md / README.npm.md are sources for the per-distribution
+# READMEs; `make package-vscode` / `make publish-vscode` swap
+# README.vscode.md into place as README.md for the vsce invocation, then
+# restore. Exclude both source copies so they don't appear alongside the
+# swapped-in README.md inside the VSIX.
+README.vscode.md
+README.npm.md
