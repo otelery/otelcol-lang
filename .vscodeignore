@@ -20,6 +20,7 @@ esbuild.js
 Makefile
 .editorconfig
 .gitignore
+.envrc
 .oxlintrc.json
 .oxfmtrc.json
 **/*.map

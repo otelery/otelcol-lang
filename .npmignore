@@ -16,6 +16,7 @@ Makefile
 .oxlintrc.json
 .oxfmtrc.json
 .vscodeignore
+.envrc
 
 # Editor integrations (not part of the npm language-server package)
 editors/

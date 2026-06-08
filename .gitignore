@@ -3,6 +3,9 @@ out/
 *.vsix
 .DS_Store
 dist/
+
+# direnv local environment file
+.envrc
 .vscode-test/
 
 # Local toolchain installed by `make bootstrap` (mise + node/rust/java/gradle/...).
