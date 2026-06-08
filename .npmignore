@@ -1,0 +1,37 @@
+# Controls what goes into the npm package (otelcol-language-server binary + server bundle).
+# Only bin/, dist/server/, dist/schemas/, LICENSE, and README.md are published.
+# .vscodeignore handles VSIX packaging separately.
+
+# Source and build tooling
+src/
+test/
+scripts/
+schemas/
+out/
+esbuild.js
+tsconfig.json
+Makefile
+.editorconfig
+.gitignore
+.oxlintrc.json
+.oxfmtrc.json
+.vscodeignore
+
+# Editor integrations (not part of the npm language-server package)
+editors/
+examples/
+
+# Dev/CI artefacts
+node_modules/
+.ci-tools/
+.vscode/
+.vscode-test/
+*.vsix
+**/*.map
+
+# Misc
+.claude/
+CHANGELOG.md
+NEXT-TASKS
+RELEASE_BUCKETS.md
+package-lock.json

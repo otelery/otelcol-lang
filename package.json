@@ -13,11 +13,15 @@
     "url": "https://github.com/otelery/otelcol-lang"
   },
   "publisher": "otelery",
+  "bin": {
+    "otelcol-language-server": "./bin/otelcol-language-server.js"
+  },
   "main": "./dist/extension/extension.js",
   "scripts": {
     "watch": "node esbuild.js --watch",
     "compile": "node esbuild.js",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "smoke:stdio": "node scripts/smoke-stdio.mjs"
   },
   "dependencies": {
     "vscode-languageclient": "^10.0.0",
