@@ -15,7 +15,7 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(fileURLToPath(import.meta.url), "..", "..");
-const targets = [join(root, "src", "extension"), join(root, "src", "server")];
+const targets = [join(root, "editors", "vscode", "src"), join(root, "src", "server")];
 
 // Matches: `"out"` or `'out'` inside a path.join / asAbsolutePath / require / import argument.
 // The quoted literal is the actionable signal — accidental ID references like
@@ -31,7 +31,7 @@ if (offenders.length) {
     console.error(`  ${relative(root, file)}:${line}: ${text.trim()}`);
   }
   console.error(
-    '\nRule: src/extension/ and src/server/ must never asAbsolutePath/require/import from "out".\n' +
+    '\nRule: editors/vscode/src/ and src/server/ must never asAbsolutePath/require/import from "out".\n' +
       "      Runtime loads from dist/ (esbuild output). out/ is for tests only.",
   );
   process.exit(1);
