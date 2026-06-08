@@ -50,7 +50,7 @@
         ],
         "extensions": [],
         "firstLine": "^#\\s*(otelcol|opentelemetry-collector)\\b",
-        "configuration": "./language-configuration.json"
+        "configuration": "./editors/vscode/language-configuration.json"
       },
       {
         "id": "ottl",
@@ -61,7 +61,7 @@
         "extensions": [
           ".ottl"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./editors/vscode/language-configuration.json"
       }
     ],
     "grammars": [
@@ -246,6 +246,11 @@
           "type": "boolean",
           "default": false,
           "description": "Log per-file YAML → otelcol retag decisions to the 'Otelcol Sniffer' output channel. Useful for diagnosing why a configset fragment is or isn't being detected."
+        },
+        "otelcol.attachToYaml": {
+          "type": "boolean",
+          "default": false,
+          "description": "Server-side sniffer fallback. When true, the LSP runs the same content-based detection that VSCode uses client-side on any 'yaml' document the client sends, and emits diagnostics/semantic-tokens only for matches. Off by default in VSCode (the extension's sniffer already retags). Recommended for Zed and other editors that can't retag documents based on content."
         }
       }
     }

@@ -1,16 +1,21 @@
 .vscode
 .vscode-test
-.vscode-test.mjs
+.ci-tools
+.npmignore
+.mise.toml
+.github
 node_modules
+TODO
+NOTICE
 src/**
 scripts/**
 test/**
 examples/**
 schemas/**
 out/**
+bin/**
 package-lock.json
 tsconfig.json
-tsconfig.test.json
 esbuild.js
 Makefile
 .editorconfig
@@ -21,3 +26,17 @@ Makefile
 .claude/**
 NEXT-TASKS
 RELEASE_BUCKETS.md
+
+# Sibling editor integrations — only editors/vscode/ ships in the VSIX.
+editors/SHARED.md
+editors/helix/**
+editors/jetbrains/**
+editors/neovim/**
+editors/zed/**
+# VS Code dir: drop dev-only files; only language-configuration.json ships.
+editors/vscode/src/**
+editors/vscode/test/**
+editors/vscode/.vscode-test.mjs
+editors/vscode/tsconfig.json
+editors/vscode/tsconfig.test.json
+editors/vscode/README.md
