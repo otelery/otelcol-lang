@@ -1,0 +1,60 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "OpenTelemetry Collector YAML",
+  "scopeName": "source.yaml.otelcol",
+  "fileTypes": ["yaml", "yml"],
+  "patterns": [
+    { "include": "#ottl-block-sequence" },
+    { "include": "#ottl-inline-scalar" },
+    { "include": "source.yaml" }
+  ],
+  "repository": {
+    "ottl-block-sequence": {
+      "comment": "Match a YAML key whose value is a sequence of OTTL statements/conditions, e.g. 'statements:' or 'log_statements:'. The end pattern triggers when indent drops back to or above the key's indent.",
+      "begin": "^(\\s*)(statements|conditions|log_statements|trace_statements|metric_statements|profile_statements|log_record|span|spanevent|metric|datapoint|span_conditions|datapoint_conditions|spanevent_conditions|metric_conditions|resource_conditions|scope_conditions|profile_conditions)\\s*:\\s*(?:#.*)?$",
+      "beginCaptures": {
+        "2": { "name": "entity.name.tag.yaml" }
+      },
+      "end": "^(?!\\1\\s|\\s*(?:#.*)?$)",
+      "patterns": [
+        {
+          "comment": "Sequence item: '- <ottl statement or condition>'",
+          "begin": "^(\\s*)-\\s+",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.block.sequence.item.yaml" }
+          },
+          "end": "$",
+          "contentName": "meta.embedded.block.ottl",
+          "patterns": [
+            { "include": "#yaml-quoted-string-ottl" },
+            { "include": "source.ottl" }
+          ]
+        },
+        { "include": "source.yaml" }
+      ]
+    },
+    "ottl-inline-scalar": {
+      "comment": "Single OTTL scalar values: 'condition: ...' or 'statement: ...' on one line.",
+      "match": "^(\\s*)(condition|statement)\\s*:\\s+(.+?)\\s*(#.*)?$",
+      "captures": {
+        "2": { "name": "entity.name.tag.yaml" },
+        "3": {
+          "name": "meta.embedded.block.ottl",
+          "patterns": [
+            { "include": "#yaml-quoted-string-ottl" },
+            { "include": "source.ottl" }
+          ]
+        },
+        "4": { "name": "comment.line.number-sign.yaml" }
+      }
+    },
+    "yaml-quoted-string-ottl": {
+      "comment": "OTTL wrapped in YAML double-quoted string. Strip the quotes and highlight the inside as OTTL.",
+      "begin": "\"",
+      "end": "\"",
+      "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.yaml" } },
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.yaml" } },
+      "patterns": [{ "include": "source.ottl" }]
+    }
+  }
+}

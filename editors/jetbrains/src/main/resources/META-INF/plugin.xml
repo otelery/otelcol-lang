@@ -1,0 +1,42 @@
+<idea-plugin>
+  <id>ch.snowgarden.otelcol</id>
+  <name>OpenTelemetry Collector</name>
+  <vendor email="opensource@snowgarden.ch" url="https://github.com/otelery/otelcol-lang">otelery</vendor>
+
+  <description><![CDATA[
+    Syntax highlighting and language support for OpenTelemetry Collector
+    configuration files (<code>*.otelcol.yaml</code>) and the OpenTelemetry
+    Transformation Language (OTTL).
+    <br/>
+    Backed by the standalone <code>otelcol-language-server</code> binary
+    (install via <code>npm i -g otelcol-language-server</code> or from the
+    repository tarball).
+  ]]></description>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.redhat.devtools.lsp4ij</depends>
+  <depends>org.jetbrains.plugins.textmate</depends>
+
+  <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+    <server
+        id="otelcol"
+        name="OpenTelemetry Collector"
+        factoryClass="ch.snowgarden.otelcol.OtelcolLspServerFactory"/>
+    <languageMapping
+        language="yaml"
+        serverId="otelcol"
+        languageId="otelcol"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.textmate">
+    <bundleProvider implementation="ch.snowgarden.otelcol.OtelcolTextMateBundle"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType
+        name="OpenTelemetry Collector"
+        implementationClass="ch.snowgarden.otelcol.OtelcolFileType"
+        fieldName="INSTANCE"
+        patterns="*.otelcol.yaml;*.otelcol.yml;otelcol-configset.yaml"/>
+  </extensions>
+</idea-plugin>
