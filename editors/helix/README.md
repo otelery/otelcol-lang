@@ -10,7 +10,7 @@ Drop-in config + queries for editing otelcol configs in Helix.
    # from the repo root:
    npm run compile
    npm pack
-   npm i -g ./vscode-otelcol-*.tgz
+   npm i -g ./opentelemetry-collector-config-*.tgz
    # verify:
    which otelcol-language-server
    ```

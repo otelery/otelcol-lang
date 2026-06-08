@@ -1,6 +1,6 @@
 <idea-plugin>
   <id>ch.snowgarden.otelcol</id>
-  <name>OpenTelemetry Collector</name>
+  <name>OpenTelemetry Collector Config</name>
   <vendor email="opensource@snowgarden.ch" url="https://github.com/otelery/otelcol-lang">otelery</vendor>
 
   <description><![CDATA[

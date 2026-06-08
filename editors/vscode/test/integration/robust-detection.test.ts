@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as vscode from "vscode";
 
-const EXTENSION_ID = "otelery.vscode-otelcol";
+const EXTENSION_ID = "otelery.opentelemetry-collector-config";
 
 async function waitFor<T>(
   predicate: () => T | undefined | Promise<T | undefined>,

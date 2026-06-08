@@ -15,7 +15,7 @@ Ultimate. Requires the **LSP4IJ** plugin to be installed in the IDE.
    # from repo root:
    npm run compile
    npm pack
-   npm i -g ./vscode-otelcol-*.tgz
+   npm i -g ./opentelemetry-collector-config-*.tgz
    which otelcol-language-server
    ```
 

@@ -59,7 +59,7 @@ release; prefer the new name.
 ## Packaging the VSIX
 
 ```sh
-make package-vscode   # → dist/packages/vscode-otelcol-<version>.vsix
+make package-vscode   # → dist/packages/opentelemetry-collector-config-<version>.vsix
 # (`make package` builds every editor's distributable in one go.)
 ```
 

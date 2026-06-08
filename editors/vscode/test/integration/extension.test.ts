@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as vscode from "vscode";
 
-const EXTENSION_ID = "otelery.vscode-otelcol";
+const EXTENSION_ID = "otelery.opentelemetry-collector-config";
 
 async function waitFor<T>(
   predicate: () => T | undefined | Promise<T | undefined>,
@@ -19,7 +19,7 @@ async function waitFor<T>(
   throw new Error(`waitFor: predicate never became truthy within ${timeoutMs}ms`);
 }
 
-describe("vscode-otelcol extension", () => {
+describe("opentelemetry-collector-config extension", () => {
   before(async () => {
     const ext = vscode.extensions.getExtension(EXTENSION_ID);
     assert.ok(ext, `extension ${EXTENSION_ID} not found in Extension Host`);

@@ -20,7 +20,7 @@ local checkout:
 npm install
 npm run compile
 npm pack
-npm i -g ./vscode-otelcol-*.tgz
+npm i -g ./opentelemetry-collector-config-*.tgz
 which otelcol-language-server   # should print a path
 ```
 
@@ -296,7 +296,7 @@ make build-zed
   `otelcol-language-server`; until it is, Zed cannot
   `npm_install_package` it on first use. Use the
   `lsp.otelcol.binary.path` setting or a global install of
-  `vscode-otelcol`.
+  `opentelemetry-collector-config`.
 
 ## Notes
 

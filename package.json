@@ -1,6 +1,6 @@
 {
-  "name": "vscode-otelcol",
-  "displayName": "OpenTelemetry Collector",
+  "name": "opentelemetry-collector-config",
+  "displayName": "OpenTelemetry Collector Config",
   "version": "0.1.0",
   "description": "Syntax highlighting, completion, hover, diagnostics and embedded OTTL for OpenTelemetry Collector configs.",
   "categories": [
@@ -195,7 +195,7 @@
       }
     },
     "configuration": {
-      "title": "OpenTelemetry Collector",
+      "title": "OpenTelemetry Collector Config",
       "properties": {
         "otelcol.distribution": {
           "type": "string",

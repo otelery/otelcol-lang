@@ -7,6 +7,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- Package renamed from `vscode-otelcol` to `opentelemetry-collector-config`
+  across `package.json`, `package-lock.json`, all editor READMEs, the
+  JetBrains plugin display name, and the VS Code integration test
+  extension IDs. The npm tarball, `.vsix` filename, and JetBrains plugin
+  label all follow the new name.
+
 ### Added
 - Confmap substitution highlighting for `${env:VAR}`,
   `${env:VAR:-default}` and `${file:path}` expressions in collector

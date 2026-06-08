@@ -2,7 +2,7 @@ import * as assert from "node:assert/strict";
 import * as path from "node:path";
 import * as vscode from "vscode";
 
-const EXTENSION_ID = "otelery.vscode-otelcol";
+const EXTENSION_ID = "otelery.opentelemetry-collector-config";
 // out/test/integration/crossfile/ → repo root (up 4)
 const REPO_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
 

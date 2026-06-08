@@ -165,10 +165,10 @@ install the resulting file into the editor.
 
 ```sh
 make package-vscode
-# → dist/packages/vscode-otelcol-<version>.vsix
+# → dist/packages/opentelemetry-collector-config-<version>.vsix
 
 # install into your local VS Code:
-code --install-extension dist/packages/vscode-otelcol-*.vsix
+code --install-extension dist/packages/opentelemetry-collector-config-*.vsix
 # or: Extensions view → "…" menu → "Install from VSIX…"
 ```
 
@@ -201,8 +201,8 @@ The Zed extension shells out to `otelcol-language-server` on `PATH`,
 so first install the server locally:
 
 ```sh
-npm pack                                  # → vscode-otelcol-<version>.tgz
-npm i -g ./vscode-otelcol-*.tgz           # exposes otelcol-language-server
+npm pack                                  # → opentelemetry-collector-config-<version>.tgz
+npm i -g ./opentelemetry-collector-config-*.tgz           # exposes otelcol-language-server
 which otelcol-language-server
 ```
 
@@ -219,7 +219,7 @@ make package-helix
 tar xzf dist/packages/otelcol-helix-*.tar.gz -C ~/.config/helix/
 ```
 
-The server also needs to be on `PATH` (same `npm i -g ./vscode-otelcol-*.tgz`
+The server also needs to be on `PATH` (same `npm i -g ./opentelemetry-collector-config-*.tgz`
 step as for Zed). See [`editors/helix/README.md`](editors/helix/README.md)
 for the symlink-based dev variant that lets query edits flow through
 without re-packaging.
@@ -235,7 +235,7 @@ Install in the IDE: `Settings → Plugins → ⚙ → Install Plugin from
 Disk…` → pick the `.zip`. The plugin depends on **LSP4IJ**, which
 the IDE will offer to install on first launch if it isn't already
 present. The `otelcol-language-server` binary must be on `PATH` (same
-`npm i -g ./vscode-otelcol-*.tgz` step as above), or pass the path via
+`npm i -g ./opentelemetry-collector-config-*.tgz` step as above), or pass the path via
 `-Dotelcol.lsp.command=…`.
 
 For iteration without packaging:
@@ -290,7 +290,7 @@ make publish-major        # 0.1.0 → 1.0.0
 For a local-only artefact without uploading:
 
 ```sh
-make package      # writes vscode-otelcol-<version>.vsix in the repo root
+make package      # writes opentelemetry-collector-config-<version>.vsix in the repo root
 ```
 
 ## LSP
