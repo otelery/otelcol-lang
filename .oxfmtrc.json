@@ -15,6 +15,7 @@
     "out/",
     "schemas/",
     "syntaxes/",
+    "editors/jetbrains/src/main/resources/textmate/",
     "test/configsets/",
     "package-lock.json",
     "LICENSE",

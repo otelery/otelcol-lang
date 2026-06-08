@@ -14,5 +14,13 @@
     "no-await-in-loop": "off",
     "unicorn/no-array-sort": "off"
   },
-  "ignorePatterns": ["node_modules", "dist", "out", "schemas", "syntaxes", "test/configsets"]
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "out",
+    "schemas",
+    "syntaxes",
+    "test/configsets",
+    "editors/zed/grammars"
+  ]
 }
