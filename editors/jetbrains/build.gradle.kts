@@ -2,8 +2,8 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
   id("java")
-  id("org.jetbrains.kotlin.jvm") version "2.0.20"
-  id("org.jetbrains.intellij.platform") version "2.1.0"
+  id("org.jetbrains.kotlin.jvm") version "2.4.0"
+  id("org.jetbrains.intellij.platform") version "2.16.0"
   // Reports out-of-date dependencies via `gradle dependencyUpdates`.
   // Wired into the repo-level `make outdated`.
   id("com.github.ben-manes.versions") version "0.54.0"
@@ -40,7 +40,6 @@ dependencies {
       providers.gradleProperty("lsp4ijPluginVersion").get(),
     )
 
-    instrumentationTools()
     testFramework(TestFrameworkType.Platform)
   }
   // JUnit 3/4 is required at test-compile time because BasePlatformTestCase

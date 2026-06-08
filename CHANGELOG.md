@@ -8,6 +8,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- JetBrains plugin build bumps `org.jetbrains.kotlin.jvm` to 2.4.0 and
+  `org.jetbrains.intellij.platform` to 2.16.0. The deprecated
+  `instrumentationTools()` dependency is removed as required by the
+  new platform plugin version.
 - `.envrc` is now excluded from git, the npm tarball, and the `.vsix`
   bundle so per-developer direnv environment files cannot leak into
   published artifacts.
