@@ -5,6 +5,21 @@ out/
 dist/
 .vscode-test/
 
+# Local toolchain installed by `make bootstrap` (mise + node/rust/java/gradle/...).
+.ci-tools/
+
+# Editor build artefacts (see editors/{jetbrains,zed,...}/).
+editors/jetbrains/build/
+editors/jetbrains/.gradle/
+editors/zed/target/
+editors/zed/Cargo.lock
+# Vendored tree-sitter-yaml grammar (built locally for the Zed extension).
+editors/zed/grammars/
+# Built tree-sitter-yaml WASM artifact produced by the Zed extension build.
+editors/zed/extension.wasm
+# JetBrains IntelliJ Platform local cache.
+editors/jetbrains/.intellijPlatform/
+
 # .vscode/ — allowlist only the shared workflow files. Everything else is
 # ignored by default, which keeps potentially sensitive files out of the
 # repo: settings.json (API keys, tokens, license keys), sftp.json /

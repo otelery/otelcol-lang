@@ -42,7 +42,7 @@ Today the server is launched as a Node module over IPC by the extension
 dist/server/server.js  →  ../schemas/<sub>   (i.e. dist/schemas/<sub>)
 ```
 
-`__dirname` is the *bundled file's* directory at runtime, independent of the
+`__dirname` is the _bundled file's_ directory at runtime, independent of the
 client's CWD. As long as `dist/schemas/` ships alongside `dist/server/server.js`
 (which `copy-schemas.mjs` ensures), the server finds its schemas no matter who
 launched it or from where.
@@ -76,12 +76,12 @@ Maintenance contract:
 
 Prior art across four widely-consumed Node-based LSP servers:
 
-| Server | Install | CLI binary | Invocation |
-|---|---|---|---|
-| `yaml-language-server` | `npm i -g yaml-language-server` | (runs via `node out/.../server.js`) | `--stdio` |
-| `typescript-language-server` | `npm i -g typescript-language-server typescript` | `typescript-language-server` | `--stdio` |
-| `bash-language-server` | `npm i -g bash-language-server` (also dnf, snap) | `bash-language-server` | `start` |
-| `vscode-langservers-extracted` | `npm i -g vscode-langservers-extracted` | `vscode-{html,css,json,eslint}-language-server` | (stdio default) |
+| Server                         | Install                                          | CLI binary                                      | Invocation      |
+| ------------------------------ | ------------------------------------------------ | ----------------------------------------------- | --------------- |
+| `yaml-language-server`         | `npm i -g yaml-language-server`                  | (runs via `node out/.../server.js`)             | `--stdio`       |
+| `typescript-language-server`   | `npm i -g typescript-language-server typescript` | `typescript-language-server`                    | `--stdio`       |
+| `bash-language-server`         | `npm i -g bash-language-server` (also dnf, snap) | `bash-language-server`                          | `start`         |
+| `vscode-langservers-extracted` | `npm i -g vscode-langservers-extracted`          | `vscode-{html,css,json,eslint}-language-server` | (stdio default) |
 
 The dominant pattern is unambiguous: **publish an npm package with a `bin`
 entry that exposes a single CLI binary accepting `--stdio`**. Editors then
@@ -118,12 +118,12 @@ to the shared classifier at `src/common/yaml-classify.ts`) to retag generic
 
 Per-editor equivalents:
 
-| Editor | Mechanism | Maps cleanly? |
-|---|---|---|
-| Zed | `languages/<lang>/config.toml`: `path_suffixes` + `first_line_pattern` | partial — no equivalent to runtime classification; rely on (4) + (5) only |
-| Neovim | `vim.filetype.add({ pattern = …, extension = …, filename = … })`; can also use Lua function for content sniff | full — can replicate the classifier exactly via a Lua callback |
-| Helix | `languages.toml`: `file-types` and `shebangs` | partial — no content sniff; rely on (4) + (5) |
-| JetBrains | Per-file-type pattern via `FileTypeRegistry`; full content sniff via custom `FileType` if needed | full — but requires Java/Kotlin plugin code |
+| Editor    | Mechanism                                                                                                     | Maps cleanly?                                                             |
+| --------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Zed       | `languages/<lang>/config.toml`: `path_suffixes` + `first_line_pattern`                                        | partial — no equivalent to runtime classification; rely on (4) + (5) only |
+| Neovim    | `vim.filetype.add({ pattern = …, extension = …, filename = … })`; can also use Lua function for content sniff | full — can replicate the classifier exactly via a Lua callback            |
+| Helix     | `languages.toml`: `file-types` and `shebangs`                                                                 | partial — no content sniff; rely on (4) + (5)                             |
+| JetBrains | Per-file-type pattern via `FileTypeRegistry`; full content sniff via custom `FileType` if needed              | full — but requires Java/Kotlin plugin code                               |
 
 **Open question:** for Zed/Helix, do we accept the loss of content-based
 classification (forcing users to either name files `*.otelcol.yaml` or add
