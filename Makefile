@@ -307,7 +307,7 @@ package-vscode: bundle | $(DIST_PKG) ## VS Code .vsix → dist/packages/
 	@set -e; \
 	  cp README.md .README.md.vsce-bak; \
 	  trap 'mv .README.md.vsce-bak README.md' EXIT INT TERM; \
-	  cp README.vscode.md README.md; \
+	  cp docs/dist/vscode-readme.md README.md; \
 	  $(VSCE) package --out $(DIST_PKG)/
 
 package-jetbrains: .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) | $(DIST_PKG) ## JetBrains plugin .zip → dist/packages/
@@ -350,7 +350,7 @@ publish-vscode: check ## Publish current version to the VS Code Marketplace (req
 	@set -e; \
 	  cp README.md .README.md.vsce-bak; \
 	  trap 'mv .README.md.vsce-bak README.md' EXIT INT TERM; \
-	  cp README.vscode.md README.md; \
+	  cp docs/dist/vscode-readme.md README.md; \
 	  $(VSCE) publish
 
 publish-npm: check ## Publish the otelcol-language-server binary to npm (requires NPM_TOKEN or `npm login`)
@@ -360,7 +360,7 @@ publish-npm: check ## Publish the otelcol-language-server binary to npm (require
 	@set -e; \
 	  cp README.md .README.md.publish-bak; \
 	  trap 'mv .README.md.publish-bak README.md' EXIT INT TERM; \
-	  cp README.npm.md README.md; \
+	  cp docs/dist/npm-readme.md README.md; \
 	  $(NPM) publish
 
 publish-jetbrains: package-jetbrains ## Print manual upload steps for the JetBrains Marketplace

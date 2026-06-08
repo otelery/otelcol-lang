@@ -37,8 +37,8 @@ NEXT-TASKS
 RELEASE_BUCKETS.md
 package-lock.json
 
-# README.npm.md is the *source* for the npm README; `make publish-npm`
-# swaps it into place as README.md for the duration of `npm publish`.
-# Exclude the source copy so it doesn't appear alongside the swapped-in
-# README.md in the published tarball.
-README.npm.md
+# docs/dist/ holds the source READMEs that `make publish-npm` /
+# `make publish-vscode` swap into place as README.md for the duration
+# of the registry upload. Exclude the whole dir so the swap-source
+# files don't appear alongside the swapped-in README.md in the tarball.
+docs/dist/

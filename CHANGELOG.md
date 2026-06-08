@@ -8,16 +8,17 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
-- Distribution-specific READMEs: `README.npm.md` documents the
+- Distribution-specific READMEs under `docs/dist/`:
+  `docs/dist/npm-readme.md` documents the
   `opentelemetry-collector-config` npm package (LSP install, transport
-  flags, workspace settings, editor matrix); `README.vscode.md` is the
-  VS Code Marketplace listing (features, activation patterns,
+  flags, workspace settings, editor matrix); `docs/dist/vscode-readme.md`
+  is the VS Code Marketplace listing (features, activation patterns,
   settings table). `make package-vscode`, `make publish-vscode` and
   `make publish-npm` swap the relevant file into place as `README.md`
   for the duration of the vsce/npm invocation and restore it via
-  `trap`. `.vscodeignore` and `.npmignore` exclude the source copies
-  so they do not appear alongside the swapped-in `README.md` inside
-  the artifacts.
+  `trap`. `.vscodeignore` and `.npmignore` exclude `docs/dist/` so the
+  swap-source files do not appear alongside the swapped-in `README.md`
+  inside the artifacts.
 
 ### Changed
 - `make publish` now splits per editor: `publish-vscode`, `publish-npm`,
