@@ -1,0 +1,59 @@
+// Custom semantic-token style rules for the OpenTelemetry Collector
+// language. Zed merges these with the editor's
+// `assets/settings/default_semantic_token_rules.json` — extension rules
+// take precedence over the defaults but yield to anything the user puts
+// in their settings.json under `semantic_token_rules`.
+//
+// What the server emits (src/server/semantic-tokens.ts):
+//   class + declaration               → component definition that IS referenced
+//   class + declaration + deprecated  → component definition that is UNUSED
+//   class                             → component reference inside a pipeline /
+//                                       service.extensions / extension ref
+//   namespace + declaration           → pipeline definition (e.g. `traces:`)
+//   namespace                         → pipeline-id ref inside routing/failover
+//
+// The defaults don't style `deprecated` at all, so unused components rendered
+// effectively the same as used ones — hence the "barely visible" pprof.
+// Rules are evaluated top-to-bottom; the first match with a usable style wins.
+[
+  // Unused component definition — loud, hard to miss.
+  {
+    "token_type": "class",
+    "token_modifiers": ["declaration", "deprecated"],
+    "style": ["comment.deprecated", "comment", "comment.disabled"],
+    "strikethrough": true,
+    "font_style": "italic"
+  },
+
+  // Used component definition — bold, picks up the strong "type" colour.
+  {
+    "token_type": "class",
+    "token_modifiers": ["declaration"],
+    "style": ["type.class.definition", "type.definition", "type.class", "type"],
+    "font_weight": "bold"
+  },
+
+  // Pipeline definition — bold namespace.
+  {
+    "token_type": "namespace",
+    "token_modifiers": ["declaration"],
+    "style": ["namespace.definition", "namespace", "module", "type"],
+    "font_weight": "bold"
+  },
+
+  // Component reference inside a pipeline (or service.extensions, …).
+  // Keep the theme's stock "type/class" colour so refs read as links to
+  // the bold definitions above.
+  {
+    "token_type": "class",
+    "token_modifiers": [],
+    "style": ["type.class", "class", "type"]
+  },
+
+  // Pipeline-id reference inside routing/failover connectors.
+  {
+    "token_type": "namespace",
+    "token_modifiers": [],
+    "style": ["namespace", "module", "type"]
+  }
+]

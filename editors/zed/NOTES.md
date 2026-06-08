@@ -102,7 +102,7 @@ per-OS artifacts first. See [SHARED.md §4](../SHARED.md#4-distribution-recommen
 
 ### Tree-sitter injection for OTTL-inside-YAML
 
-This is the *single biggest unknown* for Zed. OTTL appears inside YAML
+This is the _single biggest unknown_ for Zed. OTTL appears inside YAML
 string values under specific keys (e.g. `statements:` under transform
 processor). TextMate handles this via embedded patterns scoped to those
 keys. Tree-sitter handles it via `injections.scm`:
