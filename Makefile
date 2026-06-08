@@ -1,7 +1,8 @@
 .PHONY: help bootstrap tools install build bundle test test-unit test-integration test-vscode \
         lint lint-fix format format-check typecheck audit package-check check \
         clean distclean package package-vscode package-jetbrains package-zed package-helix \
-        publish publish-patch publish-minor publish-major \
+        publish publish-vscode publish-npm publish-jetbrains publish-zed publish-helix \
+        publish-patch publish-minor publish-major \
         check-versions upgrade-tools outdated test-stdio test-helix test-helix-integration test-jetbrains \
         test-zed test-editors build-jetbrains build-zed build-editors
 
@@ -319,17 +320,53 @@ package-helix: | $(DIST_PKG) ## Helix config + queries tarball (users extract in
 	tar czf $(DIST_PKG)/otelcol-helix-$(VERSION).tar.gz \
 	    -C editors/helix languages.toml runtime
 
-publish: check ## Publish current package.json version to the VS Code Marketplace (requires VSCE_PAT or `vsce login otelery`)
+# --- publish ------------------------------------------------------------------
+# The root package.json drives two registries from one version:
+#   - VS Code Marketplace (`vsce publish`) — ships the bundled extension
+#   - npm (`npm publish`)                  — ships the standalone
+#       otelcol-language-server binary used by Zed / Helix / JetBrains
+# The two channels MUST stay in lockstep, otherwise non-VS Code editors get
+# a stale LSP. `make publish` is the aggregate; the bump targets bump the
+# version exactly once and then fan out to both raw publish targets.
+# JetBrains / Zed / Helix registry uploads aren't automated yet; the targets
+# print the manual steps so the Make surface is uniform across editors.
+
+publish: publish-vscode publish-npm ## Publish to both VS Code Marketplace and npm (automated channels). Prints reminder for jetbrains/zed/helix.
+	@echo
+	@echo "==> Reminder: JetBrains, Zed and Helix have manual steps:"
+	@echo "      make publish-jetbrains   # upload .zip to JetBrains Marketplace"
+	@echo "      make publish-zed         # open PR against zed-industries/extensions"
+	@echo "      make publish-helix       # tarball is for end-users to extract"
+
+publish-vscode: check ## Publish current version to the VS Code Marketplace (requires VSCE_PAT or `vsce login otelery`)
 	$(VSCE) publish
 
-publish-patch: check ## Bump patch version (x.y.Z) and publish
-	$(VSCE) publish patch
+publish-npm: check ## Publish the otelcol-language-server binary to npm (requires NPM_TOKEN or `npm login`)
+	$(NPM) publish
 
-publish-minor: check ## Bump minor version (x.Y.0) and publish
-	$(VSCE) publish minor
+publish-jetbrains: package-jetbrains ## Print manual upload steps for the JetBrains Marketplace
+	@echo "Upload $(DIST_PKG)/*.zip to https://plugins.jetbrains.com/plugin/edit"
 
-publish-major: check ## Bump major version (X.0.0) and publish
-	$(VSCE) publish major
+publish-zed: package-zed ## Print steps for submitting the Zed extension to zed-industries/extensions
+	@echo "Open a PR against https://github.com/zed-industries/extensions"
+	@echo "  - add/update the otelcol entry with version $(VERSION)"
+	@echo "  - users install via Zed's extension picker; tarball $(DIST_PKG)/otelcol-zed-$(VERSION).tar.gz is for reference"
+
+publish-helix: package-helix ## Print install instructions for end-users
+	@echo "Helix has no central registry; ship $(DIST_PKG)/otelcol-helix-$(VERSION).tar.gz"
+	@echo "End-users extract it into ~/.config/helix/ and install the LSP via 'npm i -g opentelemetry-collector-config'"
+
+publish-patch: check ## Bump patch version (x.y.Z) and publish to vsce + npm
+	$(NPM) version patch --no-git-tag-version
+	$(MAKE) publish-vscode publish-npm
+
+publish-minor: check ## Bump minor version (x.Y.0) and publish to vsce + npm
+	$(NPM) version minor --no-git-tag-version
+	$(MAKE) publish-vscode publish-npm
+
+publish-major: check ## Bump major version (X.0.0) and publish to vsce + npm
+	$(NPM) version major --no-git-tag-version
+	$(MAKE) publish-vscode publish-npm
 
 check-versions: ## Show pinned vs latest versions for all .mise.toml tools (mise outdated --bump)
 	$(MISE) outdated --bump

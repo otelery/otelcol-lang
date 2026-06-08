@@ -4,13 +4,10 @@ Drop-in config + queries for editing otelcol configs in Helix.
 
 ## Install
 
-1. **LSP server** — install once globally:
+1. **LSP server** — install once globally from npm:
 
    ```sh
-   # from the repo root:
-   npm run compile
-   npm pack
-   npm i -g ./opentelemetry-collector-config-*.tgz
+   npm i -g opentelemetry-collector-config
    # verify:
    which otelcol-language-server
    ```

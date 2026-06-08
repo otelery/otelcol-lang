@@ -8,6 +8,18 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Changed
+- `make publish` now splits per editor: `publish-vscode`, `publish-npm`,
+  `publish-jetbrains`, `publish-zed`, `publish-helix`. The top-level
+  `publish` aggregates the two automated channels (vsce + npm) so the
+  Marketplace listing and the `opentelemetry-collector-config` npm
+  tarball — which ships the standalone `otelcol-language-server` binary
+  used by Zed, Helix and the JetBrains plugin — stay in lockstep. The
+  `publish-patch/minor/major` bump targets bump the version once via
+  `npm version --no-git-tag-version` and then fan out to both channels.
+- Helix, JetBrains and Zed READMEs replace the local `npm pack` install
+  dance with `npm i -g opentelemetry-collector-config` now that the LSP
+  is published to npm.
+
 - JetBrains plugin build bumps `org.jetbrains.kotlin.jvm` to 2.4.0 and
   `org.jetbrains.intellij.platform` to 2.16.0. The deprecated
   `instrumentationTools()` dependency is removed as required by the

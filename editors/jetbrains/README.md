@@ -12,10 +12,7 @@ Ultimate. Requires the **LSP4IJ** plugin to be installed in the IDE.
 1. **LSP server on PATH**:
 
    ```sh
-   # from repo root:
-   npm run compile
-   npm pack
-   npm i -g ./opentelemetry-collector-config-*.tgz
+   npm i -g opentelemetry-collector-config
    which otelcol-language-server
    ```
 

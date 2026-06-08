@@ -12,15 +12,10 @@ below.
 ## Pre-requisites
 
 You need the language server on `PATH` (or pointed at via Zed
-settings). Until the server is published to npm, install from a
-local checkout:
+settings). Install from npm:
 
 ```sh
-# from repo root
-npm install
-npm run compile
-npm pack
-npm i -g ./opentelemetry-collector-config-*.tgz
+npm i -g opentelemetry-collector-config
 which otelcol-language-server   # should print a path
 ```
 
@@ -292,11 +287,11 @@ make build-zed
   Until one ships, the `injections.scm` query is inert. OTTL
   diagnostics still surface if `ottl-lsp` is configured on the
   server side.
-- **No npm auto-install yet.** The LSP isn't published to npm as
-  `otelcol-language-server`; until it is, Zed cannot
-  `npm_install_package` it on first use. Use the
-  `lsp.otelcol.binary.path` setting or a global install of
-  `opentelemetry-collector-config`.
+- **No npm auto-install yet.** The npm package is
+  `opentelemetry-collector-config` (not `otelcol-language-server`),
+  so Zed cannot `npm_install_package` it on first use. Use the
+  `lsp.otelcol.binary.path` setting or a global install
+  (`npm i -g opentelemetry-collector-config`).
 
 ## Notes
 
