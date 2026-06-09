@@ -1,4 +1,5 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import java.io.File
 
 plugins {
   id("java")
@@ -66,10 +67,18 @@ kotlin {
   jvmToolchain(17)
 }
 
-// Single-source the TextMate grammars from the repo root so VS Code
-// and JetBrains never drift apart. Runs before resource processing.
+// --- Bundled assets ---------------------------------------------------------
+// Both TextMate grammars and the LSP server bundle are produced by tools
+// outside this Gradle module; we copy them into src/main/resources/ so they
+// land on the plugin classpath. The LSP server is extracted from the jar to
+// a stable PathManager cache on first activation (OtelcolLspServerFactory).
+
 val syntaxesSource = file("../../syntaxes")
 val syntaxesTarget = file("src/main/resources/textmate")
+
+val languageServerSource = file("../../dist/server")
+val schemasSource = file("../../dist/schemas")
+val languageServerTarget = file("src/main/resources/language-server")
 
 val copySyntaxes by tasks.registering(Copy::class) {
   from(syntaxesSource) {
@@ -79,10 +88,43 @@ val copySyntaxes by tasks.registering(Copy::class) {
   into(syntaxesTarget)
 }
 
+val copyLanguageServer by tasks.registering(Copy::class) {
+  description = "Stage bundled otelcol-language-server (esbuild output) + JSON schemas into plugin resources"
+  doFirst {
+    require(file("$languageServerSource/server.js").exists()) {
+      "Missing dist/server/server.js — run `make bundle` from the repo root first."
+    }
+    require(schemasSource.exists()) {
+      "Missing dist/schemas/ — run `make bundle` from the repo root first."
+    }
+  }
+  from(languageServerSource) {
+    include("server.js")
+    into("server")
+  }
+  from(schemasSource) {
+    into("schemas")
+  }
+  into(languageServerTarget)
+  doLast {
+    // Self-describing manifest of relative paths. OtelcolLspServerFactory reads
+    // this at runtime to know which classpath resources to extract to disk.
+    val manifest = fileTree(languageServerTarget) {
+      exclude("manifest.txt")
+    }.files
+      .map { it.toRelativeString(languageServerTarget).replace(File.separatorChar, '/') }
+      .sorted()
+    file("$languageServerTarget/manifest.txt").writeText(manifest.joinToString("\n") + "\n")
+  }
+}
+
 tasks.named("processResources") {
-  dependsOn(copySyntaxes)
+  dependsOn(copySyntaxes, copyLanguageServer)
 }
 
 tasks.named("clean") {
-  doLast { syntaxesTarget.deleteRecursively() }
+  doLast {
+    syntaxesTarget.deleteRecursively()
+    languageServerTarget.deleteRecursively()
+  }
 }

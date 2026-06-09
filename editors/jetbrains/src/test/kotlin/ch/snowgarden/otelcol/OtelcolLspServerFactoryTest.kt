@@ -1,27 +1,36 @@
 package ch.snowgarden.otelcol
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
 
 class OtelcolLspServerFactoryTest : BasePlatformTestCase() {
-  fun testDefaultCommandUsesPathBin() {
-    System.clearProperty("otelcol.lsp.command")
-    val factory = OtelcolLspServerFactory()
-    val provider = factory.createConnectionProvider(project) as ProcessStreamConnectionProvider
-    val commands = provider.commands
-    assertNotNull("provider must expose its commands", commands)
-    assertEquals(listOf("otelcol-language-server", "--stdio"), commands)
+  override fun tearDown() {
+    System.clearProperty(OtelcolLspServerFactory.PROP_COMMAND)
+    System.clearProperty(OtelcolLspServerFactory.PROP_NODE)
+    super.tearDown()
   }
 
-  fun testCommandOverrideViaSystemProperty() {
-    System.setProperty("otelcol.lsp.command", "/tmp/fake-otelcol-lsp")
-    try {
-      val factory = OtelcolLspServerFactory()
-      val provider = factory.createConnectionProvider(project) as ProcessStreamConnectionProvider
-      assertEquals(listOf("/tmp/fake-otelcol-lsp", "--stdio"), provider.commands)
-    } finally {
-      System.clearProperty("otelcol.lsp.command")
-    }
+  fun testDefaultCommandSpawnsBundledServer() {
+    System.clearProperty(OtelcolLspServerFactory.PROP_COMMAND)
+    System.clearProperty(OtelcolLspServerFactory.PROP_NODE)
+    val cmd = OtelcolLspServerFactory().buildCommand()
+    assertEquals("expected [node, <server.js>, --stdio]", 3, cmd.size)
+    assertEquals("node", cmd[0])
+    assertTrue("server.js path expected, got ${cmd[1]}", cmd[1].endsWith("server.js"))
+    assertEquals("--stdio", cmd[2])
+  }
+
+  fun testNodeBinaryOverride() {
+    System.setProperty(OtelcolLspServerFactory.PROP_NODE, "/opt/node22/bin/node")
+    val cmd = OtelcolLspServerFactory().buildCommand()
+    assertEquals("/opt/node22/bin/node", cmd[0])
+    assertTrue(cmd[1].endsWith("server.js"))
+    assertEquals("--stdio", cmd[2])
+  }
+
+  fun testFullCommandOverride() {
+    System.setProperty(OtelcolLspServerFactory.PROP_COMMAND, "/tmp/fake-otelcol-lsp")
+    val cmd = OtelcolLspServerFactory().buildCommand()
+    assertEquals(listOf("/tmp/fake-otelcol-lsp", "--stdio"), cmd)
   }
 
   @Suppress("UNCHECKED_CAST")

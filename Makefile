@@ -239,7 +239,7 @@ test-helix-integration: .ci-tools/helix-$(HELIX_VERSION) .ci-tools/tree-sitter-$
 	XDG_CONFIG_HOME=$(_HX_TMP) HELIX_RUNTIME=$(CURDIR)/editors/helix/runtime $(HX) --health otelcol; \
 	  status=$$?; rm -rf $(_HX_TMP); exit $$status
 
-test-jetbrains: .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## JetBrains plugin unit tests (gradle test)
+test-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## JetBrains plugin unit tests (gradle test)
 	cd editors/jetbrains && $(GRADLEW) test
 
 test-zed: .ci-tools/rust-wasm32-$(RUST_VERSION) ## Zed extension cargo tests (static TOML + query validation)
@@ -247,7 +247,7 @@ test-zed: .ci-tools/rust-wasm32-$(RUST_VERSION) ## Zed extension cargo tests (st
 
 test-editors: test-helix test-vscode test-jetbrains test-zed test-stdio ## Run all per-editor suites + stdio smoke
 
-build-jetbrains: .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Assemble JetBrains plugin distributable
+build-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Assemble JetBrains plugin distributable
 	cd editors/jetbrains && $(GRADLEW) assemble
 
 build-zed: .ci-tools/rust-wasm32-$(RUST_VERSION) ## Compile Zed extension to wasm32-wasip1
@@ -310,7 +310,7 @@ package-vscode: bundle | $(DIST_PKG) ## VS Code .vsix → dist/packages/
 	  cp docs/dist/vscode-readme.md README.md; \
 	  $(VSCE) package --out $(DIST_PKG)/
 
-package-jetbrains: .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) | $(DIST_PKG) ## JetBrains plugin .zip → dist/packages/
+package-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) | $(DIST_PKG) ## JetBrains plugin .zip → dist/packages/
 	# buildSearchableOptions launches a headless IDE to build a search index;
 	# the plugin is small enough that the index is not worth the headless-IDE
 	# flakiness. Skip it.
