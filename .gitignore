@@ -4,6 +4,9 @@ out/
 .DS_Store
 dist/
 
+# JetBrains IDE per-project metadata.
+.idea/
+
 # direnv local environment file
 .envrc
 .vscode-test/
@@ -22,6 +25,12 @@ editors/zed/grammars/
 editors/zed/extension.wasm
 # JetBrains IntelliJ Platform local cache.
 editors/jetbrains/.intellijPlatform/
+# Gradle wrapper — redundant since mise pins gradle in .mise.toml.
+# gradle.properties is intentionally NOT ignored: it carries the
+# build-critical platformVersion / sinceBuild / untilBuild / lsp4ij pins.
+editors/jetbrains/gradlew
+editors/jetbrains/gradlew.bat
+editors/jetbrains/gradle/
 
 # .vscode/ — allowlist only the shared workflow files. Everything else is
 # ignored by default, which keeps potentially sensitive files out of the
