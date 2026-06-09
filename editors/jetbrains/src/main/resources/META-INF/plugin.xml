@@ -16,6 +16,7 @@
   <depends>com.intellij.modules.platform</depends>
   <depends>com.redhat.devtools.lsp4ij</depends>
   <depends>org.jetbrains.plugins.textmate</depends>
+  <depends>org.jetbrains.plugins.yaml</depends>
 
   <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
     <server
