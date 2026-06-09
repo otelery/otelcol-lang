@@ -27,6 +27,13 @@
         language="yaml"
         serverId="otelcol"
         languageId="otelcol"/>
+    <!-- Colorize component references (namespace) and declarations (class)
+         using the user's theme-aware highlighter palette, matching the VS
+         Code styling. Without this, LSP4IJ leaves these tokens unstyled
+         and they render as plain text. -->
+    <semanticTokensColorsProvider
+        serverId="otelcol"
+        class="ch.snowgarden.otelcol.OtelcolSemanticTokensColorsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.textmate">

@@ -47,4 +47,16 @@ class PluginXmlSmokeTest : BasePlatformTestCase() {
       assertTrue("plugin.xml missing glob $glob", xml.contains(glob))
     }
   }
+
+  fun testSemanticTokensColorsProviderRegistered() {
+    // Without this extension the LSP `namespace`/`class` tokens render
+    // unstyled. Pin the registration so a future refactor doesn't silently
+    // regress to the "references are plain white" bug.
+    val xml = readPluginXml()
+    assertTrue(
+      "plugin.xml missing semanticTokensColorsProvider registration",
+      xml.contains("<semanticTokensColorsProvider") &&
+        xml.contains("class=\"ch.snowgarden.otelcol.OtelcolSemanticTokensColorsProvider\""),
+    )
+  }
 }
