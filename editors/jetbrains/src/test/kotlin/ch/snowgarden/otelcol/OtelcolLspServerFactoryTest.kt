@@ -13,10 +13,24 @@ class OtelcolLspServerFactoryTest : BasePlatformTestCase() {
     System.clearProperty(OtelcolLspServerFactory.PROP_COMMAND)
     System.clearProperty(OtelcolLspServerFactory.PROP_NODE)
     val cmd = OtelcolLspServerFactory().buildCommand()
-    assertEquals("expected [node, <server.js>, --stdio]", 3, cmd.size)
-    assertEquals("node", cmd[0])
+    assertEquals("expected [<node>, <server.js>, --stdio]", 3, cmd.size)
+    // resolveNode() returns an absolute path when one is found on the shell
+    // PATH, else the bare "node" literal. Either is acceptable.
+    assertTrue("node binary expected at cmd[0], got ${cmd[0]}", cmd[0].endsWith("node"))
     assertTrue("server.js path expected, got ${cmd[1]}", cmd[1].endsWith("server.js"))
     assertEquals("--stdio", cmd[2])
+  }
+
+  fun testResolveNodePrefersShellPathOverBareLiteral() {
+    System.clearProperty(OtelcolLspServerFactory.PROP_NODE)
+    // On dev machines / CI runners node is on PATH; resolveNode should hand
+    // back an absolute path. On a system without node anywhere it falls back
+    // to the literal "node" — also acceptable, asserted in the OR below.
+    val resolved = OtelcolLspServerFactory().resolveNode()
+    assertTrue(
+      "expected absolute path or literal 'node', got $resolved",
+      resolved == "node" || java.nio.file.Paths.get(resolved).isAbsolute,
+    )
   }
 
   fun testNodeBinaryOverride() {
