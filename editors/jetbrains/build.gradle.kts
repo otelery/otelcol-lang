@@ -53,13 +53,33 @@ dependencies {
 intellijPlatform {
   pluginConfiguration {
     id = providers.gradleProperty("pluginGroup")
-    name = providers.gradleProperty("pluginName")
+    // Do not override `name` here. plugin.xml's <name>OpenTelemetry Collector
+    // Config</name> is the canonical display name; piping `pluginName` through
+    // would inject "JetBrains" (the artifact slug) into the marketplace title,
+    // which Plugin Verifier rejects as TemplateWordInPluginName.
     version = providers.gradleProperty("pluginVersion")
 
     ideaVersion {
       sinceBuild = providers.gradleProperty("pluginSinceBuild")
       untilBuild = providers.gradleProperty("pluginUntilBuild")
     }
+  }
+
+  // Plugin Verifier — official JetBrains static-analysis tool.
+  // Catches undeclared <depends>, missing classes, deprecated API across the
+  // declared sinceBuild..untilBuild range. Would have caught the
+  // YAMLLanguage NoClassDefFoundError that slipped past unit tests, because
+  // the verifier exercises the strict production classloader.
+  // Run via `./gradlew verifyPlugin` or `make verify-jetbrains`.
+  pluginVerification {
+    ides {
+      recommended()
+    }
+    failureLevel = listOf(
+      org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask.FailureLevel.COMPATIBILITY_PROBLEMS,
+      org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask.FailureLevel.MISSING_DEPENDENCIES,
+      org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask.FailureLevel.NOT_DYNAMIC,
+    )
   }
 }
 
@@ -128,3 +148,11 @@ tasks.named("clean") {
     languageServerTarget.deleteRecursively()
   }
 }
+
+// Integration tests (IDE Starter / IntegrationTestApplication) are tracked as
+// a separate follow-up. The Plugin Verifier above already catches the
+// classloader bugs that motivated this layer (e.g. the missing
+// `<depends>org.jetbrains.plugins.yaml</depends>` regression), so we ship
+// verifier coverage first and revisit IDE Starter once a Docker-capable CI
+// runner is available.
+// Reference: https://blog.jetbrains.com/platform/2025/02/integration-tests-for-plugin-developers-intro-dependencies-and-first-integration-test/

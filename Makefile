@@ -242,6 +242,9 @@ test-helix-integration: .ci-tools/helix-$(HELIX_VERSION) .ci-tools/tree-sitter-$
 test-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## JetBrains plugin unit tests (gradle test)
 	cd editors/jetbrains && $(GRADLEW) test
 
+verify-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Run JetBrains Plugin Verifier across the declared IDE range (catches missing <depends>, classloader issues)
+	cd editors/jetbrains && $(GRADLEW) verifyPlugin
+
 test-zed: .ci-tools/rust-wasm32-$(RUST_VERSION) ## Zed extension cargo tests (static TOML + query validation)
 	cd editors/zed && $(CARGO) test
 

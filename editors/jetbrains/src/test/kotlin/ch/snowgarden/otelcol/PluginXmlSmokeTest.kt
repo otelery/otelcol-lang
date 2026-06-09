@@ -59,4 +59,16 @@ class PluginXmlSmokeTest : BasePlatformTestCase() {
         xml.contains("class=\"ch.snowgarden.otelcol.OtelcolSemanticTokensColorsProvider\""),
     )
   }
+
+  fun testYamlPluginDependencyDeclared() {
+    // The YAML plugin must be declared via <depends> (not just the
+    // build-classpath bundledPlugin in build.gradle.kts) — otherwise the
+    // strict production classloader rejects YAMLLanguage at FileType init.
+    // This is a static guard alongside the live Plugin Verifier check.
+    val xml = readPluginXml()
+    assertTrue(
+      "plugin.xml missing <depends>org.jetbrains.plugins.yaml</depends>",
+      xml.contains("<depends>org.jetbrains.plugins.yaml</depends>"),
+    )
+  }
 }
