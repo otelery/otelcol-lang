@@ -1,12 +1,30 @@
 package ch.snowgarden.otelcol
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class OtelcolLspServerFactoryTest : BasePlatformTestCase() {
   override fun tearDown() {
     System.clearProperty(OtelcolLspServerFactory.PROP_COMMAND)
     System.clearProperty(OtelcolLspServerFactory.PROP_NODE)
+    System.clearProperty(OtelcolLspServerFactory.PROP_SERVER)
+    Registry.get(OtelcolLspServerFactory.REG_SERVER_PATH).resetToDefault()
     super.tearDown()
+  }
+
+  fun testRegistryServerPathOverride() {
+    Registry.get(OtelcolLspServerFactory.REG_SERVER_PATH).setValue("/tmp/registry-server.js")
+    val cmd = OtelcolLspServerFactory().buildCommand()
+    assertEquals(3, cmd.size)
+    assertEquals("/tmp/registry-server.js", cmd[1])
+    assertEquals("--stdio", cmd[2])
+  }
+
+  fun testSystemPropertyServerOverridesRegistry() {
+    Registry.get(OtelcolLspServerFactory.REG_SERVER_PATH).setValue("/tmp/registry-server.js")
+    System.setProperty(OtelcolLspServerFactory.PROP_SERVER, "/tmp/sysprop-server.js")
+    val cmd = OtelcolLspServerFactory().buildCommand()
+    assertEquals("/tmp/sysprop-server.js", cmd[1])
   }
 
   fun testDefaultCommandSpawnsBundledServer() {

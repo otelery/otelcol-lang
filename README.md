@@ -234,16 +234,60 @@ make package-jetbrains
 Install in the IDE: `Settings → Plugins → ⚙ → Install Plugin from
 Disk…` → pick the `.zip`. The plugin depends on **LSP4IJ**, which
 the IDE will offer to install on first launch if it isn't already
-present. The `otelcol-language-server` binary must be on `PATH` (same
-`npm i -g ./opentelemetry-collector-config-*.tgz` step as above), or pass the path via
-`-Dotelcol.lsp.command=…`.
+present. The bundled `server.js` is extracted from the plugin jar to
+`~/.cache/JetBrains/<IDE>/otelcol-language-server/<version>/`; the
+extraction is keyed by a content hash (`manifest.sha256`) so
+reinstalling a newer plugin invalidates the cache automatically — no
+manual `rm -rf` step. A `node` binary on the user's shell PATH is the
+only external dependency.
 
-For iteration without packaging:
+**Node discovery.** `OtelcolLspServerFactory.resolveNode()` uses
+`com.intellij.execution.configurations.PathEnvironmentVariableUtil.findInPath`
+against the shell-inherited PATH (`EnvironmentUtil.getValue("PATH")`),
+which is necessary because GUI-launched IDEs on macOS/Linux otherwise
+inherit a stripped PATH that excludes Homebrew, nvm, `/usr/local/bin`,
+etc. Falls back to the literal `"node"` if lookup fails.
+
+**Server JS override channels** (priority order):
+
+| Channel                              | Lifetime          | Use                                |
+| ------------------------------------ | ----------------- | ---------------------------------- |
+| `-Dotelcol.lsp.command="…"`          | Process lifetime  | Full executable override; tests    |
+| `-Dotelcol.lsp.server="…"`           | Process lifetime  | Source-tree `server.js` during dev |
+| `otelcol.lsp.server.path` (Registry) | Across restarts   | Persistent override on any IDE     |
+| _(none)_                             | —                 | Bundled extraction (production)    |
+
+`-Dotelcol.lsp.node="…"` overrides the resolved Node binary
+independently.
+
+**Sandbox IDE for plugin development:**
 
 ```sh
-cd editors/jetbrains
-./gradlew runIde     # boots a sandbox IDE with the plugin loaded
+make runide-jetbrains
 ```
+
+Bundles the server and launches a sandbox IntelliJ with `examples/`
+opened as the project and `-Dotelcol.lsp.server=…/dist/server/server.js`
+pre-wired. Override the project folder with
+`./gradlew -p editors/jetbrains runIde -PsandboxProject=$(realpath test)`.
+
+**Auto-restart on rebuild.** Set the unified environment variable
+`OTELCOL_DEV_WATCH=1` to enable a file watcher on the active
+`server.js`. The JetBrains plugin's `OtelcolDevWatcher`
+`ProjectActivity` uses a NIO `WatchService` (300 ms debounce) and
+calls `LanguageServerManager.stop + start` on change; the VS Code
+extension uses `fs.watch` and calls `client.restart()`. Combined with
+`npm run watch` (esbuild `--watch` rebuilds `dist/server/server.js` on
+save), editing TS source automatically restarts the LSP process. Same
+flag works in both editors — no editor auto-enables it via dev-mode
+detection. The `make runide-jetbrains` target and the VS Code
+"Run Extension" launch config both set `OTELCOL_DEV_WATCH=1` already;
+production installs are unaffected.
+
+Manual restart fallback: **Tools → Restart otelcol Language Server**
+(also available via _Find Action_).
+
+Full dev-loop reference: [`docs/investigations/jetbrains-dev-loop.md`](docs/investigations/jetbrains-dev-loop.md).
 
 ### Sanity check across editors
 

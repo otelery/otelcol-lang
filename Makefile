@@ -253,6 +253,9 @@ test-editors: test-helix test-vscode test-jetbrains test-zed test-stdio ## Run a
 build-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Assemble JetBrains plugin distributable
 	cd editors/jetbrains && $(GRADLEW) assemble
 
+runide-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Launch sandbox IntelliJ with examples/ open and source-tree server.js
+	cd editors/jetbrains && $(GRADLEW) runIdeDev
+
 build-zed: .ci-tools/rust-wasm32-$(RUST_VERSION) ## Compile Zed extension to wasm32-wasip1
 	cd editors/zed && $(CARGO) build --target wasm32-wasip1
 
