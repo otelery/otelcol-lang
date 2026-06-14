@@ -211,10 +211,10 @@ build: $(NPM_INSTALL_STAMP) ## Compile TS to out/ + copy schemas (for unit tests
 	$(TSC) -p .
 	$(NODE) scripts/copy-schemas.mjs
 
-bundle: $(NPM_INSTALL_STAMP) ## Bundle extension + server with esbuild to dist/ (for VS Code packaging + integration tests)
+bundle: $(NPM_INSTALL_STAMP) ## Bundle extension + server with esbuild to dist/ (shared by all editors + integration tests)
 	$(NODE) esbuild.js --production
 
-test: test-unit test-editors ## Run unit + per-editor tests (VS Code is one of the editors)
+test: test-unit test-editors ## Run unit + per-editor tests (all editors: VS Code, JetBrains, Helix, Zed)
 
 test-unit: build ## LSP modules in isolation (node --test, fast)
 	$(NODE) scripts/check-runtime-paths.mjs
@@ -338,8 +338,8 @@ package-helix: | $(DIST_PKG) ## Helix config + queries tarball (users extract in
 #   - VS Code Marketplace (`vsce publish`) — ships the bundled extension
 #   - npm (`npm publish`)                  — ships the standalone
 #       otelcol-language-server binary used by Zed / Helix / JetBrains
-# The two channels MUST stay in lockstep, otherwise non-VS Code editors get
-# a stale LSP. `make publish` is the aggregate; the bump targets bump the
+# The two channels MUST stay in lockstep, otherwise the JetBrains/Helix/Zed
+# editors get a stale LSP. `make publish` is the aggregate; the bump targets bump the
 # version exactly once and then fan out to both raw publish targets.
 # JetBrains / Zed / Helix registry uploads aren't automated yet; the targets
 # print the manual steps so the Make surface is uniform across editors.
