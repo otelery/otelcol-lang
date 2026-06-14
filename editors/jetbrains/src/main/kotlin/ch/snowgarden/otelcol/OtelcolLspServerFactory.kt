@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EnvironmentUtil
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
+import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures
 import com.redhat.devtools.lsp4ij.server.ProcessStreamConnectionProvider
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 import java.nio.file.Files
@@ -40,6 +41,13 @@ class OtelcolLspServerFactory : LanguageServerFactory {
       it.userEnvironmentVariables = EnvironmentUtil.getEnvironmentMap()
     }
   }
+
+  // Defence-in-depth against LSP4IJ's verbatim snippet expansion: rewrite
+  // any `\t` continuation indent into the cursor line's actual whitespace
+  // before lookup elements are constructed. See OtelcolLspCompletionFeature
+  // for the why.
+  override fun createClientFeatures(): LSPClientFeatures =
+    LSPClientFeatures().setCompletionFeature(OtelcolLspCompletionFeature())
 
   // Visible for testing. Override priority: PROP_COMMAND (full argv0) >
   // PROP_SERVER (system property, dev-only) > REG_SERVER_PATH (persistent
