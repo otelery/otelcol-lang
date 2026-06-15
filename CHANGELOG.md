@@ -133,6 +133,18 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   plus a full writeup of the JetBrains plugin's server discovery,
   override channels, cache invalidation, Node.js resolution, and
   unified `OTELCOL_DEV_WATCH=1` dev loop.
+- `make upgrade-*` targets bump dependencies in every ecosystem reported
+  by `make outdated`, mirroring its structure: `upgrade-npm` runs
+  `npm-check-updates -u`; `upgrade-cargo-zed` runs `cargo upgrade` on
+  the Zed extension; `upgrade-gradle-jetbrains` runs the new
+  `se.patrikerdes.use-latest-versions` Gradle plugin against the
+  JetBrains build; per-editor aliases `upgrade-zed` /
+  `upgrade-jetbrains`; and central `upgrade-deps` rolls up all of the
+  above plus the existing `upgrade-tools` (mise toolchain). The
+  `cargo-outdated` and `cargo-edit` plugins they depend on are now
+  pinned in `.mise.toml` under `cargo:…` and installed via the same
+  sentinel pattern as every other tool — no more bespoke
+  `cargo install --locked` rules in the Makefile.
 
 ### Changed
 - Pipeline-body bucket completions (`receivers`, `processors`, `exporters`

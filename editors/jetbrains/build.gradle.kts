@@ -9,6 +9,9 @@ plugins {
   // Reports out-of-date dependencies via `gradle dependencyUpdates`.
   // Wired into the repo-level `make outdated`.
   id("com.github.ben-manes.versions") version "0.54.0"
+  // Rewrites version literals in build.gradle.kts to the latest versions
+  // reported by `dependencyUpdates`. Wired into `make upgrade-gradle-jetbrains`.
+  id("se.patrikerdes.use-latest-versions") version "0.2.18"
 }
 
 group = providers.gradleProperty("pluginGroup").get()
