@@ -262,15 +262,9 @@ function escapeSnippetLiteral(s: string): string {
   return s.replace(/[\\$}]/g, (c) => `\\${c}`);
 }
 function defaultLiteral(schema: JsonSchemaNode): string {
-  return typeof schema.default === "string"
-    ? schema.default
-    : JSON.stringify(schema.default);
+  return typeof schema.default === "string" ? schema.default : JSON.stringify(schema.default);
 }
-function snippetForProperty(
-  key: string,
-  schema: JsonSchemaNode,
-  refRoot?: JsonSchemaNode,
-): string {
+function snippetForProperty(key: string, schema: JsonSchemaNode, refRoot?: JsonSchemaNode): string {
   const t = Array.isArray(schema.type) ? schema.type[0] : schema.type;
   if (t === "object") {
     // If the object declares scalar children, expand the structure inline so
