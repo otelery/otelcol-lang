@@ -24,6 +24,27 @@ class BundledLanguageServerTest : BasePlatformTestCase() {
     )
   }
 
+  fun testManifestSha256SidecarMatchesBundle() {
+    val sidecar = javaClass.classLoader.getResourceAsStream("language-server/manifest.sha256")
+    assertNotNull(
+      "language-server/manifest.sha256 missing — copyLanguageServer task did not emit it",
+      sidecar,
+    )
+    val recorded = sidecar!!.bufferedReader().use { it.readText() }.trim()
+    // Recompute using the same algorithm as the Gradle task and verify match.
+    val cl = javaClass.classLoader
+    val entries = cl.getResourceAsStream("language-server/manifest.txt")!!
+      .bufferedReader().use { it.readLines() }.filter { it.isNotBlank() }
+    val md = java.security.MessageDigest.getInstance("SHA-256")
+    entries.forEach { rel ->
+      md.update(rel.toByteArray(Charsets.UTF_8))
+      md.update(0)
+      md.update(cl.getResourceAsStream("language-server/$rel")!!.use { it.readBytes() })
+    }
+    val computed = md.digest().joinToString("") { "%02x".format(it) }
+    assertEquals("manifest.sha256 out of sync with bundled contents", computed, recorded)
+  }
+
   fun testExtractedBundleIsRunnableJsFile() {
     val factory = OtelcolLspServerFactory()
     val path = factory.extractBundledServer()

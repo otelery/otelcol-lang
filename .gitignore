@@ -16,6 +16,9 @@ dist/
 
 # Editor build artefacts (see editors/{jetbrains,zed,...}/).
 editors/jetbrains/build/
+# Eclipse JDT compiler output (created when opening the module in an
+# Eclipse-based IDE or with ecj); Gradle writes to build/, not bin/.
+editors/jetbrains/bin/
 editors/jetbrains/.gradle/
 editors/zed/target/
 editors/zed/Cargo.lock
@@ -47,3 +50,6 @@ editors/jetbrains/src/main/resources/language-server/
 !.vscode/extensions.json
 # Local History extension snapshots — can resurrect previously deleted secrets.
 .history/
+
+# Personal scratch / WIP tracking, kept out of git so `git status` stays clean.
+NEXT-TASKS

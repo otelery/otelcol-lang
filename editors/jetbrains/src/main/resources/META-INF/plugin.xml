@@ -46,5 +46,20 @@
         implementationClass="ch.snowgarden.otelcol.OtelcolFileType"
         fieldName="INSTANCE"
         patterns="*.otelcol.yaml;*.otelcol.yml;otelcol-configset.yaml"/>
+    <registryKey
+        key="otelcol.lsp.server.path"
+        defaultValue=""
+        description="Absolute path to the otelcol LSP server.js. Leave blank to use the bundled copy. Restart the language server (Tools → Restart otelcol Language Server) after changing."
+        restartRequired="false"/>
+    <postStartupActivity implementation="ch.snowgarden.otelcol.OtelcolDevWatcher"/>
   </extensions>
+
+  <actions>
+    <action id="otelcol.RestartLspServer"
+            class="ch.snowgarden.otelcol.RestartOtelcolServerAction"
+            text="Restart otelcol Language Server"
+            description="Stop and start the otelcol LSP server process for the current project">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

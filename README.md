@@ -67,7 +67,7 @@ receivers:
 
 ```
 otelcol-lang/
-├── package.json                              VS Code extension manifest + npm bin for the LSP server
+├── package.json                              Shared manifest: VS Code extension + npm bin for the LSP server
 ├── syntaxes/
 │   ├── otelcol-yaml.tmLanguage.json          YAML + OTTL injection (VS Code + JetBrains)
 │   └── ottl.tmLanguage.json                  vendored from ottl-lang
@@ -234,16 +234,60 @@ make package-jetbrains
 Install in the IDE: `Settings → Plugins → ⚙ → Install Plugin from
 Disk…` → pick the `.zip`. The plugin depends on **LSP4IJ**, which
 the IDE will offer to install on first launch if it isn't already
-present. The `otelcol-language-server` binary must be on `PATH` (same
-`npm i -g ./opentelemetry-collector-config-*.tgz` step as above), or pass the path via
-`-Dotelcol.lsp.command=…`.
+present. The bundled `server.js` is extracted from the plugin jar to
+`~/.cache/JetBrains/<IDE>/otelcol-language-server/<version>/`; the
+extraction is keyed by a content hash (`manifest.sha256`) so
+reinstalling a newer plugin invalidates the cache automatically — no
+manual `rm -rf` step. A `node` binary on the user's shell PATH is the
+only external dependency.
 
-For iteration without packaging:
+**Node discovery.** `OtelcolLspServerFactory.resolveNode()` uses
+`com.intellij.execution.configurations.PathEnvironmentVariableUtil.findInPath`
+against the shell-inherited PATH (`EnvironmentUtil.getValue("PATH")`),
+which is necessary because GUI-launched IDEs on macOS/Linux otherwise
+inherit a stripped PATH that excludes Homebrew, nvm, `/usr/local/bin`,
+etc. Falls back to the literal `"node"` if lookup fails.
+
+**Server JS override channels** (priority order):
+
+| Channel                              | Lifetime          | Use                                |
+| ------------------------------------ | ----------------- | ---------------------------------- |
+| `-Dotelcol.lsp.command="…"`          | Process lifetime  | Full executable override; tests    |
+| `-Dotelcol.lsp.server="…"`           | Process lifetime  | Source-tree `server.js` during dev |
+| `otelcol.lsp.server.path` (Registry) | Across restarts   | Persistent override on any IDE     |
+| _(none)_                             | —                 | Bundled extraction (production)    |
+
+`-Dotelcol.lsp.node="…"` overrides the resolved Node binary
+independently.
+
+**Sandbox IDE for plugin development:**
 
 ```sh
-cd editors/jetbrains
-./gradlew runIde     # boots a sandbox IDE with the plugin loaded
+make runide-jetbrains
 ```
+
+Bundles the server and launches a sandbox IntelliJ with `examples/`
+opened as the project and `-Dotelcol.lsp.server=…/dist/server/server.js`
+pre-wired. Override the project folder with
+`./gradlew -p editors/jetbrains runIde -PsandboxProject=$(realpath test)`.
+
+**Auto-restart on rebuild.** Set the unified environment variable
+`OTELCOL_DEV_WATCH=1` to enable a file watcher on the active
+`server.js`. The JetBrains plugin's `OtelcolDevWatcher`
+`ProjectActivity` uses a NIO `WatchService` (300 ms debounce) and
+calls `LanguageServerManager.stop + start` on change; the VS Code
+extension uses `fs.watch` and calls `client.restart()`. Combined with
+`npm run watch` (esbuild `--watch` rebuilds `dist/server/server.js` on
+save), editing TS source automatically restarts the LSP process. Same
+flag works in both editors — no editor auto-enables it via dev-mode
+detection. The `make runide-jetbrains` target and the VS Code
+"Run Extension" launch config both set `OTELCOL_DEV_WATCH=1` already;
+production installs are unaffected.
+
+Manual restart fallback: **Tools → Restart otelcol Language Server**
+(also available via _Find Action_).
+
+Full dev-loop reference: [`docs/investigations/jetbrains-dev-loop.md`](docs/investigations/jetbrains-dev-loop.md).
 
 ### Sanity check across editors
 
@@ -392,3 +436,63 @@ forwards each OTTL string to `ottl-lsp` and translates diagnostic
 ranges back). Distribution support is layered cleanly on top: the
 schemas live in their own repo, and the LSP just consumes the
 generated per-distribution index at runtime.
+
+### Single server, multiple editors
+
+`src/server/` is a stdio language server built with esbuild into a
+single `dist/server/server.js`. Every editor frontend talks to the
+same bundle:
+
+- **VS Code** — `src/extension/extension.ts` spawns it via `vscode-languageclient/node`.
+- **JetBrains** — `editors/jetbrains/` uses LSP4IJ; `OtelcolLspServerFactory` constructs the `node server.js --stdio` command line.
+- **Zed**, **Helix**, **Neovim** — point at the same `server.js` (or the `npm i -g` global) via stdio.
+
+A bug fix or feature lands in one place and reaches every editor on
+the next `make bundle`.
+
+### Completion contexts (`src/server/completion.ts`)
+
+Five branches, all driven by `pathAtPosition` (indent-aware, handles
+blank-line cursors that the YAML AST has no node for):
+
+1. **Value position** — cursor after `key: ` on the same line. If the
+   key's resolved schema has an `enum`, surfaces those values.
+2. **Top-level component map** (`receivers:` / `processors:` / …) —
+   suggests known component types from the distribution index.
+3. **Inside a component instance** (`receivers.otlp.<cursor>`) — walks
+   the JSON Schema along the trailing path (`resolveRef`, `lookupProperty`)
+   and emits property keys with `detail` (type/format/enum preview),
+   markdown `documentation`, and snippet `insertText` that pre-fills
+   schema defaults for scalars and expands `object` / `array` types
+   onto an indented child line.
+4. **`service.pipelines.<sig>`** — the bucket names `receivers`,
+   `processors`, `exporters`.
+5. **`service.pipelines.<sig>.{receivers,processors,exporters}`** —
+   the defined IDs (cross-file aware via the set model).
+
+Snippets use `\t` for the body indent so LSP clients expand it relative
+to the cursor line — emitting literal spaces double-indents on most
+clients.
+
+### Configuration sets
+
+`src/server/set-model.ts` discovers sibling `*.otelcol.yaml` files that
+share a `service.pipelines` anchor and unions their definitions. Hover,
+go-to-definition, find-references, and completion all consult the set
+model so an exporter declared in `exporters.otelcol.yaml` is resolvable
+from a `pipelines.otelcol.yaml` reference.
+
+### Editor-side specifics
+
+- **Content sniffing** (VS Code) — `src/extension/sniffer.ts` retags
+  `*.yaml` files as `otelcol` when their content matches; the LSP
+  server runs the same sniffer on the server side for editors that
+  can't retag (`otelcol.sniffer.serverSide`).
+- **Semantic tokens** — VS Code consumes the LSP semantic-tokens
+  response directly; JetBrains adds `OtelcolSemanticTokensColorsProvider`
+  to map the LSP token types onto the user's theme palette (otherwise
+  LSP4IJ renders them as plain text).
+- **Dev auto-restart** — both VS Code (`fs.watch` gated on
+  `ExtensionMode.Development`) and JetBrains (`OtelcolDevWatcher`
+  gated on an override path being set) watch `dist/server/server.js`
+  and restart the client on change. Pairs with `npm run watch`.

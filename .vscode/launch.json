@@ -10,6 +10,9 @@
         "${workspaceFolder}/test",
         "${workspaceFolder}/examples"
       ],
+      "env": {
+        "OTELCOL_DEV_WATCH": "1"
+      },
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "preLaunchTask": "npm: compile"
     },
@@ -20,6 +23,13 @@
       "port": 6099,
       "restart": true,
       "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+    },
+    {
+      "name": "Run JetBrains Sandbox",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "make runide-jetbrains",
+      "cwd": "${workspaceFolder}"
     }
   ]
 }
