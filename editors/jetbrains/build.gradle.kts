@@ -1,5 +1,6 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import java.io.File
+import java.security.MessageDigest
 
 plugins {
   id("java")
@@ -131,15 +132,136 @@ val copyLanguageServer by tasks.registering(Copy::class) {
     // this at runtime to know which classpath resources to extract to disk.
     val manifest = fileTree(languageServerTarget) {
       exclude("manifest.txt")
+      exclude("manifest.sha256")
     }.files
       .map { it.toRelativeString(languageServerTarget).replace(File.separatorChar, '/') }
       .sorted()
     file("$languageServerTarget/manifest.txt").writeText(manifest.joinToString("\n") + "\n")
+    // Content hash of the bundled tree. OtelcolLspServerFactory uses this to
+    // invalidate its on-disk extraction cache when the bundled bytes change —
+    // so reinstalling a freshly-built zip no longer requires manually wiping
+    // ~/.cache/JetBrains/.../otelcol-language-server/.
+    val md = MessageDigest.getInstance("SHA-256")
+    manifest.forEach { rel ->
+      md.update(rel.toByteArray(Charsets.UTF_8))
+      md.update(0)
+      md.update(file("$languageServerTarget/$rel").readBytes())
+    }
+    val hex = md.digest().joinToString("") { b: Byte -> "%02x".format(b) }
+    file("$languageServerTarget/manifest.sha256").writeText(hex + "\n")
   }
 }
 
 tasks.named("processResources") {
   dependsOn(copySyntaxes, copyLanguageServer)
+}
+
+// `./gradlew runIdeDev` — sandbox IDE pre-wired for plugin development.
+// Decoupled from the build's `platformVersion` (which targets sinceBuild=243
+// as a compile-time floor) by registering a separate runIde task pinned to
+// `runIdeVersion` from gradle.properties. Mirrors VS Code's F5 setup: opens
+// the repo's examples/ as the sandbox project, points the LSP server
+// override at dist/server/server.js, and enables the dev watcher.
+//
+// Override IDE version: -PrunIdeVersion=2026.2
+// Override project:    -PsandboxProject=/abs/path
+intellijPlatformTesting {
+  runIde.register("runIdeDev") {
+    // Starting with 2025.3 (253), JetBrains dropped the IC/IU split — there
+    // is only one `intellijIdea` artifact. Use the unified type so 2026.x
+    // versions resolve.
+    type = org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdea
+    version = providers.gradleProperty("runIdeVersion")
+    plugins {
+      plugin(
+        providers.gradleProperty("lsp4ijPluginId").get(),
+        providers.gradleProperty("lsp4ijPluginVersion").get(),
+      )
+    }
+    task {
+      val repoRoot = rootDir.parentFile.parentFile
+      val sandboxProject = (project.findProperty("sandboxProject") as String?)
+        ?: File(repoRoot, "examples").absolutePath
+      setArgs(listOf(sandboxProject))
+      systemProperty(
+        "otelcol.lsp.server",
+        File(repoRoot, "dist/server/server.js").absolutePath,
+      )
+      // Same env var the VS Code extension checks; unified opt-in. Defaults
+      // to "1" but respects the shell value, so `OTELCOL_DEV_WATCH=0 make
+      // runide-jetbrains` disables the watcher without editing the script.
+      environment("OTELCOL_DEV_WATCH", System.getenv("OTELCOL_DEV_WATCH") ?: "1")
+
+      // Verbose logging is wired BOTH ways: system properties (apply at
+      // startup, no UI footprint) AND options/log-categories.xml (UI mirror
+      // so Help → Diagnostic Tools → Debug Log Settings shows the same
+      // categories). The system-property path is the safety net in case
+      // the file schema drifts across IDE versions.
+      //
+      // Auto-trust + skipping the Trust dialog is done via options/
+      // trusted-paths.xml — idea.trust.all.projects=true is unreliable on
+      // 2025.3+ since JetBrains tightened the gate.
+      //
+      // Override via gradle property if needed:
+      //   ./gradlew runIdeDev -PlogDebug="extra.cat" -PlogTrace="other.cat"
+      val debugCats = (project.findProperty("logDebug") as String?)
+        ?: "com.redhat.devtools.lsp4ij,org.eclipse.lsp4j"
+      val traceCats = (project.findProperty("logTrace") as String?)
+        ?: "ch.snowgarden.otelcol"
+      systemProperty("idea.log.debug.categories", debugCats)
+      systemProperty("idea.log.trace.categories", traceCats)
+
+      doFirst {
+        // Sandbox layout produced by the intellij-platform plugin:
+        //   editors/jetbrains/.intellijPlatform/sandbox/<pluginName>/<type>-<version>/config_runIdeDev/options/
+        val pluginNameRes = providers.gradleProperty("pluginName").get()
+        val platformTypeRes = providers.gradleProperty("platformType").get()
+        val platformVersionRes = providers.gradleProperty("platformVersion").get()
+        val configDir = projectDir
+          .resolve(".intellijPlatform/sandbox/$pluginNameRes/$platformTypeRes-$platformVersionRes/config_runIdeDev/options")
+        configDir.mkdirs()
+
+        // Trust the sandbox project up-front, so the dialog never appears.
+        configDir.resolve("trusted-paths.xml").writeText(
+          """
+          |<application>
+          |  <component name="Trusted.Paths">
+          |    <option name="TRUSTED_PROJECT_PATHS">
+          |      <map>
+          |        <entry key="$sandboxProject" value="true" />
+          |      </map>
+          |    </option>
+          |  </component>
+          |</application>
+          |
+          """.trimMargin()
+        )
+
+        // Pre-populate Debug Log Settings (Help → Diagnostic Tools → …) so
+        // the UI mirrors what's active. Schema matches IntelliJ's
+        // LogLevelConfigurationManager.State: {"categories":[{"category":
+        // "<cat>","level":"DEBUG|TRACE"}]}.
+        val entries = buildList {
+          debugCats.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+            .forEach { add(""""category":"$it","level":"DEBUG"""") }
+          traceCats.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+            .forEach { add(""""category":"$it","level":"TRACE"""") }
+        }
+        val json = entries.joinToString(",", """{"categories":[""", "]}") { "{$it}" }
+        configDir.resolve("log-categories.xml").writeText(
+          """
+          |<application>
+          |  <component name="Logs.Categories"><![CDATA[$json]]></component>
+          |</application>
+          |
+          """.trimMargin()
+        )
+      }
+      // `idea.is.internal=true` is already set by the platform plugin in
+      // sandbox mode — that's what unlocks the in-log error-reporter dialog
+      // and the extra assertion checks. No extra wiring needed.
+    }
+  }
 }
 
 tasks.named("clean") {

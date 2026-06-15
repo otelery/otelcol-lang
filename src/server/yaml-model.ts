@@ -545,4 +545,114 @@ export function pathAtOffset(text: string, offset: number): string[] {
   return path;
 }
 
+// Indent-aware path resolution. Used by completion so that pressing Ctrl-Space
+// on a whitespace-only line still yields the surrounding map's key chain.
+//
+// The plain `pathAtOffset` walks the parsed AST and only descends into nodes
+// whose byte range contains the cursor — blank lines under a key like
+// `receivers:` have no AST node covering them, so the path collapses to [].
+//
+// Strategy when the cursor sits on a blank line: take the cursor's indent
+// column, then walk earlier non-blank lines, popping anything at >= indent
+// and pushing the key of each strictly-less-indented `key:` ancestor.
+export function pathAtPosition(text: string, position: Position): string[] {
+  const lines = text.split("\n");
+  const cur = lines[position.line] ?? "";
+  if (cur.trim() !== "") {
+    return pathAtOffset(text, offsetFromPos(text, position));
+  }
+  // Effective indent on a blank line:
+  //  - VS Code reports `position.character` as the cursor's visual column,
+  //    which equals the line's leading whitespace length. Trust it.
+  //  - IntelliJ via LSP4IJ often reports 0 even when the user has clearly
+  //    pressed Enter under a `key:` line (the indent is "virtual" / not yet
+  //    in the document text). Only in that case do we fall back to: previous
+  //    non-blank line's indent plus 2 if that line ends with `:` (we're
+  //    adding a child) else its indent.
+  //
+  // Critically, when char > 0 the user has committed to an indent — we must
+  // honour it. Otherwise a cursor at col 4 sitting two lines below a
+  // `      - item` array element gets incorrectly pulled to col 6,
+  // resolving the parent path inside the array (no properties → empty
+  // completion).
+  let cursorIndent = position.character;
+  const lineLeading = cur.match(/^\s*/)?.[0].length ?? 0;
+  if (cursorIndent === 0 && lineLeading === 0) {
+    for (let i = position.line - 1; i >= 0; i--) {
+      const l = lines[i];
+      if (l.trim() === "") continue;
+      const indent = l.match(/^\s*/)?.[0].length ?? 0;
+      const endsWithColon = /:\s*$/.test(l);
+      cursorIndent = endsWithColon ? indent + 2 : indent;
+      break;
+    }
+  }
+  const chain: { indent: number; key: string }[] = [];
+  for (let i = position.line - 1; i >= 0; i--) {
+    const line = lines[i];
+    if (line.trim() === "") continue;
+    const indent = line.match(/^\s*/)?.[0].length ?? 0;
+    if (indent >= cursorIndent) continue;
+    const keyMatch = line.slice(indent).match(/^([A-Za-z_][\w./-]*)\s*:/);
+    if (!keyMatch) continue;
+    if (chain.length && chain[0].indent <= indent) continue;
+    chain.unshift({ indent, key: keyMatch[1] });
+    if (indent === 0) break;
+  }
+  return chain.map((c) => c.key);
+}
+
+// Return the keys already defined in the mapping addressed by `keyPath`.
+// Used by completion to suppress sibling suggestions that would create a
+// duplicate-key error if accepted (YAML mappings require unique keys).
+// Returns an empty set when the path doesn't resolve to a mapping.
+export function siblingKeysAt(text: string, keyPath: string[]): Set<string> {
+  const doc = parseDocument(text, { keepSourceTokens: true });
+  let node: Node | null = doc.contents as Node | null;
+  for (const seg of keyPath) {
+    if (!node || !isMap(node)) return new Set();
+    const pair = node.items.find(
+      (p) => isPair(p) && isScalar(p.key) && String(p.key.value) === seg,
+    );
+    if (!pair || !isPair(pair)) return new Set();
+    node = pair.value as Node | null;
+  }
+  if (!node || !isMap(node)) return new Set();
+  const keys = new Set<string>();
+  for (const p of node.items) {
+    if (isPair(p) && isScalar(p.key)) keys.add(String(p.key.value));
+  }
+  return keys;
+}
+
+// When the cursor sits to the right of `<key>: ` on a single line, return the
+// full path to that key (ancestors via indent + the key). Used by completion
+// to surface enum values / scalar suggestions for the scalar being assigned.
+// Returns null when the cursor isn't in value position on a `key:` line.
+export function valueContextAtPosition(
+  text: string,
+  position: Position,
+): { keyPath: string[] } | null {
+  const lines = text.split("\n");
+  const line = lines[position.line] ?? "";
+  const before = line.slice(0, position.character);
+  const m = before.match(/^(\s*)([A-Za-z_][\w./-]*)\s*:\s+(\S*)$/);
+  if (!m) return null;
+  const keyColumn = m[1].length;
+  const key = m[2];
+  const chain: { indent: number; key: string }[] = [];
+  for (let i = position.line - 1; i >= 0; i--) {
+    const l = lines[i];
+    if (l.trim() === "") continue;
+    const indent = l.match(/^\s*/)?.[0].length ?? 0;
+    if (indent >= keyColumn) continue;
+    const km = l.slice(indent).match(/^([A-Za-z_][\w./-]*)\s*:/);
+    if (!km) continue;
+    if (chain.length && chain[0].indent <= indent) continue;
+    chain.unshift({ indent, key: km[1] });
+    if (indent === 0) break;
+  }
+  return { keyPath: [...chain.map((c) => c.key), key] };
+}
+
 export { CLASS_KEYS };

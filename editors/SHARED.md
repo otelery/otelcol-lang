@@ -1,9 +1,10 @@
 # Cross-editor concerns
 
-Research notes for porting the OpenTelemetry Collector language tooling
-beyond VS Code. Lives on branch `editor-integrations` (off `better-sniffing`)
-in worktree `../otelcol-lang-idea`. Nothing here ships back to `main` or
-`better-sniffing` without explicit sign-off.
+Research and design notes for multi-editor integration of the
+OpenTelemetry Collector language tooling — VS Code, JetBrains, Helix,
+and Zed share a single LSP server (`src/server/`) and TextMate grammar
+(`syntaxes/`); each editor has a thin client under `editors/<editor>/`.
+This file captures the cross-cutting design decisions that span them.
 
 ## 1. stdio launch
 
@@ -99,8 +100,9 @@ Recommendation for otelcol-lang:
    editor's user base already has Node available (Zed-extension authors do;
    Neovim users overwhelmingly do; Helix users mostly do; JetBrains plugin
    authors definitely do).
-4. Version the npm package together with the VS Code extension's `package.json`
-   (single source of truth). Surface the server version in `initialize`'s
+4. Version the npm package together with the shared extension manifest
+   (`package.json` — single source of truth for both the VS Code extension
+   and the npm bin). Surface the server version in `initialize`'s
    `serverInfo.version` for clients that want to check compatibility.
 
 ## 5. Per-editor "is this an otelcol file?" detection

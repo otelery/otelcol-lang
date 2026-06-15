@@ -19,11 +19,104 @@ async function waitFor<T>(
   throw new Error(`waitFor: predicate never became truthy within ${timeoutMs}ms`);
 }
 
+// Open a scratch document inside the test workspace with the given filename
+// + initial text. Must live in the workspace (not /tmp/) so the otelcol
+// language client attaches — VS Code only routes LSP traffic for files
+// inside the open workspace folder. Caller passes a unique name; the file
+// is unlinked in afterEach via the scratchFiles array.
+const scratchFiles: string[] = [];
+async function openScratch(name: string, text: string): Promise<vscode.TextEditor> {
+  const wsFolder = vscode.workspace.workspaceFolders?.[0];
+  assert.ok(wsFolder, "test workspace must be open");
+  const file = path.join(wsFolder.uri.fsPath, name);
+  fs.writeFileSync(file, text, "utf8");
+  scratchFiles.push(file);
+  const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
+  const editor = await vscode.window.showTextDocument(doc);
+  // Let the language client attach + parse the doc.
+  await new Promise((r) => setTimeout(r, 300));
+  return editor;
+}
+
+// Fetch the labels at a cursor position, waiting until at least one item
+// arrives (LSP responses are async).
+async function completionLabels(uri: vscode.Uri, position: vscode.Position): Promise<string[]> {
+  const result = await waitFor(
+    async () => {
+      const r = (await vscode.commands.executeCommand(
+        "vscode.executeCompletionItemProvider",
+        uri,
+        position,
+      )) as vscode.CompletionList;
+      return r && r.items && r.items.length > 0 ? r : undefined;
+    },
+    { timeoutMs: 10000, intervalMs: 200 },
+  );
+  return result.items.map((i) => (typeof i.label === "string" ? i.label : i.label.label));
+}
+
+// Apply the completion item with the given label by:
+//   1. fetching items via the LSP-backed provider,
+//   2. deleting the range carried by the item's textEdit (or the
+//      implicit-prefix word range if none),
+//   3. inserting the snippet at the cursor.
+// This mirrors what VS Code does internally when the user accepts an
+// item with the keyboard. Lets us assert the post-acceptance buffer.
+async function applyCompletion(
+  editor: vscode.TextEditor,
+  position: vscode.Position,
+  label: string,
+): Promise<void> {
+  const result = await waitFor(
+    async () => {
+      const r = (await vscode.commands.executeCommand(
+        "vscode.executeCompletionItemProvider",
+        editor.document.uri,
+        position,
+      )) as vscode.CompletionList;
+      return r && r.items && r.items.length > 0 ? r : undefined;
+    },
+    { timeoutMs: 10000, intervalMs: 200 },
+  );
+  const item = result.items.find((i) => {
+    const l = typeof i.label === "string" ? i.label : i.label.label;
+    return l === label;
+  });
+  assert.ok(item, `no completion item with label '${label}'`);
+  const range =
+    (item.range as vscode.Range | undefined) ??
+    (item.range && "replacing" in (item.range as any) ? (item.range as any).replacing : undefined) ??
+    editor.document.getWordRangeAtPosition(position) ??
+    new vscode.Range(position, position);
+  await editor.edit((eb) => eb.delete(range));
+  const snippet =
+    item.insertText instanceof vscode.SnippetString
+      ? item.insertText
+      : new vscode.SnippetString(typeof item.insertText === "string" ? item.insertText : label);
+  await editor.insertSnippet(snippet);
+}
+
+function assertBufferEquals(actual: string, expected: string): void {
+  if (actual === expected) return;
+  const visualise = (s: string) => s.replace(/ /g, "·").replace(/\n/g, "↵\n");
+  assert.fail(
+    `buffer mismatch\n--- expected ---\n${visualise(expected)}\n--- actual ---\n${visualise(actual)}\n`,
+  );
+}
+
 describe("opentelemetry-collector-config extension", () => {
   before(async () => {
     const ext = vscode.extensions.getExtension(EXTENSION_ID);
     assert.ok(ext, `extension ${EXTENSION_ID} not found in Extension Host`);
     await ext.activate();
+  });
+
+  afterEach(async () => {
+    while (scratchFiles.length > 0) {
+      const f = scratchFiles.pop()!;
+      try { fs.unlinkSync(f); } catch { /* ignore */ }
+    }
+    await vscode.commands.executeCommand("workbench.action.closeAllEditors");
   });
 
   describe("activation and contributions", () => {
@@ -184,6 +277,80 @@ describe("opentelemetry-collector-config extension", () => {
       assert.ok(
         labels.includes("otlp"),
         `expected 'otlp' among completion items; got: ${labels.slice(0, 15).join(", ")}`,
+      );
+    });
+
+    // The next four tests defend post-acceptance buffer state — they apply
+    // the LSP CompletionItem to the document and assert resulting text.
+    // Unit tests in test/unit-completion.test.mjs validate the LSP item
+    // shape; these guard the *client-side application* (snippet expansion,
+    // textEdit range honored, sibling filtering visible in the picker).
+    // Mirrored 1:1 in editors/jetbrains/.../OtelcolCompletionTest.kt.
+
+    // 1. Multi-line snippet indent — array property under a 4-space-indented
+    //    blank line. `metadata_keys:` must land at col 4; `- ` at col 6.
+    it("array property indents continuation line correctly post-acceptance", async () => {
+      const text = "processors:\n  batch:\n    \n";
+      const editor = await openScratch("indent-array.otelcol.yaml", text);
+      const pos = new vscode.Position(2, 4);
+      editor.selection = new vscode.Selection(pos, pos);
+      await applyCompletion(editor, pos, "metadata_keys");
+      assertBufferEquals(
+        editor.document.getText(),
+        "processors:\n  batch:\n    metadata_keys:\n      - \n",
+      );
+    });
+
+    // 2. textEdit range pinning — typing `met` on a 4-space-indented line
+    //    and accepting `metadata_keys` must NOT eat the leading indent.
+    it("textEdit range preserves the leading indent post-acceptance", async () => {
+      const text = "processors:\n  batch:\n    met\n";
+      const editor = await openScratch("indent-prefix.otelcol.yaml", text);
+      const pos = new vscode.Position(2, 7); // end of `met`
+      editor.selection = new vscode.Selection(pos, pos);
+      await applyCompletion(editor, pos, "metadata_keys");
+      assertBufferEquals(
+        editor.document.getText(),
+        "processors:\n  batch:\n    metadata_keys:\n      - \n",
+      );
+    });
+
+    // 3. Sibling-key filtering — keys already present in the mapping aren't
+    //    re-suggested (would otherwise create a YAML duplicate-key error).
+    it("filters out sibling keys already present in the mapping", async () => {
+      const text =
+        "processors:\n  batch:\n    send_batch_size: 1024\n    timeout: 5s\n    \n";
+      const editor = await openScratch("indent-siblings.otelcol.yaml", text);
+      const pos = new vscode.Position(4, 4);
+      editor.selection = new vscode.Selection(pos, pos);
+      const labels = await completionLabels(editor.document.uri, pos);
+      assert.ok(
+        !labels.includes("send_batch_size"),
+        `send_batch_size already set on line 2 — must not be suggested; got: ${labels.join(",")}`,
+      );
+      assert.ok(
+        !labels.includes("timeout"),
+        `timeout already set on line 3 — must not be suggested; got: ${labels.join(",")}`,
+      );
+      assert.ok(
+        labels.includes("metadata_keys"),
+        `metadata_keys not yet defined — should still surface; got: ${labels.join(",")}`,
+      );
+    });
+
+    // 4. keyOnLine carve-out — cursor parked on an existing key line still
+    //    surfaces that key, so re-editing / replacing it works.
+    it("re-suggests the key on the cursor's own line", async () => {
+      const text =
+        "receivers:\n  otlp:\n    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\n";
+      const editor = await openScratch("indent-keyonline.otelcol.yaml", text);
+      // cursor parked inside "endpoint" itself (line 4, between `end` and `point`)
+      const pos = new vscode.Position(4, 11);
+      editor.selection = new vscode.Selection(pos, pos);
+      const labels = await completionLabels(editor.document.uri, pos);
+      assert.ok(
+        labels.includes("endpoint"),
+        `cursor is on 'endpoint:' itself — must still appear; got: ${labels.slice(0, 15).join(",")}`,
       );
     });
   });

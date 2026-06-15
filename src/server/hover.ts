@@ -84,7 +84,7 @@ export function hover(
 
 // --- per-key hover -----------------------------------------------------
 
-interface JsonSchemaNode {
+export interface JsonSchemaNode {
   type?: string | string[];
   description?: string;
   properties?: Record<string, JsonSchemaNode>;
@@ -145,7 +145,7 @@ function walkConfigForKey(
   return null;
 }
 
-function lookupProperty(
+export function lookupProperty(
   schema: JsonSchemaNode,
   key: string,
   root: JsonSchemaNode,
@@ -180,7 +180,7 @@ function lookupProperty(
 //   - bare key:      "foo"  → root.$defs.foo  (legacy upstream form)
 //   - anything else  → returned as-is so the caller can still surface the
 //                      field's own description.
-function resolveRef(schema: JsonSchemaNode, root: JsonSchemaNode, depth = 0): JsonSchemaNode {
+export function resolveRef(schema: JsonSchemaNode, root: JsonSchemaNode, depth = 0): JsonSchemaNode {
   if (depth > 16) return schema;
   if (!schema?.$ref) return schema;
   const ref = schema.$ref;
@@ -196,23 +196,44 @@ function resolveRef(schema: JsonSchemaNode, root: JsonSchemaNode, depth = 0): Js
   return resolveRef({ ...target, ...rest }, root, depth + 1);
 }
 
-function formatKeyHover(key: string, schema: JsonSchemaNode, range: Range): Hover {
-  const resolved = schema;
+// Short type signature used as the completion item `detail` (one-line hint
+// shown next to the label) and as the hover heading.
+export function schemaTypeLabel(schema: JsonSchemaNode): string {
+  const t = Array.isArray(schema.type) ? schema.type.join(" | ") : (schema.type ?? "");
+  const parts: string[] = [];
+  if (t) parts.push(t);
+  if (schema.format) parts.push(schema.format);
+  if (schema.enum && schema.enum.length) {
+    const preview = schema.enum
+      .slice(0, 4)
+      .map((v) => (typeof v === "string" ? v : JSON.stringify(v)))
+      .join("|");
+    parts.push(`enum: ${preview}${schema.enum.length > 4 ? "…" : ""}`);
+  }
+  return parts.join(", ");
+}
+
+// Markdown body for a schema property — description + allowed values + default.
+// Shared by hover and completion so the two stay in sync.
+export function formatSchemaPropertyMarkdown(key: string, schema: JsonSchemaNode): string {
   const lines: string[] = [];
-  const typeStr = Array.isArray(resolved.type)
-    ? resolved.type.join(" \\| ")
-    : (resolved.type ?? "");
-  lines.push(
-    `**\`${key}\`**${typeStr ? ` — *${typeStr}${resolved.format ? `, ${resolved.format}` : ""}*` : ""}`,
-  );
-  if (resolved.description) lines.push("", resolved.description);
-  if (resolved.enum && resolved.enum.length) {
-    lines.push("", `*Allowed*: ${resolved.enum.map((e) => `\`${String(e)}\``).join(", ")}`);
+  const t = schemaTypeLabel(schema);
+  lines.push(`**\`${key}\`**${t ? ` — *${t.replace(/\|/g, "\\|")}*` : ""}`);
+  if (schema.description) lines.push("", schema.description);
+  if (schema.enum && schema.enum.length) {
+    lines.push("", `*Allowed*: ${schema.enum.map((e) => `\`${String(e)}\``).join(", ")}`);
   }
-  if (resolved.default !== undefined) {
-    lines.push(`*Default*: \`${JSON.stringify(resolved.default)}\``);
+  if (schema.default !== undefined) {
+    lines.push(`*Default*: \`${JSON.stringify(schema.default)}\``);
   }
-  return { range, contents: { kind: MarkupKind.Markdown, value: lines.join("\n") } };
+  return lines.join("\n");
+}
+
+function formatKeyHover(key: string, schema: JsonSchemaNode, range: Range): Hover {
+  return {
+    range,
+    contents: { kind: MarkupKind.Markdown, value: formatSchemaPropertyMarkdown(key, schema) },
+  };
 }
 
 function nodeRange(text: string, node: Node | null): Range {

@@ -1,3 +1,4 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
 import {
   commands,
@@ -140,6 +141,35 @@ export function activate(context: ExtensionContext) {
 
   client = new LanguageClient("otelcol", "OpenTelemetry Collector", serverOptions, clientOptions);
   client.start();
+
+  // Dev convenience: when OTELCOL_DEV_WATCH=1, watch the bundled server.js
+  // and restart the LSP client on change. Pairs with `npm run watch`
+  // (esbuild --watch). Unified flag across VS Code + JetBrains — neither
+  // editor's "dev mode" auto-enables it; opt in explicitly.
+  if (process.env.OTELCOL_DEV_WATCH === "1") {
+    let pending: NodeJS.Timeout | undefined;
+    let restarting = false;
+    const trigger = () => {
+      if (pending) clearTimeout(pending);
+      pending = setTimeout(async () => {
+        if (restarting || !client) return;
+        restarting = true;
+        try {
+          await client.restart();
+        } catch (e) {
+          window.showWarningMessage(`otelcol LSP restart failed: ${(e as Error).message}`);
+        } finally {
+          restarting = false;
+        }
+      }, 300);
+    };
+    try {
+      const w = fs.watch(serverModule, () => trigger());
+      context.subscriptions.push({ dispose: () => w.close() });
+    } catch {
+      // server.js doesn't exist yet (first compile) — fine, dev watcher is best-effort.
+    }
+  }
 }
 
 export function deactivate(): Thenable<void> | undefined {
