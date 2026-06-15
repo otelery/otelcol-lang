@@ -101,6 +101,17 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   unified `OTELCOL_DEV_WATCH=1` dev loop.
 
 ### Changed
+- VS Code packaging switched from a deny-list `.vscodeignore` to
+  deny-by-default + explicit allow-list. The previous deny-list silently
+  leaked any newly added top-level directory into the `.vsix` — `.idea/`
+  (11 IntelliJ project files) and `docs/investigations/` (3 markdown
+  writeups) had drifted into the published artifact unnoticed. The new
+  form starts with `**` and whitelists only the files vsce does not
+  auto-include (runtime bundles under `dist/`, JSON schemas, TextMate
+  grammars, `editors/vscode/language-configuration.json`, the icon, and
+  `LICENSE` + `CHANGELOG.md` — `package.json` and `README.md` are
+  special-cased by vsce). vsce uses minimatch (not gitignore) semantics,
+  so concrete files are whitelisted instead of bare directories.
 - `editors/jetbrains/bin/` (Eclipse JDT compiler output) and
   `NEXT-TASKS` (personal scratch / WIP-tracking file) are now
   gitignored so opening the JetBrains plugin module in an Eclipse-based
