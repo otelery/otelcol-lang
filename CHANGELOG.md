@@ -147,6 +147,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `cargo install --locked` rules in the Makefile.
 
 ### Changed
+<<<<<<< HEAD
 - Pipeline-body bucket completions (`receivers`, `processors`, `exporters`
   inside `service.pipelines.<sig>`) now expand as snippets — each accepted
   item inserts `<bucket>: [$0]` with the cursor parked inside the empty
@@ -172,6 +173,15 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and Zed configs since `*.otelcol.yaml` / the `otelcol.yaml` tail already
   cover the new name. No back-compat alias — existing `otelcol-configset.yaml`
   sidecars and `# otelcol-configset:` directives must be renamed.
+- `.npmrc` pins `os=linux,darwin,win32` and `cpu=x64,arm64` so every
+  `npm install` resolves platform-specific `optionalDependencies`
+  (esbuild, rollup, …) for every target. Previously, running
+  `npm install` on a single host silently dropped the other platforms'
+  variants from `package-lock.json` and broke CI on those platforms.
+- Dev dependencies bumped: `@types/node` `^25.0.0 → ^25.9.3`,
+  `@vscode/test-electron` `^2.5.2 → ^3.0.0`, `esbuild`
+  `^0.28.0 → ^0.28.1`. `package-lock.json` regenerated with all
+  platform variants per the new `.npmrc` policy.
 - VS Code packaging switched from a deny-list `.vscodeignore` to
   deny-by-default + explicit allow-list. The previous deny-list silently
   leaked any newly added top-level directory into the `.vsix` — `.idea/`
