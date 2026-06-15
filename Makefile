@@ -14,12 +14,15 @@ MISE_VERSION            := 2026.6.0
 # Versions live in .mise.toml under "npm:<pkg>" entries.  Bump there; a
 # sentinel-filename change propagates automatically to `make tools`.
 npm_v = $(shell grep -Fm1 '"npm:$(1)"' .mise.toml | awk -F'"' '{print $$4}')
+cargo_v = $(shell grep -Fm1 '"cargo:$(1)"' .mise.toml | awk -F'"' '{print $$4}')
 
 OXLINT_VERSION          := $(call npm_v,oxlint)
 OXFMT_VERSION           := $(call npm_v,oxfmt)
 VSCE_VERSION            := $(call npm_v,@vscode/vsce)
 TYPESCRIPT_VERSION      := $(call npm_v,typescript)
 VSCODE_TEST_CLI_VERSION := $(call npm_v,@vscode/test-cli)
+CARGO_OUTDATED_VERSION  := $(call cargo_v,cargo-outdated)
+CARGO_EDIT_VERSION      := $(call cargo_v,cargo-edit)
 
 # --- mise-managed toolchain ---------------------------------------------------
 # Versions live in .mise.toml; parse them once so a bump there propagates to
@@ -410,22 +413,24 @@ publish-major: check ## Bump major version (X.0.0) and publish to vsce + npm
 check-versions: ## Show pinned vs latest versions for all .mise.toml tools (mise outdated --bump)
 	$(MISE) outdated --bump
 
-# Per-cargo-plugin sentinel. cargo-outdated isn't a runtime build dep so it
-# lives outside .mise.toml; CARGO_INSTALL_ROOT keeps the binary inside the
-# .ci-tools/ sandbox (distclean wipes it) instead of polluting ~/.cargo/bin.
-# Compile-from-source is a one-time hit (~2 min) cached behind the sentinel.
-# PKG_CONFIG_PATH is cleared so libgit2-sys vendors libgit2 instead of linking
-# whatever happens to be on the dev box (e.g. linuxbrew's libgit2 1.9, which
-# isn't on the runtime loader path).
-CARGO_PLUGINS_BIN := $(CURDIR)/.ci-tools/cargo-bin
-CARGO_OUTDATED   := $(CARGO_PLUGINS_BIN)/bin/cargo-outdated
+# cargo-backed plugins — versions in .mise.toml under "cargo:…". Lazy-installed
+# (not part of `make bootstrap`) since they're only needed by `outdated` /
+# `upgrade-cargo-zed`. mise compiles from source on first install (~2 min hit
+# cached behind the sentinel).
+CARGO_OUTDATED := $(MISE_EXEC) cargo-outdated
+CARGO_UPGRADE  := $(MISE_EXEC) cargo-upgrade
 
-.ci-tools/cargo-outdated.stamp: .ci-tools/rust-$(RUST_VERSION)
-	CARGO_INSTALL_ROOT=$(CARGO_PLUGINS_BIN) PKG_CONFIG_PATH= \
-	  $(CARGO) install --locked cargo-outdated
+.ci-tools/cargo-outdated-$(CARGO_OUTDATED_VERSION): .ci-tools/rust-$(RUST_VERSION) .mise.toml
+	@rm -f .ci-tools/cargo-outdated-*
+	$(MISE) install cargo:cargo-outdated@$(CARGO_OUTDATED_VERSION)
 	@touch $@
 
-outdated: check-versions $(NPM_INSTALL_STAMP) .ci-tools/cargo-outdated.stamp .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## List outdated deps across npm, Cargo, and Gradle (mise toolchain via check-versions)
+.ci-tools/cargo-edit-$(CARGO_EDIT_VERSION): .ci-tools/rust-$(RUST_VERSION) .mise.toml
+	@rm -f .ci-tools/cargo-edit-*
+	$(MISE) install cargo:cargo-edit@$(CARGO_EDIT_VERSION)
+	@touch $@
+
+outdated: check-versions $(NPM_INSTALL_STAMP) .ci-tools/cargo-outdated-$(CARGO_OUTDATED_VERSION) .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## List outdated deps across npm, Cargo, and Gradle (mise toolchain via check-versions)
 	@printf "\n\033[36m== npm (package.json) ==\033[0m\n"
 	-@$(NPM) outdated
 	@printf "\n\033[36m== cargo (editors/zed) ==\033[0m\n"
@@ -436,6 +441,23 @@ outdated: check-versions $(NPM_INSTALL_STAMP) .ci-tools/cargo-outdated.stamp .ci
 upgrade-tools: ## Upgrade all tools in .mise.toml to latest and write versions back (mise up --bump)
 	$(MISE) up --bump
 	@echo "Done. Run \`make bootstrap\` to install updated tools."
+
+upgrade-npm: $(NPM_INSTALL_STAMP) ## Bump every dep in package.json to latest (npm-check-updates -u) and refresh package-lock.json
+	npx --yes npm-check-updates -u
+	$(NPM) install
+
+upgrade-cargo-zed: .ci-tools/cargo-edit-$(CARGO_EDIT_VERSION) ## Bump deps in editors/zed/Cargo.toml to latest and refresh Cargo.lock
+	$(CARGO_UPGRADE) upgrade --manifest-path editors/zed/Cargo.toml
+	$(CARGO) update --manifest-path editors/zed/Cargo.toml
+
+upgrade-gradle-jetbrains: .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Bump deps in editors/jetbrains/build.gradle.kts to latest (gradle useLatestVersions)
+	cd editors/jetbrains && $(GRADLEW) useLatestVersions
+
+upgrade-zed: upgrade-cargo-zed ## Upgrade all deps for the Zed editor
+
+upgrade-jetbrains: upgrade-gradle-jetbrains ## Upgrade all deps for the JetBrains editor
+
+upgrade-deps: upgrade-tools upgrade-npm upgrade-zed upgrade-jetbrains ## Upgrade every dep ecosystem reported by `make outdated` (mise + npm + cargo + gradle)
 
 clean: ## Remove build artefacts (dist/, out/, .vscode-test cache, editor build dirs). Keeps .ci-tools/ — wipe with `make distclean`.
 	rm -rf dist out .vscode-test
