@@ -442,9 +442,10 @@ upgrade-tools: ## Upgrade all tools in .mise.toml to latest and write versions b
 	$(MISE) up --bump
 	@echo "Done. Run \`make bootstrap\` to install updated tools."
 
-upgrade-npm: $(NPM_INSTALL_STAMP) ## Bump every dep in package.json to latest (npm-check-updates -u) and refresh package-lock.json
+upgrade-npm: $(NPM_INSTALL_STAMP) ## Bump every dep in package.json to latest (npm-check-updates -u) and refresh package-lock.json, including transitives (npm update)
 	npx --yes npm-check-updates -u
 	$(NPM) install
+	$(NPM) update
 
 upgrade-cargo-zed: .ci-tools/cargo-edit-$(CARGO_EDIT_VERSION) ## Bump deps in editors/zed/Cargo.toml to latest and refresh Cargo.lock
 	$(CARGO_UPGRADE) upgrade --manifest-path editors/zed/Cargo.toml
