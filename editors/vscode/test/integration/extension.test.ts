@@ -98,11 +98,12 @@ async function applyCompletion(
   await editor.insertSnippet(snippet);
 }
 
+const visualiseWhitespace = (s: string) => s.replace(/ /g, "·").replace(/\n/g, "↵\n");
+
 function assertBufferEquals(actual: string, expected: string): void {
   if (actual === expected) return;
-  const visualise = (s: string) => s.replace(/ /g, "·").replace(/\n/g, "↵\n");
   assert.fail(
-    `buffer mismatch\n--- expected ---\n${visualise(expected)}\n--- actual ---\n${visualise(actual)}\n`,
+    `buffer mismatch\n--- expected ---\n${visualiseWhitespace(expected)}\n--- actual ---\n${visualiseWhitespace(actual)}\n`,
   );
 }
 
