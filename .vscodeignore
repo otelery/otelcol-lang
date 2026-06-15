@@ -1,51 +1,41 @@
-.vscode
-.vscode-test
-.ci-tools
-.npmignore
-.mise.toml
-.github
-node_modules
-TODO
-NOTICE
-src/**
-scripts/**
-test/**
-examples/**
-schemas/**
-out/**
-bin/**
-package-lock.json
-tsconfig.json
-esbuild.js
-Makefile
-.editorconfig
-.gitignore
-.envrc
-.oxlintrc.json
-.oxfmtrc.json
+# Allow-list packaging: deny everything, then re-include only what ships.
+#
+# Why allow-list? A deny-list misses new junk the moment someone adds a new
+# directory at the repo root (e.g. .idea/ from JetBrains, docs/investigations/
+# from a writeup). With an allow-list, anything new is excluded by default and
+# a human has to consciously opt it in.
+#
+# vsce uses minimatch (NOT gitignore) semantics, so `!editors/vscode/` does not
+# transitively un-ignore the directory's contents. Whitelist concrete files
+# (or `dir/**`) instead of bare directories.
+#
+# vsce auto-includes package.json, LICENSE, README.md and CHANGELOG.md, so
+# they do not appear below. Everything else MUST be whitelisted explicitly or
+# it will NOT be in the .vsix.
+
+**
+
+# Marketplace metadata. vsce special-cases package.json + README.md so they
+# bypass `**`, but LICENSE and CHANGELOG.md get filtered like any other file
+# and must be whitelisted explicitly.
+!LICENSE
+!CHANGELOG.md
+
+# Runtime: esbuild bundles + bundled JSON schemas (loaded by the server at
+# runtime — see src/server/components.ts resolveSchemasBase).
+!dist/extension/extension.js
+!dist/server/server.js
+!dist/schemas/**
+
+# TextMate grammars (referenced by package.json#contributes.grammars).
+!syntaxes/*.json
+
+# Language configuration (referenced by package.json#contributes.languages).
+!editors/vscode/language-configuration.json
+
+# Extension icon (referenced by package.json#icon).
+!docs/assets/otel-logo.png
+
+# Never ship source maps, even if a future allow-rule would otherwise catch
+# them. Deny rules after allow-rules win.
 **/*.map
-.claude/**
-NEXT-TASKS
-RELEASE_BUCKETS.md
-
-# Sibling editor integrations — only editors/vscode/ ships in the VSIX.
-editors/SHARED.md
-editors/helix/**
-editors/jetbrains/**
-editors/neovim/**
-editors/zed/**
-# VS Code dir: drop dev-only files; only language-configuration.json ships.
-editors/vscode/src/**
-editors/vscode/test/**
-editors/vscode/.vscode-test.mjs
-editors/vscode/tsconfig.json
-editors/vscode/tsconfig.test.json
-editors/vscode/README.md
-
-# docs/dist/ holds the source READMEs that `make package-vscode` /
-# `make publish-vscode` swap into place as README.md for the vsce
-# invocation. Exclude the whole dir so the swap-source files don't
-# appear alongside the swapped-in README.md inside the VSIX.
-# (The icon under docs/assets/ is still shipped — it's referenced by
-# package.json#icon.)
-docs/dist/
