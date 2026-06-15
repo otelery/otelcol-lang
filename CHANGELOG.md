@@ -23,6 +23,16 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `src/server/yaml-model.ts` adds `pathAtPosition` (indent-aware path
   resolver) and `siblingKeysAt(text, keyPath)` (duplicate-key filter
   source).
+- `make test-vscode-packaged` runs the full VS Code Extension Host
+  integration suite against the just-built `.vsix` instead of the
+  in-tree source. It extracts the packaged extension into a tmp dir,
+  exposes the path via `OTELCOL_PACKAGED_EXTENSION_DIR`, and points a
+  new `editors/vscode/.vscode-test.packaged.mjs` config at it as
+  `extensionDevelopmentPath`. If a runtime file ever drops out of the
+  `.vsix` (e.g. a `.vscodeignore` regression that omits
+  `dist/schemas/**` or a grammar), activation fails here even though
+  `make test-vscode` stays green. 16 + 3 tests across both workspaces
+  pass against the packaged form today.
 - `OTELCOL_DEV_WATCH=1` opt-in dev loop, symmetric across the two heavy
   editors. VS Code: the extension installs an `fs.watch` on
   `dist/server/server.js` and calls `client.restart()` after a 300 ms

@@ -1,4 +1,4 @@
-.PHONY: help bootstrap tools install build bundle test test-unit test-integration test-vscode \
+.PHONY: help bootstrap tools install build bundle test test-unit test-integration test-vscode test-vscode-packaged \
         lint lint-fix format format-check typecheck audit package-check check \
         clean distclean package package-vscode package-jetbrains package-zed package-helix \
         publish publish-vscode publish-npm publish-jetbrains publish-zed publish-helix \
@@ -225,6 +225,20 @@ test-vscode: bundle ## VS Code Extension Host integration tests (~30s)
 	$(VSCODE_TEST) --config editors/vscode/.vscode-test.mjs
 
 test-integration: test-vscode ## Deprecated alias for test-vscode — remove after one release
+
+test-vscode-packaged: package-vscode ## VS Code Extension Host tests against the packaged .vsix (catches .vscodeignore regressions)
+	# Extract the just-built .vsix into a temp dir and point vscode-test at
+	# it as extensionDevelopmentPath. If anything required at runtime is
+	# missing from the VSIX (e.g. dist/schemas/**, syntaxes/*.json), the
+	# integration suite fails here even though `make test-vscode` is green.
+	@set -e; \
+	  VSIX="$$(ls -t $(DIST_PKG)/*.vsix | head -n1)"; \
+	  EXTRACTED="$$(mktemp -d)"; \
+	  unzip -q "$$VSIX" -d "$$EXTRACTED"; \
+	  $(TSC) -p editors/vscode/tsconfig.test.json; \
+	  OTELCOL_PACKAGED_EXTENSION_DIR="$$EXTRACTED/extension" \
+	    $(VSCODE_TEST) --config editors/vscode/.vscode-test.packaged.mjs; \
+	  status=$$?; rm -rf "$$EXTRACTED"; exit $$status
 
 test-stdio: bundle ## End-to-end LSP handshake over stdio (Phase 0 smoke)
 	$(NODE) scripts/smoke-stdio.mjs
