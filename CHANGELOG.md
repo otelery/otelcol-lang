@@ -147,7 +147,6 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `cargo install --locked` rules in the Makefile.
 
 ### Changed
-<<<<<<< HEAD
 - Pipeline-body bucket completions (`receivers`, `processors`, `exporters`
   inside `service.pipelines.<sig>`) now expand as snippets — each accepted
   item inserts `<bucket>: [$0]` with the cursor parked inside the empty
@@ -173,6 +172,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and Zed configs since `*.otelcol.yaml` / the `otelcol.yaml` tail already
   cover the new name. No back-compat alias — existing `otelcol-configset.yaml`
   sidecars and `# otelcol-configset:` directives must be renamed.
+- `.ncurc.json` keeps `@types/vscode` rejected from
+  `npm-check-updates` runs so `make upgrade-npm` cannot bump it past
+  the minimum `engines.vscode` (`^1.91.0`); the mismatch otherwise
+  fails `vsce ls` during `make package-check`.
 - `.npmrc` pins `os=linux,darwin,win32` and `cpu=x64,arm64` so every
   `npm install` resolves platform-specific `optionalDependencies`
   (esbuild, rollup, …) for every target. Previously, running
