@@ -114,7 +114,7 @@ if (!existsSync(serverEntry)) {
         textDocument: { uri },
         position: { line: 7, character: 6 },
       });
-      const items = Array.isArray(resp.result) ? resp.result : resp.result?.items ?? [];
+      const items = Array.isArray(resp.result) ? resp.result : (resp.result?.items ?? []);
       const labels = items.map((i) => i.label);
       for (const bucket of ["receivers", "processors", "exporters"]) {
         assert.ok(
@@ -142,7 +142,7 @@ if (!existsSync(serverEntry)) {
         textDocument: { uri },
         position: { line: 2, character: 4 },
       });
-      const items = Array.isArray(resp.result) ? resp.result : resp.result?.items ?? [];
+      const items = Array.isArray(resp.result) ? resp.result : (resp.result?.items ?? []);
       const labels = items.map((i) => i.label);
       assert.ok(
         labels.includes("protocols"),

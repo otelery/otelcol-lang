@@ -1,6 +1,6 @@
 # Completion improvements — reasoning log
 
-Captures the *why* behind the five completion-related fixes landed in
+Captures the _why_ behind the five completion-related fixes landed in
 `src/server/completion.ts` and `src/server/yaml-model.ts`. Companion to
 the cross-editor end-to-end tests under
 `editors/{jetbrains,vscode}/.../*Completion*` that defend these
@@ -18,14 +18,14 @@ at the wrong column. VS Code rendered it correctly; JetBrains via LSP4IJ
 landed it at column 0 + tab-width.
 
 **Root cause.** The original snippet body was `${key}:\n\t- $0`. The
-`\t` relied on the *client* to combine it with the cursor line's indent
+`\t` relied on the _client_ to combine it with the cursor line's indent
 when expanding. `vscode-languageclient` does this (it implements
 `InsertTextMode.AdjustIndentation`). LSP4IJ does not: it expands `\t`
 to a fixed N-space run with no contextual prepending (see
 `/home/dol/project/lab/observability/lsp4ij/snippet-indent-analysis.md`
 for the upstream-side analysis).
 
-**Fix.** Snippet body carries only the *relative* `INDENT_UNIT` (two
+**Fix.** Snippet body carries only the _relative_ `INDENT_UNIT` (two
 spaces, matching YAML's convention) on continuation lines, and items
 ship `insertTextMode: InsertTextMode.AsIs`. The LSP spec says both
 `AsIs` and `AdjustIndentation` prepend the cursor line's indent to
@@ -41,7 +41,8 @@ if (t === "array") return `${key}:\n${INDENT_UNIT}- $0`;
 **Why not bake absolute indent into the snippet.** Tried first. Broke
 VS Code's adjustment by double-indenting the continuation. Forced a
 choice between spec-compliant and JetBrains-compatible. Relative indent
-+ `AsIs` is both.
+
+- `AsIs` is both.
 
 ## 2. Explicit `textEdit.range` pinned to the typed prefix
 
@@ -83,7 +84,7 @@ present in the cursor's parent mapping.
 **Fix.** New helper in `src/server/yaml-model.ts`:
 
 ```ts
-export function siblingKeysAt(text: string, keyPath: string[]): Set<string>
+export function siblingKeysAt(text: string, keyPath: string[]): Set<string>;
 ```
 
 Parses the YAML, navigates the path, returns the keys of the resolved
@@ -110,7 +111,7 @@ match the previous non-blank line — `      - ff` at indent 6 — and
 resolved the path as `["processors","batch","metadata_keys"]`. That's
 inside the array, which has no `properties` → empty completion list.
 
-**Fix.** Only fall back when *both* the reported column and the
+**Fix.** Only fall back when _both_ the reported column and the
 existing whitespace are zero. An explicit non-zero column is the
 user's committed indent; honour it.
 
@@ -136,9 +137,7 @@ tab-stop placeholder:
 
 ```ts
 if (schema.default !== undefined) {
-  const lit = typeof schema.default === "string"
-    ? schema.default
-    : JSON.stringify(schema.default);
+  const lit = typeof schema.default === "string" ? schema.default : JSON.stringify(schema.default);
   return `${key}: \${1:${lit}}`;
 }
 ```
@@ -152,10 +151,10 @@ correctly quoted.
 
 Each fix is defended at three layers:
 
-| Layer | Where |
-|---|---|
-| LSP item shape | `test/unit-completion.test.mjs` |
-| stdio end-to-end | `test/integration-completion.test.mjs` |
+| Layer                  | Where                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| LSP item shape         | `test/unit-completion.test.mjs`                                                                        |
+| stdio end-to-end       | `test/integration-completion.test.mjs`                                                                 |
 | Post-acceptance buffer | `editors/jetbrains/.../OtelcolCompletionTest.kt` + `editors/vscode/test/integration/extension.test.ts` |
 
 The unit layer catches server-side regressions; the post-acceptance

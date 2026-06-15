@@ -43,6 +43,7 @@ None of these plugins spawn Node themselves — all delegate to the shared triad
 - `/home/dol/project/lab/observability/intellij-plugins/vuejs/vuejs-backend/src/org/jetbrains/vuejs/lang/typescript/service/lsp/VueHybridModeLsp4jClient.kt`
 
 Package descriptor highlights (`VueLspServerPackageDescriptor.kt`):
+
 - npm package: `vue-language-server`
 - entry point: `/bin/vue-language-server.js`
 - bundled at: `vue-language-tools/language-server/<version>`
@@ -86,7 +87,7 @@ Ships a native Deno binary; included only to show what the non-Node path looks l
 
 ### Where the server JS lives
 
-The plugins do **not** rely on a central/global `node_modules`. Each plugin ships the server JS *inside the plugin distribution* and resolves it via a project-scoped `NodePackage`. The end user's machine does not need npm/yarn installed — only a Node interpreter for execution. (Users may *opt in* to a project-local `node_modules` copy via the plugin's settings UI; this just changes which absolute path `LspServerLoader.getSelectedPackage(project)` returns.)
+The plugins do **not** rely on a central/global `node_modules`. Each plugin ships the server JS _inside the plugin distribution_ and resolves it via a project-scoped `NodePackage`. The end user's machine does not need npm/yarn installed — only a Node interpreter for execution. (Users may _opt in_ to a project-local `node_modules` copy via the plugin's settings UI; this just changes which absolute path `LspServerLoader.getSelectedPackage(project)` returns.)
 
 Bundled layouts inside this repo:
 
@@ -112,16 +113,16 @@ There are three caches in play that bite when iterating on the `.js`:
 1. **LSP process is long-lived.** The Node process stays running until the project closes or the server is restarted. Editing `bin/<server>.js` on disk has no effect until you restart the LSP server.
    - The plugins expose programmatic restart: `restartTypeScriptServicesAsync(project)` (Astro/Vue) and `restartPrismaServerAsync(project)` (Prisma). Settings panels call these on changes — that's why merely toggling the settings dialog can pick up changes.
    - You can also use the IDE action "Restart TypeScript Service" or close/reopen the project.
-2. **Plugin-resource cache (the tricky one).** Because the JS sits in plugin resources, when you run the IDE from Gradle/IntelliJ dev sandbox, the path the platform resolves often points at the *staged* sandbox copy (e.g. `…/build/idea-sandbox/plugins/<plugin>/<localPath>/<version>/…`), not your source tree. Editing the source `.js` does nothing until the Gradle task that copies/links resources runs again.
+2. **Plugin-resource cache (the tricky one).** Because the JS sits in plugin resources, when you run the IDE from Gradle/IntelliJ dev sandbox, the path the platform resolves often points at the _staged_ sandbox copy (e.g. `…/build/idea-sandbox/plugins/<plugin>/<localPath>/<version>/…`), not your source tree. Editing the source `.js` does nothing until the Gradle task that copies/links resources runs again.
    - Fixes:
      - Re-run the `prepareSandbox` / `processResources` Gradle task (or the Run/Debug configuration that depends on it) after each `.js` change.
-     - For Prisma/Vue/Astro specifically: rebuild the bundle (`npm run build` in `prisma/language-server`, `npm run build` / `rolldown --config` in `vuejs/.../language-server/<v>/`, equivalent in `Astro/astro-language-server/`) — editing the *generated* `.js` directly works, but the next build will clobber it.
+     - For Prisma/Vue/Astro specifically: rebuild the bundle (`npm run build` in `prisma/language-server`, `npm run build` / `rolldown --config` in `vuejs/.../language-server/<v>/`, equivalent in `Astro/astro-language-server/`) — editing the _generated_ `.js` directly works, but the next build will clobber it.
      - In settings, point `lspServerPackage` at an absolute path under your working tree (a real `node_modules` checkout). Then you skip the sandbox copy entirely.
-3. **Registry-driven version pinning.** `defaultVersion` (the literal string in `VueLspServerPackageDescriptor("2.2.10")`, `AstroLspServerPackageDescriptor("2.16.6")`, etc.) chooses *which subdirectory* under `localPath` is loaded. If you drop a new server bundle into a new version dir but don't bump the descriptor (or override `vue.language.server.default.version` in the Registry), the platform happily keeps loading the old one.
+3. **Registry-driven version pinning.** `defaultVersion` (the literal string in `VueLspServerPackageDescriptor("2.2.10")`, `AstroLspServerPackageDescriptor("2.16.6")`, etc.) chooses _which subdirectory_ under `localPath` is loaded. If you drop a new server bundle into a new version dir but don't bump the descriptor (or override `vue.language.server.default.version` in the Registry), the platform happily keeps loading the old one.
 
 ### Recommended dev loop
 
-For *your own* Node-based LSP server bundled the same way:
+For _your own_ Node-based LSP server bundled the same way:
 
 1. Keep one canonical source tree for the server outside the plugin (`<plugin>/language-server/`), with a `build` script that emits a single `.js` (Astro/Vue use rolldown; Prisma uses webpack).
 2. The build's output dir == the `localPath` from `PackageVersion.bundled(...)`. Make `processResources` depend on the JS build so a Gradle build picks up server changes automatically.
@@ -136,9 +137,9 @@ For *your own* Node-based LSP server bundled the same way:
 **No.** None of these plugins assume a centrally installed `node_modules`. They:
 
 - Ship a pre-built single-file server inside the plugin (bundled mode, default).
-- *Optionally* let the user point the settings at any local `node_modules` directory containing the npm package (custom mode).
+- _Optionally_ let the user point the settings at any local `node_modules` directory containing the npm package (custom mode).
 
-The "central place" people sometimes see is the *plugin's own resource directory inside the IDE installation/sandbox* — that's where the bundled copy is unpacked. The cache pain is almost always the gap between your editable source `.js` and the sandbox-staged `.js` that the platform actually loads.
+The "central place" people sometimes see is the _plugin's own resource directory inside the IDE installation/sandbox_ — that's where the bundled copy is unpacked. The cache pain is almost always the gap between your editable source `.js` and the sandbox-staged `.js` that the platform actually loads.
 
 ---
 
@@ -172,18 +173,18 @@ SonarLint is **not** comparable to Vue/Astro/Prisma in architecture, but it's in
 
 ### Caching and dev-cycle implications (vs. the LSP plugins above)
 
-| Concern | Vue / Astro / Prisma | SonarLint |
-|---|---|---|
-| What runs | `node <bundled>.js --stdio` | `java -jar <sloop>/lib/*.jar` (managed by `SloopLauncher`) |
-| Where the artefact lives | `<plugin>/<localPath>/<version>/bin/<server>.js` | `<plugin>/sloop/` (unpacked zip) |
-| How it's updated in dev | Rebuild JS → `processResources`/`prepareSandbox` → restart LSP | Bump `libs.versions.sonarlint.core` → Gradle re-resolves `sloop` configuration → `prepareSandbox` → restart backend |
-| Process restart | `restartTypeScriptServicesAsync` / `restartPrismaServerAsync` | `RestartBackendAction` |
-| `node_modules` involvement | Optional — settings can point at one | None — Node is only an *analyzer runtime* for the backend |
-| Caches that bite | Sandbox-staged `.js`, registry-pinned version, long-lived process | Sandbox-staged sloop zip, the JBR / `java.home` you launched with, long-lived backend process |
+| Concern                    | Vue / Astro / Prisma                                              | SonarLint                                                                                                           |
+| -------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| What runs                  | `node <bundled>.js --stdio`                                       | `java -jar <sloop>/lib/*.jar` (managed by `SloopLauncher`)                                                          |
+| Where the artefact lives   | `<plugin>/<localPath>/<version>/bin/<server>.js`                  | `<plugin>/sloop/` (unpacked zip)                                                                                    |
+| How it's updated in dev    | Rebuild JS → `processResources`/`prepareSandbox` → restart LSP    | Bump `libs.versions.sonarlint.core` → Gradle re-resolves `sloop` configuration → `prepareSandbox` → restart backend |
+| Process restart            | `restartTypeScriptServicesAsync` / `restartPrismaServerAsync`     | `RestartBackendAction`                                                                                              |
+| `node_modules` involvement | Optional — settings can point at one                              | None — Node is only an _analyzer runtime_ for the backend                                                           |
+| Caches that bite           | Sandbox-staged `.js`, registry-pinned version, long-lived process | Sandbox-staged sloop zip, the JBR / `java.home` you launched with, long-lived backend process                       |
 
 ### Notable consequences for your problem
 
-- **No bundled-`node_modules` strategy.** SonarLint does not ship any npm package and does not care where `node_modules` lives. The only Node-side decision it makes is *which `node` binary to call*; that path comes from the project's IntelliJ Node interpreter, not from a bundled tree.
+- **No bundled-`node_modules` strategy.** SonarLint does not ship any npm package and does not care where `node_modules` lives. The only Node-side decision it makes is _which `node` binary to call_; that path comes from the project's IntelliJ Node interpreter, not from a bundled tree.
 - **Out-of-process Java backend means the same staleness pattern as Node-LSP plugins.** When you edit code in sloop and want it picked up: rebuild the sloop artefact, re-run `prepareSandbox`, invoke `RestartBackendAction`. The IDE itself need not restart.
 - **No registry-version trick.** Version pinning is in `gradle.lockfile` / `libs.versions.toml`, not the IntelliJ Registry. There is no runtime A/B-toggle between bundled and user-provided sloop — it's whatever Gradle put in `<plugin>/sloop/`.
 - **Override hatches** exist for both halves of the runtime: `sonarlint.jre.path` system property to swap the JRE; the Node interpreter selector in the project settings to swap Node.

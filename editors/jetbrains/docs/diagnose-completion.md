@@ -4,7 +4,7 @@
 entries that are valid at multiple nesting levels, even though the same file in
 VS Code shows a tight, context-appropriate list.
 
-The fix depends on *where* the noise comes from. Don't patch blindly — run the
+The fix depends on _where_ the noise comes from. Don't patch blindly — run the
 5-minute diagnostic first, then pick the fix that matches what you found.
 
 ---
@@ -16,7 +16,7 @@ The fix depends on *where* the noise comes from. Don't patch blindly — run the
    anchor names, prior-occurrence words from the buffer, and (if any JSON schema
    is associated with the file) every key in that schema at any depth. LSP4IJ
    does not suppress these. The popup ends up with `your LSP items + YAML
-   plugin items` glued together, with no prefix filtering between sources.
+plugin items` glued together, with no prefix filtering between sources.
 
 2. **No prefix matching.** If the LSP server returns items with `filterText`
    unset and IntelliJ falls back to matching against an empty prefix at the
@@ -37,11 +37,11 @@ The fix depends on *where* the noise comes from. Don't patch blindly — run the
 4. Look at the LSP trace tab. Count the items in the `textDocument/completion`
    response and compare to the popup:
 
-   | LSP returned | Popup shows | Cause                          |
-   |--------------|-------------|--------------------------------|
-   | 5            | ~30         | #1 — YAML plugin polluting     |
-   | 30           | ~30 (matches VS Code) | #3 — server overshare |
-   | 5            | ~30, extras look like words from the file | #2 — prefix/filter issue |
+   | LSP returned | Popup shows                               | Cause                      |
+   | ------------ | ----------------------------------------- | -------------------------- |
+   | 5            | ~30                                       | #1 — YAML plugin polluting |
+   | 30           | ~30 (matches VS Code)                     | #3 — server overshare      |
+   | 5            | ~30, extras look like words from the file | #2 — prefix/filter issue   |
 
 5. In the popup itself: hover over a non-LSP-looking entry. IntelliJ shows the
    contributing source in the docs tooltip / popup metadata. Anything sourced
@@ -59,7 +59,7 @@ Register an `LSPClientFeatures` for the otelcol server and override
 
 LSP4IJ 0.19 does not expose a clean "exclusive completion" flag. The workable
 approach is to add a `CompletionContributor` for the otelcol file type that
-runs *after* LSP4IJ's contributor and calls `result.stopHere()` when the LSP
+runs _after_ LSP4IJ's contributor and calls `result.stopHere()` when the LSP
 produced items, blocking the YAML plugin's contributor from running afterwards.
 
 Rough sketch (~30 lines):

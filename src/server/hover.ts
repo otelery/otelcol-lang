@@ -180,7 +180,11 @@ export function lookupProperty(
 //   - bare key:      "foo"  → root.$defs.foo  (legacy upstream form)
 //   - anything else  → returned as-is so the caller can still surface the
 //                      field's own description.
-export function resolveRef(schema: JsonSchemaNode, root: JsonSchemaNode, depth = 0): JsonSchemaNode {
+export function resolveRef(
+  schema: JsonSchemaNode,
+  root: JsonSchemaNode,
+  depth = 0,
+): JsonSchemaNode {
   if (depth > 16) return schema;
   if (!schema?.$ref) return schema;
   const ref = schema.$ref;
