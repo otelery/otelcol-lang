@@ -467,6 +467,38 @@ describe("completion: snippet insertion", () => {
     );
   });
 
+  it("object property with scalar children expands the full child structure", () => {
+    // aerospike receiver's `tls` resolves to a configtls client config whose
+    // declared scalar children are insecure / insecure_skip_verify /
+    // server_name_override. Accepting the completion should populate them all
+    // so the user doesn't have to recall each child key.
+    const text = "receivers:\n  aerospike:\n    \n";
+    const items = complete(text, 2, 4);
+    const tls = items.find((i) => i.label === "tls");
+    assert.ok(tls, `missing tls; got ${items.map((i) => i.label)}`);
+    assert.equal(tls.insertTextFormat, 2);
+    const body = tls.insertText;
+    assert.ok(body.startsWith("tls:\n"), `expected multi-line body, got ${JSON.stringify(body)}`);
+    for (const child of ["insecure", "insecure_skip_verify", "server_name_override"]) {
+      assert.ok(
+        new RegExp(`\\n  ${child}: \\$`).test(body),
+        `child ${child} should appear with a tabstop; got ${JSON.stringify(body)}`,
+      );
+    }
+    assert.ok(/\$0/.test(body), "final $0 tabstop should be present");
+  });
+
+  it("object property with only nested-object children falls back to single-line snippet", () => {
+    // protocols is an object whose children (grpc, http) are themselves
+    // objects — we skip recursing, leaving no expandable scalars, so the
+    // snippet should fall back to the old `key:\n  $0` shape.
+    const text = "receivers:\n  otlp:\n    \n";
+    const items = complete(text, 2, 4);
+    const protocols = items.find((i) => i.label === "protocols");
+    assert.ok(protocols);
+    assert.equal(protocols.insertText, "protocols:\n  $0");
+  });
+
   it("scalar property inserts `key: $0` as a snippet", () => {
     // endpoint inside grpc is a scalar (string).
     const text = "receivers:\n  otlp:\n    protocols:\n      grpc:\n        \n";
