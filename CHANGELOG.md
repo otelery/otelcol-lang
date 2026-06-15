@@ -8,6 +8,19 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Object-typed property completions now expand the full child structure
+  on accept (`src/server/completion.ts`). When an inserted key's schema
+  declares scalar children, the snippet body lists each child on its own
+  line as a numbered tabstop, pre-filling the schema's `default` as
+  placeholder text where one exists — e.g. accepting `tls` under an
+  exporter populates `insecure: false`, `insecure_skip_verify: false`,
+  etc. with the cursor on the first child. Free-form maps (no declared
+  `properties`) and objects whose children are themselves objects/arrays
+  keep the previous single-line `key:\n  $0` behaviour. Children that
+  resolve through `$ref` are now resolved before classifying their
+  type, so the heuristic doesn't miscategorise a `$ref`-to-object child
+  as a scalar.
+
 - LSP completion expanded well beyond top-level component types
   (`src/server/completion.ts`): component-instance property suggestions
   walk the component's JSON Schema along the trailing path and offer

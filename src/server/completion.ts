@@ -103,7 +103,7 @@ export function completion(
           const sub = resolveRef(raw, refRoot);
           const t = schemaTypeLabel(sub);
           const detailBits = [t, required.has(key) ? "required" : null].filter(Boolean);
-          const body = snippetForProperty(key, sub);
+          const body = snippetForProperty(key, sub, refRoot);
           return {
             label: key,
             kind: CompletionItemKind.Property,
@@ -201,16 +201,66 @@ export function completion(
 // the cumulative line indent back on top. INDENT_UNIT = 2 spaces, matching
 // the editor's YAML indentation convention.
 const INDENT_UNIT = "  ";
-function snippetForProperty(key: string, schema: JsonSchemaNode): string {
+// Snippet syntax meta-chars that must be escaped inside placeholder literals.
+function escapeSnippetLiteral(s: string): string {
+  return s.replace(/[\\$}]/g, (c) => `\\${c}`);
+}
+function defaultLiteral(schema: JsonSchemaNode): string {
+  return typeof schema.default === "string"
+    ? schema.default
+    : JSON.stringify(schema.default);
+}
+function snippetForProperty(
+  key: string,
+  schema: JsonSchemaNode,
+  refRoot?: JsonSchemaNode,
+): string {
   const t = Array.isArray(schema.type) ? schema.type[0] : schema.type;
-  if (t === "object") return `${key}:\n${INDENT_UNIT}$0`;
+  if (t === "object") {
+    // If the object declares scalar children, expand the structure inline so
+    // the user gets a fully populated block with one tabstop per child (and
+    // each scalar default shown as a placeholder). Matches otelbin/UX from
+    // vscode-json-languageservice's getInsertTextForObject.
+    const expanded = expandedObjectSnippet(key, schema, refRoot);
+    if (expanded) return expanded;
+    return `${key}:\n${INDENT_UNIT}$0`;
+  }
   if (t === "array") return `${key}:\n${INDENT_UNIT}- $0`;
   if (schema.default !== undefined) {
-    const lit =
-      typeof schema.default === "string" ? schema.default : JSON.stringify(schema.default);
-    return `${key}: \${1:${lit}}`;
+    return `${key}: \${1:${escapeSnippetLiteral(defaultLiteral(schema))}}`;
   }
   return `${key}: $0`;
+}
+
+// Build a multi-line snippet enumerating each scalar child of an object
+// schema. Object/array children are skipped — recursing produces oversized
+// snippets and no observed otelcol component needs deep expansion. Returns
+// null when the schema has no `properties` or no expandable scalar children
+// (free-form maps fall back to the single-line behaviour).
+function expandedObjectSnippet(
+  key: string,
+  schema: JsonSchemaNode,
+  refRoot?: JsonSchemaNode,
+): string | null {
+  const props = schema.properties;
+  if (!props) return null;
+  const scalars: Array<{ name: string; node: JsonSchemaNode }> = [];
+  for (const [name, raw] of Object.entries(props)) {
+    const sub = refRoot ? resolveRef(raw, refRoot) : raw;
+    const ct = Array.isArray(sub.type) ? sub.type[0] : sub.type;
+    if (ct === "object" || ct === "array") continue;
+    scalars.push({ name, node: sub });
+  }
+  if (scalars.length === 0) return null;
+  const lines = scalars.map((c, i) => {
+    const stop = i === scalars.length - 1 ? "$0" : `$${i + 1}`;
+    if (c.node.default !== undefined) {
+      const lit = escapeSnippetLiteral(defaultLiteral(c.node));
+      return `${INDENT_UNIT}${c.name}: \${${i === scalars.length - 1 ? 0 : i + 1}:${lit}}`;
+    }
+    return `${INDENT_UNIT}${c.name}: ${stop}`;
+  });
+  return `${key}:\n${lines.join("\n")}`;
 }
 
 // If the cursor's line defines a mapping key (`<indent><key>:`), return the
