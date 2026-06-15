@@ -85,7 +85,9 @@ async function applyCompletion(
   assert.ok(item, `no completion item with label '${label}'`);
   const range =
     (item.range as vscode.Range | undefined) ??
-    (item.range && "replacing" in (item.range as any) ? (item.range as any).replacing : undefined) ??
+    (item.range && "replacing" in (item.range as any)
+      ? (item.range as any).replacing
+      : undefined) ??
     editor.document.getWordRangeAtPosition(position) ??
     new vscode.Range(position, position);
   await editor.edit((eb) => eb.delete(range));
@@ -114,7 +116,11 @@ describe("opentelemetry-collector-config extension", () => {
   afterEach(async () => {
     while (scratchFiles.length > 0) {
       const f = scratchFiles.pop()!;
-      try { fs.unlinkSync(f); } catch { /* ignore */ }
+      try {
+        fs.unlinkSync(f);
+      } catch {
+        /* ignore */
+      }
     }
     await vscode.commands.executeCommand("workbench.action.closeAllEditors");
   });
@@ -318,8 +324,7 @@ describe("opentelemetry-collector-config extension", () => {
     // 3. Sibling-key filtering — keys already present in the mapping aren't
     //    re-suggested (would otherwise create a YAML duplicate-key error).
     it("filters out sibling keys already present in the mapping", async () => {
-      const text =
-        "processors:\n  batch:\n    send_batch_size: 1024\n    timeout: 5s\n    \n";
+      const text = "processors:\n  batch:\n    send_batch_size: 1024\n    timeout: 5s\n    \n";
       const editor = await openScratch("indent-siblings.otelcol.yaml", text);
       const pos = new vscode.Position(4, 4);
       editor.selection = new vscode.Selection(pos, pos);

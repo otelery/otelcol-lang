@@ -2,12 +2,12 @@
 
 Three override channels are exposed by `OtelcolLspServerFactory`, in priority order:
 
-| Channel | Where it lives | Persistence | Typical use |
-|---|---|---|---|
-| `-Dotelcol.lsp.command="…"` | JVM system property | Process lifetime | Hand-rolled wrapper script; tests |
-| `-Dotelcol.lsp.server="…"` | JVM system property | Process lifetime | Source-tree `server.js` during dev |
-| `otelcol.lsp.server.path` | IntelliJ Registry | Across IDE restarts | Persistent override on any IDE |
-| (none) | Bundled extraction | Across IDE restarts | Production |
+| Channel                     | Where it lives      | Persistence         | Typical use                        |
+| --------------------------- | ------------------- | ------------------- | ---------------------------------- |
+| `-Dotelcol.lsp.command="…"` | JVM system property | Process lifetime    | Hand-rolled wrapper script; tests  |
+| `-Dotelcol.lsp.server="…"`  | JVM system property | Process lifetime    | Source-tree `server.js` during dev |
+| `otelcol.lsp.server.path`   | IntelliJ Registry   | Across IDE restarts | Persistent override on any IDE     |
+| (none)                      | Bundled extraction  | Across IDE restarts | Production                         |
 
 `-Dotelcol.lsp.node="…"` (also a system property) overrides the resolved `node` binary independently of the server path.
 
@@ -51,7 +51,7 @@ cd editors/jetbrains
 ## Persistent override (any IDE)
 
 Help → Find Action → **Registry…** → set `otelcol.lsp.server.path` to an
-absolute path. Then run the *Restart otelcol Language Server* action to
+absolute path. Then run the _Restart otelcol Language Server_ action to
 pick it up. Clear the value to fall back to the bundled copy.
 
 ## Production install

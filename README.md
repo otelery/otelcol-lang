@@ -250,12 +250,12 @@ etc. Falls back to the literal `"node"` if lookup fails.
 
 **Server JS override channels** (priority order):
 
-| Channel                              | Lifetime          | Use                                |
-| ------------------------------------ | ----------------- | ---------------------------------- |
-| `-Dotelcol.lsp.command="…"`          | Process lifetime  | Full executable override; tests    |
-| `-Dotelcol.lsp.server="…"`           | Process lifetime  | Source-tree `server.js` during dev |
-| `otelcol.lsp.server.path` (Registry) | Across restarts   | Persistent override on any IDE     |
-| _(none)_                             | —                 | Bundled extraction (production)    |
+| Channel                              | Lifetime         | Use                                |
+| ------------------------------------ | ---------------- | ---------------------------------- |
+| `-Dotelcol.lsp.command="…"`          | Process lifetime | Full executable override; tests    |
+| `-Dotelcol.lsp.server="…"`           | Process lifetime | Source-tree `server.js` during dev |
+| `otelcol.lsp.server.path` (Registry) | Across restarts  | Persistent override on any IDE     |
+| _(none)_                             | —                | Bundled extraction (production)    |
 
 `-Dotelcol.lsp.node="…"` overrides the resolved Node binary
 independently.

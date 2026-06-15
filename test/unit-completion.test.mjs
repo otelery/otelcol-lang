@@ -87,9 +87,7 @@ describe("completion: component-type context", () => {
     }
     assert.ok(
       items.some((i) => i.label === "otlp"),
-      `expected 'otlp' among receiver suggestions; got: ${items
-        .map((i) => i.label)
-        .slice(0, 10)}`,
+      `expected 'otlp' among receiver suggestions; got: ${items.map((i) => i.label).slice(0, 10)}`,
     );
   });
 });
@@ -191,8 +189,7 @@ describe("completion: schema-driven property keys", () => {
     //     protocols:
     //       grpc:
     //         <cursor at column 8>
-    const text =
-      "receivers:\n  otlp:\n    protocols:\n      grpc:\n        \n";
+    const text = "receivers:\n  otlp:\n    protocols:\n      grpc:\n        \n";
     const items = complete(text, 4, 8);
     const labels = items.map((i) => i.label);
     assert.ok(
