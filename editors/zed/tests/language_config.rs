@@ -55,7 +55,7 @@ fn path_suffixes_cover_sidecar_and_simple_example() {
         .filter_map(|x| x.as_str())
         .collect();
     for expected in [
-        "otelcol-configset.yaml",
+        "otelcol.yaml",
         "otelcol-config.yaml",
         "otelcol-config.yml",
     ] {
@@ -78,9 +78,9 @@ fn first_line_pattern_matches_directive_and_markers() {
     let re = regex::Regex::new(pat).expect("first_line_pattern is a valid regex");
 
     let matches = [
-        "# otelcol-configset: receivers.yaml exporters.yaml",
+        "# configset-otelcol: receivers.yaml exporters.yaml",
         "# otelcol",
-        "#otelcol-configset: foo.yaml",
+        "#configset-otelcol: foo.yaml",
         "# opentelemetry-collector",
     ];
     for line in matches {
@@ -104,7 +104,7 @@ fn first_line_pattern_matches_configset_directive() {
         .as_str()
         .expect("first_line_pattern must be a string");
     assert!(
-        pat.contains("otelcol-configset:"),
-        "first_line_pattern must accept `# otelcol-configset:` directive — got {pat:?}"
+        pat.contains("configset-otelcol:"),
+        "first_line_pattern must accept `# configset-otelcol:` directive — got {pat:?}"
     );
 }

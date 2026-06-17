@@ -23,12 +23,12 @@ object OtelcolYamlClassify {
     "receivers", "processors", "exporters", "connectors", "extensions",
   )
 
-  const val SIDECAR_NAME = "otelcol-configset.yaml"
+  const val SIDECAR_NAME = "configset.otelcol.yaml"
   const val HEAD_BYTES = 16 * 1024
 
-  // `# otelcol-configset:` anywhere in the head (the "is this declared as part
+  // `# configset-otelcol:` anywhere in the head (the "is this declared as part
   // of a configset" marker check).
-  val DIRECTIVE_MARKER_RE = Regex("^#\\s*otelcol-configset:", RegexOption.MULTILINE)
+  val DIRECTIVE_MARKER_RE = Regex("^#\\s*configset-otelcol:", RegexOption.MULTILINE)
 
   data class Classification(
     /** `service.pipelines` exists at the top level — this is an anchor. */
@@ -38,14 +38,14 @@ object OtelcolYamlClassify {
     /** Whether any top-level key is in `FRAGMENT_KEYS`. */
     val hasFragmentKeys: Boolean,
     /**
-     * Members named by a first-line `# otelcol-configset:` directive, or `null`
+     * Members named by a first-line `# configset-otelcol:` directive, or `null`
      * if the file has no such directive. Names are verbatim, not resolved.
      */
     val directive: List<String>?,
   )
 
   private val TOP_KEY_RE = Regex("^([A-Za-z0-9_.-]+)\\s*:(\\s.*)?$")
-  private val DIRECTIVE_FIRST_RE = Regex("^#\\s*otelcol-configset:\\s*(.+)$")
+  private val DIRECTIVE_FIRST_RE = Regex("^#\\s*configset-otelcol:\\s*(.+)$")
 
   fun classify(text: String): Classification {
     val head = if (text.length > HEAD_BYTES) text.substring(0, HEAD_BYTES) else text

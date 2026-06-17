@@ -8,13 +8,13 @@
 // independent sets).
 //
 // Explicit overrides (highest precedence first):
-//   1. Sidecar file `otelcol-configset.yaml` in the anchor's directory:
+//   1. Sidecar file `configset.otelcol.yaml` in the anchor's directory:
 //        members:
 //          - base.yaml
 //          - exporters.yaml
 //          - pipelines.yaml   # anchor must appear in the list
 //   2. First-line directive in any file in the set:
-//        # otelcol-configset: base.yaml exporters.yaml pipelines.yaml
+//        # configset-otelcol: base.yaml exporters.yaml pipelines.yaml
 //
 // Discovery is opt-in: if `autoDiscover` is false, only explicit overrides
 // create sets — everything else is a single-file set.

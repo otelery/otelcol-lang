@@ -55,13 +55,13 @@ class OtelcolYamlClassifyTest {
   }
 
   @Test fun directiveParsedFromFirstLine() {
-    val c = OtelcolYamlClassify.classify("# otelcol-configset: base.yaml exporters.yaml\nexporters:\n  debug:\n")
+    val c = OtelcolYamlClassify.classify("# configset-otelcol: base.yaml exporters.yaml\nexporters:\n  debug:\n")
     assertEquals(listOf("base.yaml", "exporters.yaml"), c.directive)
   }
 
   @Test fun directiveMarkerMatchesNonFirstLine() {
     // Marker (rule 1) matches anywhere; the captured name list only when first.
-    val text = "exporters:\n# otelcol-configset: a.yaml\n"
+    val text = "exporters:\n# configset-otelcol: a.yaml\n"
     assertTrue(OtelcolYamlClassify.DIRECTIVE_MARKER_RE.containsMatchIn(text))
     assertNull(OtelcolYamlClassify.classify(text).directive)
   }

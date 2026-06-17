@@ -124,6 +124,22 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   unified `OTELCOL_DEV_WATCH=1` dev loop.
 
 ### Changed
+- **Breaking:** renamed the config-set sidecar manifest from
+  `otelcol-configset.yaml` to `configset.otelcol.yaml`, and the inline
+  directive from `# otelcol-configset:` to `# configset-otelcol:`. The old
+  filename started with `otel`, which the SchemaStore.org catalog's
+  start-anchored `otel*.yaml` glob ("OpenTelemetry Declarative Configuration")
+  matched — so every SchemaStore-backed editor (JetBrains' built-in catalog,
+  VS Code via the Red Hat YAML extension) force-applied the unrelated
+  `opentelemetry_configuration.json` SDK schema to the manifest. The new name
+  keeps the `.otelcol.yaml` suffix the toolchain already recognises while no
+  longer matching the SchemaStore globs. `SIDECAR_NAME` /
+  `DIRECTIVE_MARKER_RE` (`src/common/yaml-classify.ts`,
+  `OtelcolYamlClassify.kt`) and every editor's detection config were updated;
+  the redundant explicit sidecar glob was dropped from the JetBrains, Helix,
+  and Zed configs since `*.otelcol.yaml` / the `otelcol.yaml` tail already
+  cover the new name. No back-compat alias — existing `otelcol-configset.yaml`
+  sidecars and `# otelcol-configset:` directives must be renamed.
 - VS Code packaging switched from a deny-list `.vscodeignore` to
   deny-by-default + explicit allow-list. The previous deny-list silently
   leaked any newly added top-level directory into the `.vsix` — `.idea/`
@@ -158,12 +174,12 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - JetBrains detected otelcol config files by filename glob only, so a
   config-set's member files (`base.yaml`, `pipelines.yaml`, …) never
   switched to the "OpenTelemetry Collector" file type — only the
-  `otelcol-configset.yaml` manifest did, and that was the one file that
+  `configset.otelcol.yaml` manifest did, and that was the one file that
   isn't itself collector config. `OtelcolFileType` now implements
   `FileTypeIdentifiableByVirtualFile` and ports the VS Code content
   sniffer (`src/common/yaml-sniff.ts` + `yaml-classify.ts`) into Kotlin
   (`OtelcolYamlClassify`): `service.pipelines` anchors, ≥2 top-level
-  otelcol keys, the `# otelcol-configset:` directive, and the
+  otelcol keys, the `# configset-otelcol:` directive, and the
   sibling-sidecar / sibling-anchor scans are all recognised, so member
   files of `examples/configset-sidecar/` are detected on open. The
   filename globs remain as a no-I/O fast path.
@@ -216,8 +232,8 @@ as `opentelemetry-collector-config` on npm.
 - Language server (`src/server/`, 11 modules) providing:
   - YAML model parsing with anchor/alias tracking.
   - Config-set discovery (auto-scan via `service.pipelines:` anchors,
-    or explicit `otelcol-configset.yaml` sidecar / first-line
-    `# otelcol-configset:` directive).
+    or explicit `configset.otelcol.yaml` sidecar / first-line
+    `# configset-otelcol:` directive).
   - Pipeline graph validation: undefined refs, ambiguous refs,
     defined-but-unused components, signal compatibility.
   - Component-aware hover with signals, stability, codeowners,
