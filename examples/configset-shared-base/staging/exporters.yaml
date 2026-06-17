@@ -1,0 +1,4 @@
+# staging-only overlay: a console exporter for live debugging.
+exporters:
+  debug:
+    verbosity: detailed
