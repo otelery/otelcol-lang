@@ -8,8 +8,9 @@ import org.jetbrains.yaml.YAMLLanguage
 import javax.swing.Icon
 
 // Detection has two layers, mirroring the VS Code extension:
-//   - Filename globs (`*.otelcol.yaml`, `*.otelcol.yml`, `otelcol-configset.yaml`)
-//     declared via <fileType patterns> in plugin.xml — the cheap, no-I/O path.
+//   - Filename globs (`*.otelcol.yaml`, `*.otelcol.yml` — these also cover the
+//     sidecar manifest configset.otelcol.yaml) declared via <fileType patterns>
+//     in plugin.xml — the cheap, no-I/O path.
 //   - Content sniffing in isMyFileType below, a Kotlin port of
 //     src/common/yaml-sniff.ts. Because the YAML plugin owns `*.yaml`/`*.yml`
 //     by extension, a plain content FileTypeDetector is never consulted for
@@ -90,10 +91,11 @@ class OtelcolFileType private constructor() :
 
     private fun isYaml(name: String): Boolean = YAML_RE.containsMatchIn(name)
 
+    // The sidecar manifest (configset.otelcol.yaml) is covered by the
+    // `.otelcol.yaml` suffix, so it needs no separate clause here.
     private fun matchesGlob(name: String): Boolean =
       name.endsWith(".otelcol.yaml", ignoreCase = true) ||
-        name.endsWith(".otelcol.yml", ignoreCase = true) ||
-        name == OtelcolYamlClassify.SIDECAR_NAME
+        name.endsWith(".otelcol.yml", ignoreCase = true)
 
     // Read up to HEAD_BYTES of the file as UTF-8. Returns null on any read
     // failure (binary, deleted mid-scan, unreadable during indexing, …).

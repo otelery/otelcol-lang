@@ -11,7 +11,7 @@ Older nvim or non-nvim Vim needs `nvim-lspconfig` + adapter; not covered here.
 vim.lsp.config.otelcol = {
   cmd = { 'otelcol-language-server', '--stdio' },
   filetypes = { 'otelcol' },
-  root_markers = { 'otelcol-configset.yaml', '.git' },
+  root_markers = { 'configset.otelcol.yaml', '.git' },
   settings = {
     otelcol = {
       distribution = 'otelcol-contrib',
@@ -37,7 +37,7 @@ vim.filetype.add {
     yaml = function(path, bufnr)
       if path:match('%.otelcol%.ya?ml$') then return 'otelcol' end
       local first = vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] or ''
-      if first:match('^#%s*otelcol%-configset:') then return 'otelcol' end
+      if first:match('^#%s*configset%-otelcol:') then return 'otelcol' end
       if first:match('^#%s*otelcol') or first:match('^#%s*opentelemetry%-collector') then
         return 'otelcol'
       end
@@ -48,7 +48,7 @@ vim.filetype.add {
     end,
   },
   filename = {
-    ['otelcol-configset.yaml'] = 'otelcol-configset',
+    ['configset.otelcol.yaml'] = 'otelcol',
   },
 }
 ```

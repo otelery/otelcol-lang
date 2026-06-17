@@ -1,4 +1,4 @@
-# otelcol-configset: base.yaml exporters.yaml pipelines.yaml
+# configset-otelcol: base.yaml exporters.yaml pipelines.yaml
 service:
   pipelines:
     traces:

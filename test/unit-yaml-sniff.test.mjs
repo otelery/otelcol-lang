@@ -19,27 +19,27 @@ function scratch() {
 }
 
 describe("looksLikeOtelcol — rule 1: directive marker", () => {
-  it("matches on a first-line `# otelcol-configset:` directive", () => {
+  it("matches on a first-line `# configset-otelcol:` directive", () => {
     const dir = scratch();
     try {
       const f = join(dir, "plain.yaml");
-      writeFileSync(f, "# otelcol-configset: pipelines.yaml\nkey: value\n");
-      assert.equal(looksLikeOtelcol("# otelcol-configset: pipelines.yaml\nkey: value\n", f), true);
+      writeFileSync(f, "# configset-otelcol: pipelines.yaml\nkey: value\n");
+      assert.equal(looksLikeOtelcol("# configset-otelcol: pipelines.yaml\nkey: value\n", f), true);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
   });
 
   it("matches even without an fsPath (unsaved buffer)", () => {
-    assert.equal(looksLikeOtelcol("# otelcol-configset: a.yaml\nfoo: 1\n", null), true);
+    assert.equal(looksLikeOtelcol("# configset-otelcol: a.yaml\nfoo: 1\n", null), true);
   });
 });
 
 describe("looksLikeOtelcol — rule 2: sidecar filename", () => {
-  it("matches when basename is otelcol-configset.yaml regardless of content", () => {
+  it("matches when basename is configset.otelcol.yaml regardless of content", () => {
     const dir = scratch();
     try {
-      const f = join(dir, "otelcol-configset.yaml");
+      const f = join(dir, "configset.otelcol.yaml");
       writeFileSync(f, "anything: at: all\n");
       assert.equal(looksLikeOtelcol("anything: at: all\n", f), true);
     } finally {
@@ -69,12 +69,12 @@ describe("looksLikeOtelcol — rule 3: parsed structure", () => {
 });
 
 describe("looksLikeOtelcol — rule 4: sibling sidecar", () => {
-  it("matches a fragment when otelcol-configset.yaml lives next to it", () => {
+  it("matches a fragment when configset.otelcol.yaml lives next to it", () => {
     const dir = scratch();
     try {
       const frag = join(dir, "exporters.yaml");
       writeFileSync(frag, "exporters:\n  debug: {}\n");
-      writeFileSync(join(dir, "otelcol-configset.yaml"), "members:\n  - exporters.yaml\n");
+      writeFileSync(join(dir, "configset.otelcol.yaml"), "members:\n  - exporters.yaml\n");
       assert.equal(looksLikeOtelcol("exporters:\n  debug: {}\n", frag), true);
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -90,7 +90,7 @@ describe("looksLikeOtelcol — rule 5: sibling anchor / directive", () => {
       writeFileSync(frag, "exporters:\n  debug: {}\n");
       writeFileSync(
         join(dir, "pipelines.yaml"),
-        "# otelcol-configset: myexporter.yaml pipelines.yaml\nfoo: bar\n",
+        "# configset-otelcol: myexporter.yaml pipelines.yaml\nfoo: bar\n",
       );
       assert.equal(looksLikeOtelcol("exporters:\n  debug: {}\n", frag), true);
     } finally {
@@ -144,7 +144,7 @@ describe("looksLikeOtelcol — diagnostic logger", () => {
   it("invokes the optional logger with rule-naming messages on each decision point", () => {
     const lines = [];
     const log = (m) => lines.push(m);
-    looksLikeOtelcol("# otelcol-configset: a.yaml\nkey: 1\n", null, log);
+    looksLikeOtelcol("# configset-otelcol: a.yaml\nkey: 1\n", null, log);
     assert.ok(
       lines.some((l) => l.includes("match rule 1")),
       `logger should emit a rule-1 match line; got: ${JSON.stringify(lines)}`,

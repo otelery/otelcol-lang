@@ -15,7 +15,7 @@ class OtelcolFileTypeTest : BasePlatformTestCase() {
   }
 
   fun testGlobMatchesConfigsetSidecar() {
-    val ft = FileTypeManager.getInstance().getFileTypeByFileName("otelcol-configset.yaml")
+    val ft = FileTypeManager.getInstance().getFileTypeByFileName("configset.otelcol.yaml")
     assertEquals(OtelcolFileType.INSTANCE, ft)
   }
 
@@ -53,9 +53,9 @@ class OtelcolFileTypeTest : BasePlatformTestCase() {
 
   fun testFragmentDetectedViaSiblingSidecar() {
     // Reproduces examples/configset-sidecar: a single-key fragment alongside
-    // an otelcol-configset.yaml manifest. This is the case the old glob-only
+    // an configset.otelcol.yaml manifest. This is the case the old glob-only
     // detection missed.
-    myFixture.addFileToProject("set/otelcol-configset.yaml", "members:\n  - base.yaml\n")
+    myFixture.addFileToProject("set/configset.otelcol.yaml", "members:\n  - base.yaml\n")
     val base = myFixture.addFileToProject(
       "set/base.yaml",
       "receivers:\n  otlp:\n    protocols:\n      grpc:\n        endpoint: 0.0.0.0:4317\n",
@@ -75,7 +75,7 @@ class OtelcolFileTypeTest : BasePlatformTestCase() {
   fun testDirectiveMarkerDetected() {
     val vf = myFixture.addFileToProject(
       "dir/anything.yaml",
-      "# otelcol-configset: a.yaml b.yaml\nexporters:\n  debug:\n",
+      "# configset-otelcol: a.yaml b.yaml\nexporters:\n  debug:\n",
     ).virtualFile
     assertEquals(OtelcolFileType.INSTANCE, vf.fileType)
   }
@@ -83,7 +83,7 @@ class OtelcolFileTypeTest : BasePlatformTestCase() {
   fun testSiblingDirectiveNamesSelf() {
     myFixture.addFileToProject(
       "dir2/main.yaml",
-      "# otelcol-configset: frag.yaml main.yaml\n" +
+      "# configset-otelcol: frag.yaml main.yaml\n" +
         "service:\n  pipelines:\n    traces:\n      receivers: [otlp]\n",
     )
     val frag = myFixture.addFileToProject("dir2/frag.yaml", "extensions:\n  health_check:\n").virtualFile

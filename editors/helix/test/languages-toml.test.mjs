@@ -28,8 +28,8 @@ describe("editors/helix/languages.toml", () => {
     assert.match(toml, /language-servers\s*=\s*\[\s*"otelcol"\s*\]/);
   });
 
-  it("matches the three documented file-types globs", () => {
-    for (const glob of ["*.otelcol.yaml", "*.otelcol.yml", "otelcol-configset.yaml"]) {
+  it("matches the two documented file-types globs", () => {
+    for (const glob of ["*.otelcol.yaml", "*.otelcol.yml"]) {
       assert.ok(
         toml.includes(`glob = "${glob}"`),
         `expected file-types glob "${glob}" in languages.toml`,
@@ -37,8 +37,8 @@ describe("editors/helix/languages.toml", () => {
     }
   });
 
-  it("uses the otelcol-configset.yaml sidecar as a workspace root marker", () => {
-    assert.match(toml, /roots\s*=\s*\[[^\]]*"otelcol-configset\.yaml"/);
+  it("uses the configset.otelcol.yaml sidecar as a workspace root marker", () => {
+    assert.match(toml, /roots\s*=\s*\[[^\]]*"configset\.otelcol\.yaml"/);
   });
 
   it("does NOT declare a custom [[grammar]] block (stock-yaml decision)", () => {

@@ -5,7 +5,7 @@ inline at the top of the anchor file (the one containing
 `service.pipelines:`):
 
 ```yaml
-# otelcol-configset: base.yaml exporters.yaml pipelines.yaml
+# configset-otelcol: base.yaml exporters.yaml pipelines.yaml
 service:
   pipelines: ...
 ```
@@ -25,7 +25,7 @@ otelcol-contrib \
 ## How the extension finds it
 
 The extension scans the first line of every YAML file in the workspace
-for a `# otelcol-configset:` comment. When it finds one, the members
+for a `# configset-otelcol:` comment. When it finds one, the members
 listed (relative to the file containing the directive) form the
 config-set.
 

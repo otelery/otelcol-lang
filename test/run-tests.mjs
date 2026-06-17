@@ -110,7 +110,7 @@ describe("ConfigSetIndex discovery", () => {
     assert.equal(
       looksLikeOtelcol(text, baseFs),
       true,
-      "base.yaml has only `receivers:` but a sibling pipelines.yaml has `# otelcol-configset: base.yaml exporters.yaml pipelines.yaml` — it should retag to otelcol",
+      "base.yaml has only `receivers:` but a sibling pipelines.yaml has `# configset-otelcol: base.yaml exporters.yaml pipelines.yaml` — it should retag to otelcol",
     );
   });
 
@@ -617,9 +617,9 @@ describe("parse diagnostics attribute to the defining file", () => {
 // then exercises positive and negative paths. Rules from src/extension/sniffer.ts:
 //   (a) anchor — `service:` + indented `pipelines:` child
 //   (b) two or more top-level otelcol keys
-//   (c) `# otelcol-configset:` directive in the file itself
-//   (d) sibling `otelcol-configset.yaml` sidecar in same dir
-//   (e) sibling YAML carries an `# otelcol-configset:` directive that names this file
+//   (c) `# configset-otelcol:` directive in the file itself
+//   (d) sibling `configset.otelcol.yaml` sidecar in same dir
+//   (e) sibling YAML carries an `# configset-otelcol:` directive that names this file
 
 describe("looksLikeOtelcol sniffer", () => {
   let tmp;
@@ -659,9 +659,9 @@ describe("looksLikeOtelcol sniffer", () => {
   });
 
   // (c) self-directive
-  it("(c) `# otelcol-configset:` directive in the file triggers true", () => {
+  it("(c) `# configset-otelcol:` directive in the file triggers true", () => {
     fresh();
-    const f = mk("x.yaml", "# otelcol-configset: a.yaml b.yaml\nreceivers:\n  otlp:\n");
+    const f = mk("x.yaml", "# configset-otelcol: a.yaml b.yaml\nreceivers:\n  otlp:\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
   });
   it("(c) similarly-named comment (`# otelcol-foo:`) does NOT trigger the directive rule", () => {
@@ -672,9 +672,9 @@ describe("looksLikeOtelcol sniffer", () => {
   });
 
   // (d) sidecar
-  it("(d) sibling `otelcol-configset.yaml` sidecar triggers true even with one key", () => {
+  it("(d) sibling `configset.otelcol.yaml` sidecar triggers true even with one key", () => {
     fresh();
-    mk("otelcol-configset.yaml", "members:\n  - x.yaml\n");
+    mk("configset.otelcol.yaml", "members:\n  - x.yaml\n");
     const f = mk("x.yaml", "receivers:\n  otlp:\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
   });
@@ -684,7 +684,7 @@ describe("looksLikeOtelcol sniffer", () => {
     fresh();
     mk(
       "pipelines.yaml",
-      "# otelcol-configset: base.yaml pipelines.yaml\nservice:\n  pipelines:\n    traces: { receivers: [otlp], exporters: [debug] }\n",
+      "# configset-otelcol: base.yaml pipelines.yaml\nservice:\n  pipelines:\n    traces: { receivers: [otlp], exporters: [debug] }\n",
     );
     const f = mk("base.yaml", "receivers:\n  otlp:\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
@@ -693,7 +693,7 @@ describe("looksLikeOtelcol sniffer", () => {
     fresh();
     // Sibling has a directive listing other files, but is NOT itself an anchor
     // (no `service: + pipelines:`), so rule (f) can't accidentally rescue this.
-    mk("notes.yaml", "# otelcol-configset: a.yaml notes.yaml\nfoo: 1\n");
+    mk("notes.yaml", "# configset-otelcol: a.yaml notes.yaml\nfoo: 1\n");
     const f = mk("base.yaml", "receivers:\n  otlp:\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), false);
   });
@@ -701,7 +701,7 @@ describe("looksLikeOtelcol sniffer", () => {
     fresh();
     mk(
       "pipelines.yaml",
-      "# otelcol-configset: base.yml pipelines.yaml\nservice:\n  pipelines: {}\n",
+      "# configset-otelcol: base.yml pipelines.yaml\nservice:\n  pipelines: {}\n",
     );
     const f = mk("base.yml", "receivers:\n  otlp:\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
@@ -776,10 +776,10 @@ describe("looksLikeOtelcol sniffer", () => {
   // Combination coverage: multiple rules simultaneously → still true
   it("combo: anchor + sidecar + directive → true (independent rules don't interfere)", () => {
     fresh();
-    mk("otelcol-configset.yaml", "members: [x.yaml]\n");
+    mk("configset.otelcol.yaml", "members: [x.yaml]\n");
     const f = mk(
       "x.yaml",
-      "# otelcol-configset: x.yaml\nservice:\n  pipelines:\n    traces: { receivers: [otlp] }\n",
+      "# configset-otelcol: x.yaml\nservice:\n  pipelines:\n    traces: { receivers: [otlp] }\n",
     );
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
   });
@@ -808,13 +808,13 @@ describe("looksLikeOtelcol sniffer", () => {
 
   // Sidecar marker recognised by filename — the sidecar file itself contains
   // only `members:`, so the parsed-structure rule alone can't catch it.
-  it("the `otelcol-configset.yaml` sidecar file itself is recognised by filename", () => {
+  it("the `configset.otelcol.yaml` sidecar file itself is recognised by filename", () => {
     fresh();
-    const f = mk("otelcol-configset.yaml", "members:\n  - base.yaml\n  - pipelines.yaml\n");
+    const f = mk("configset.otelcol.yaml", "members:\n  - base.yaml\n  - pipelines.yaml\n");
     assert.equal(looksLikeOtelcol(readFileSync(f, "utf8"), f), true);
   });
-  it("fixture: test/configsets/sidecar/otelcol-configset.yaml → true via filename", () => {
-    const p = resolve(root, "test/configsets/sidecar/otelcol-configset.yaml");
+  it("fixture: test/configsets/sidecar/configset.otelcol.yaml → true via filename", () => {
+    const p = resolve(root, "test/configsets/sidecar/configset.otelcol.yaml");
     assert.equal(looksLikeOtelcol(readFileSync(p, "utf8"), p), true);
   });
 

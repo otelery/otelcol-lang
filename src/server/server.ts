@@ -42,6 +42,7 @@ import {
   SEMTOK_TYPES,
 } from "./semantic-tokens";
 import { looksLikeOtelcol } from "../common/yaml-sniff";
+import { SIDECAR_NAME } from "../common/yaml-classify";
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
@@ -248,7 +249,7 @@ function dirContainsSidecarOrAnchor(dir: string): boolean {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     for (const e of entries) {
       if (!e.isFile()) continue;
-      if (e.name === "otelcol-configset.yaml") return true;
+      if (e.name === SIDECAR_NAME) return true;
       if (!/\.ya?ml$/i.test(e.name)) continue;
       try {
         const fd = fs.openSync(path.join(dir, e.name), "r");
@@ -339,7 +340,7 @@ connection.onDidChangeWatchedFiles((params) => {
     // Drop disk cache so the next read picks up changes.
     diskCache.delete(uri);
     // If the file is a sidecar, rescan (set membership changes).
-    if (uri.endsWith("/otelcol-configset.yaml")) rescanNeeded = true;
+    if (uri.endsWith("/" + SIDECAR_NAME)) rescanNeeded = true;
     // Invalidate any set containing this URI.
     const set = configSetIndex.getSetForUri(uri);
     if (set) setModelCache.delete(set.anchorUri);
