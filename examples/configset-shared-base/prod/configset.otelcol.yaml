@@ -1,0 +1,8 @@
+# prod config-set. Pulls the shared fragments in from the sibling base/
+# folder with `../base/...` parent-relative paths (resolved against THIS
+# file's directory), then adds the prod-local anchor. Members merge in
+# this order (confmap semantics); the anchor must appear in the list.
+members:
+  - ../base/receivers.yaml
+  - ../base/exporters.yaml
+  - pipelines.yaml

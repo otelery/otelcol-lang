@@ -1,0 +1,11 @@
+service:
+  pipelines:
+    # Same base path as prod…
+    traces:
+      receivers: [otlp]
+      exporters: [otlp/backend]
+    # …plus an extra debug pipeline stitched in from the staging overlay:
+    # the same OTLP input also fans out to the console debug exporter.
+    traces/debug:
+      receivers: [otlp]
+      exporters: [debug]
