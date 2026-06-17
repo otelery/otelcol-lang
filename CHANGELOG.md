@@ -155,6 +155,18 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   class is caught at CI time.
 
 ### Fixed
+- JetBrains detected otelcol config files by filename glob only, so a
+  config-set's member files (`base.yaml`, `pipelines.yaml`, …) never
+  switched to the "OpenTelemetry Collector" file type — only the
+  `otelcol-configset.yaml` manifest did, and that was the one file that
+  isn't itself collector config. `OtelcolFileType` now implements
+  `FileTypeIdentifiableByVirtualFile` and ports the VS Code content
+  sniffer (`src/common/yaml-sniff.ts` + `yaml-classify.ts`) into Kotlin
+  (`OtelcolYamlClassify`): `service.pipelines` anchors, ≥2 top-level
+  otelcol keys, the `# otelcol-configset:` directive, and the
+  sibling-sidecar / sibling-anchor scans are all recognised, so member
+  files of `examples/configset-sidecar/` are detected on open. The
+  filename globs remain as a no-I/O fast path.
 - JetBrains semantic-token references rendered as plain foreground
   (white in Darcula) because the non-declaration `class` token was
   mapped to `CLASS_REFERENCE`, whose default attributes are empty. Drop
