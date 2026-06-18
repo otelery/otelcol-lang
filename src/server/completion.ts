@@ -165,18 +165,30 @@ export function completion(
     });
   }
 
-  // Inside service.pipelines.<sig>: suggest the bucket names.
+  // Inside service.pipelines.<sig>: suggest the bucket names. Filter out
+  // buckets already defined in this pipeline — re-inserting them produces a
+  // duplicate-key error.
   if (segs[0] === "service" && segs[1] === "pipelines" && segs.length === 3) {
     const bucketDetails: Record<string, string> = {
       receivers: "data sources feeding this pipeline",
       processors: "ordered list of transforms",
       exporters: "data sinks for this pipeline",
     };
-    return ["receivers", "processors", "exporters"].map((k) => ({
-      label: k,
-      kind: CompletionItemKind.Property,
-      detail: bucketDetails[k],
-    }));
+    const existing = new Set(siblingKeysAt(doc.text, segs));
+    return ["receivers", "processors", "exporters"]
+      .filter((k) => !existing.has(k))
+      .map((k) => {
+        const body = `${k}: [$0]`;
+        return {
+          label: k,
+          kind: CompletionItemKind.Property,
+          detail: bucketDetails[k],
+          textEdit: { range: editRange, newText: body },
+          insertText: body,
+          insertTextFormat: InsertTextFormat.Snippet,
+          insertTextMode: InsertTextMode.asIs,
+        };
+      });
   }
 
   // Inside service.pipelines.<sig>.{receivers,processors,exporters}: suggest defined IDs.

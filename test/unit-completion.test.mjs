@@ -213,6 +213,54 @@ describe("completion: pipeline signal names under service.pipelines", () => {
   });
 });
 
+// ─── (1b'') pipeline-body filters out already-defined siblings ───────────
+
+describe("completion: pipeline-body filters existing siblings", () => {
+  it("offers nothing when receivers/processors/exporters are all set", () => {
+    // service:
+    //   pipelines:
+    //     logs:
+    //       receivers: [otlp]
+    //       processors: [batch]
+    //       exporters: [otlp/foo]
+    //       <cursor at column 6>
+    const text =
+      "receivers:\n  otlp:\nprocessors:\n  batch:\nexporters:\n  otlp/foo:\nservice:\n  pipelines:\n    logs:\n      receivers: [otlp]\n      processors: [batch]\n      exporters: [otlp/foo]\n      \n";
+    const items = complete(text, 12, 6);
+    const labels = items.map((i) => i.label);
+    for (const k of ["receivers", "processors", "exporters"]) {
+      assert.ok(
+        !labels.includes(k),
+        `'${k}' already defined — should not be re-suggested; got: ${labels}`,
+      );
+    }
+  });
+
+  it("bucket items expand as snippets with empty flow array and cursor inside", () => {
+    const text = "service:\n  pipelines:\n    traces:\n      \n";
+    const items = complete(text, 3, 6);
+    const receivers = items.find((i) => i.label === "receivers");
+    assert.ok(receivers, "no 'receivers' suggestion");
+    assert.equal(receivers.insertTextFormat, 2, "expected Snippet format (2)");
+    const body = receivers.textEdit?.newText ?? receivers.insertText ?? "";
+    assert.match(
+      body,
+      /^receivers: \[\$0\]$/,
+      `bucket should expand to 'receivers: [$0]'; got: ${body}`,
+    );
+  });
+
+  it("still offers the missing bucket when only some are set", () => {
+    const text =
+      "receivers:\n  otlp:\nexporters:\n  debug:\nservice:\n  pipelines:\n    logs:\n      receivers: [otlp]\n      \n";
+    const items = complete(text, 8, 6);
+    const labels = items.map((i) => i.label);
+    assert.ok(!labels.includes("receivers"), `'receivers' already set; got ${labels}`);
+    assert.ok(labels.includes("processors"), `'processors' missing; got ${labels}`);
+    assert.ok(labels.includes("exporters"), `'exporters' missing; got ${labels}`);
+  });
+});
+
 // ─── (1c) schema-driven property completion ─────────────────────────────
 
 describe("completion: schema-driven property keys", () => {
