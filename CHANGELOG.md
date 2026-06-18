@@ -171,6 +171,23 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   class is caught at CI time.
 
 ### Fixed
+- Completion items in every label-only branch now carry an explicit
+  `textEdit` anchored to the typed identifier prefix via a new
+  `wordStartBefore` helper (`src/server/completion.ts`). LSP4IJ (JetBrains)
+  otherwise scans back to column 0 to compute the replace range, eating the
+  cursor line's leading indent and landing accepted keys at the wrong
+  column — e.g. accepting `batch` under `processors:` produced `batch` at
+  column 0 instead of `  batch`. The property-keys branch already had this
+  anchoring; it now also covers component types, pipeline-ref IDs,
+  pipeline-bucket names, and root keys. `insertText` is kept as the
+  fallback for clients that ignore `textEdit`.
+- Completion is suppressed when the cursor sits in scalar value position on
+  the same line as the parent key (`parent:|`). The `:` trigger character
+  was firing the key-list branches there, and accepting a suggestion
+  produced `parent:child` (invalid YAML, e.g. `processors:batch`). The
+  guard checks `lineToCursor` for a `:` not followed by a flow-collection
+  opener — so `receivers: [x|` and partial-key edits like `  prot|` still
+  surface their normal completions.
 - JetBrains detected otelcol config files by filename glob only, so a
   config-set's member files (`base.yaml`, `pipelines.yaml`, …) never
   switched to the "OpenTelemetry Collector" file type — only the
