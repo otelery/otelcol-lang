@@ -142,6 +142,29 @@ export function completion(
     }
   }
 
+  // Directly inside service.pipelines: suggest signal names as snippets
+  // that scaffold the receivers/processors/exporters skeleton. The optional
+  // `/<name>` suffix lets users disambiguate multiple pipelines per signal.
+  if (segs[0] === "service" && segs[1] === "pipelines" && segs.length === 2) {
+    const signals = ["traces", "metrics", "logs", "profiles"] as const;
+    return signals.map((sig) => {
+      const body =
+        `${sig}/\${1:name}:\n` +
+        `${INDENT_UNIT}receivers: [$2]\n` +
+        `${INDENT_UNIT}processors: [$3]\n` +
+        `${INDENT_UNIT}exporters: [$0]`;
+      return {
+        label: sig,
+        kind: CompletionItemKind.Module,
+        detail: `${sig.replace(/s$/, "")} pipeline`,
+        textEdit: { range: editRange, newText: body },
+        insertText: body,
+        insertTextFormat: InsertTextFormat.Snippet,
+        insertTextMode: InsertTextMode.asIs,
+      };
+    });
+  }
+
   // Inside service.pipelines.<sig>: suggest the bucket names.
   if (segs[0] === "service" && segs[1] === "pipelines" && segs.length === 3) {
     const bucketDetails: Record<string, string> = {

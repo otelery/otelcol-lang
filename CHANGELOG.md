@@ -8,6 +8,17 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Completion at `service.pipelines.<cursor>` offers the four standard
+  signal names (`traces`, `metrics`, `logs`, `profiles`) as snippets that
+  scaffold the full pipeline body (`src/server/completion.ts`). Each
+  snippet expands to `traces/${1:name}:` followed by `receivers: [$2]`,
+  `processors: [$3]`, `exporters: [$0]` lines (relative indent +
+  `InsertTextMode.asIs` so the client re-applies the cursor line's
+  leading indent). The `/` between the signal name and the suffix
+  placeholder is literal — typing fills only the sub-pipeline name and
+  leaves `traces/foo:`; to get a plain `traces:` delete the `/name`
+  trailer. Useful entry point — before this branch existed, that cursor
+  position returned no suggestions at all.
 - Object-typed property completions now expand the full child structure
   on accept (`src/server/completion.ts`). When an inserted key's schema
   declares scalar children, the snippet body lists each child on its own

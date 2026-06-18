@@ -167,6 +167,52 @@ describe("completion: pipeline-body context", () => {
   });
 });
 
+// ─── (1b') pipeline signal-name snippets ────────────────────────────────
+
+describe("completion: pipeline signal names under service.pipelines", () => {
+  // service:
+  //   pipelines:
+  //     <cursor at column 4>
+  // Should offer traces/metrics/logs/profiles as snippets that scaffold
+  // the receivers/processors/exporters skeleton.
+  const text = "service:\n  pipelines:\n    \n";
+
+  it("suggests the four standard signal names", () => {
+    const items = complete(text, 2, 4);
+    const labels = items.map((i) => i.label);
+    for (const sig of ["traces", "metrics", "logs", "profiles"]) {
+      assert.ok(labels.includes(sig), `expected '${sig}'; got ${labels}`);
+    }
+  });
+
+  it("each signal item is a snippet that scaffolds the pipeline body", () => {
+    const items = complete(text, 2, 4);
+    const traces = items.find((i) => i.label === "traces");
+    assert.ok(traces, "no 'traces' suggestion");
+    assert.equal(traces.insertTextFormat, 2, "expected Snippet format (2)");
+    const body = traces.textEdit?.newText ?? traces.insertText ?? "";
+    assert.match(body, /^traces/, `body should start with 'traces'; got: ${body}`);
+    assert.match(body, /receivers:/, "body should scaffold receivers");
+    assert.match(body, /processors:/, "body should scaffold processors");
+    assert.match(body, /exporters:/, "body should scaffold exporters");
+  });
+
+  it("snippet keeps the '/' literal so typing fills only the suffix name", () => {
+    // Previously the snippet was `traces${1:/${2:name}}:` — typing the first
+    // character wiped the leading `/`. The slash should be a literal so the
+    // user types only the sub-pipeline name.
+    const items = complete(text, 2, 4);
+    const traces = items.find((i) => i.label === "traces");
+    const body = traces.textEdit?.newText ?? traces.insertText ?? "";
+    // Match `traces/${...}` — slash outside any placeholder.
+    assert.match(
+      body,
+      /^traces\/\$\{/,
+      `slash must be literal between label and first tabstop; got: ${body}`,
+    );
+  });
+});
+
 // ─── (1c) schema-driven property completion ─────────────────────────────
 
 describe("completion: schema-driven property keys", () => {
