@@ -135,6 +135,15 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   unified `OTELCOL_DEV_WATCH=1` dev loop.
 
 ### Changed
+- Pipeline-body bucket completions (`receivers`, `processors`, `exporters`
+  inside `service.pipelines.<sig>`) now expand as snippets — each accepted
+  item inserts `<bucket>: [$0]` with the cursor parked inside the empty
+  flow array, ready to trigger the existing pipeline-ref completion for
+  defined component IDs. Already-defined buckets are filtered out of the
+  suggestion list via `siblingKeysAt(doc.text, segs)`, mirroring the
+  duplicate-key filter the property-keys branch already used — accepting
+  a bucket that's already present would otherwise produce a
+  `Map keys must be unique` diagnostic.
 - **Breaking:** renamed the config-set sidecar manifest from
   `otelcol-configset.yaml` to `configset.otelcol.yaml`, and the inline
   directive from `# otelcol-configset:` to `# configset-otelcol:`. The old
