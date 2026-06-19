@@ -8,6 +8,20 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.2.0] - 2026-06-19
+
+### Added
 - Completion at `service.pipelines.<cursor>` offers the four standard
   signal names (`traces`, `metrics`, `logs`, `profiles`) as snippets that
   scaffold the full pipeline body (`src/server/completion.ts`). Each
