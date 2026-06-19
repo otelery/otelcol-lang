@@ -32,8 +32,8 @@ if grep -q "^##[[:space:]]*\\[$VERSION\\][[:space:]]*-" CHANGELOG.md; then
   exit 1
 fi
 
-if git rev-parse --verify --quiet "refs/tags/$VERSION" >/dev/null; then
-  echo "prepare-release: git tag '$VERSION' already exists" >&2
+if git rev-parse --verify --quiet "refs/tags/v$VERSION" >/dev/null; then
+  echo "prepare-release: git tag 'v$VERSION' already exists" >&2
   exit 1
 fi
 
@@ -90,7 +90,7 @@ fi
 
 git add CHANGELOG.md package.json package-lock.json editors/jetbrains/gradle.properties
 git commit -m "chore(release): ${VERSION}"
-git tag "$VERSION"
+git tag "v$VERSION"
 
-echo "Release prepared: commit + tag created locally."
+echo "Release prepared: commit + tag v$VERSION created locally."
 echo "Push when ready: git push && git push --tags"
