@@ -19,6 +19,24 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+## [0.3.0] - 2026-06-20
+
+### Added
+- `make publish-jetbrains` now uploads the plugin to the JetBrains
+  Marketplace via the IntelliJ Platform Gradle plugin's `publishPlugin`
+  task. Configured `intellijPlatform.publishing { token = … }` in
+  `editors/jetbrains/build.gradle.kts` to read
+  `JETBRAINS_MARKETPLACE_TOKEN` from the environment. `make publish`
+  now chains VS Code Marketplace → npm → JetBrains Marketplace
+  end-to-end (Zed/Helix remain manual).
+
+### Changed
+- `scripts/prepare-release.sh` now bumps `package.json`,
+  `package-lock.json`, and `editors/jetbrains/gradle.properties`'s
+  `pluginVersion` to the supplied `X.Y.Z` alongside the CHANGELOG
+  rewrite, so all three registries ship the same version. Tag is
+  written as `vX.Y.Z`.
+
 ## [0.2.0] - 2026-06-19
 
 ### Added
