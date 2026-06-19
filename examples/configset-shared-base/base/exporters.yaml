@@ -1,0 +1,4 @@
+# Shared exporter used by every environment.
+exporters:
+  otlp/backend:
+    endpoint: backend:4317

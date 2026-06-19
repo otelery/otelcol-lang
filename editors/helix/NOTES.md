@@ -17,10 +17,10 @@ injection-regex = "otelcol"
 file-types = [
   { glob = "*.otelcol.yaml" },
   { glob = "*.otelcol.yml" },
-  { glob = "otelcol-configset.yaml" },
+  { glob = "configset.otelcol.yaml" },
 ]
-shebangs = []  # YAML doesn't really shebang, but `# otelcol-configset:` works similarly
-roots = ["otelcol-configset.yaml", ".git"]
+shebangs = []  # YAML doesn't really shebang, but `# configset-otelcol:` works similarly
+roots = ["configset.otelcol.yaml", ".git"]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
 language-servers = ["otelcol"]
@@ -42,8 +42,8 @@ Helix uses `file-types` globs and `shebangs`. No content-based sniffing
 hook is exposed. This means:
 
 - `foo.otelcol.yaml` → detected.
-- `otelcol-configset.yaml` (the sidecar) → detected by exact-name glob.
-- A plain `foo.yaml` with a `# otelcol-configset:` directive → **not**
+- `configset.otelcol.yaml` (the sidecar) → detected by exact-name glob.
+- A plain `foo.yaml` with a `# configset-otelcol:` directive → **not**
   detected. User must either rename the file, add a `language-id` mode
   line (`# helix: language=otelcol` — verify Helix actually supports
   this), or invoke `:set-language otelcol` after opening.

@@ -53,7 +53,7 @@
           "otelcol"
         ],
         "extensions": [],
-        "firstLine": "^#\\s*(otelcol|opentelemetry-collector)\\b",
+        "firstLine": "^#\\s*(otelcol\\b|opentelemetry-collector\\b|configset-otelcol:)",
         "configuration": "./editors/vscode/language-configuration.json"
       },
       {
@@ -229,7 +229,7 @@
         "otelcol.configSets.autoDiscover": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically group YAML files into config sets by searching the workspace for `service.pipelines:` anchors. An anchor at directory D owns fragments in D and its subdirectories, stopping at any nested anchor. Disable to require an explicit `otelcol-configset.yaml` sidecar or `# otelcol-configset:` directive."
+          "description": "Automatically group YAML files into config sets by searching the workspace for `service.pipelines:` anchors. An anchor at directory D owns fragments in D and its subdirectories, stopping at any nested anchor. Disable to require an explicit `configset.otelcol.yaml` sidecar or `# configset-otelcol:` directive."
         },
         "otelcol.configSets.maxFilesScanned": {
           "type": "integer",

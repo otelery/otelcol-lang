@@ -45,7 +45,7 @@
         name="OpenTelemetry Collector"
         implementationClass="ch.snowgarden.otelcol.OtelcolFileType"
         fieldName="INSTANCE"
-        patterns="*.otelcol.yaml;*.otelcol.yml;otelcol-configset.yaml"/>
+        patterns="*.otelcol.yaml;*.otelcol.yml"/>
     <registryKey
         key="otelcol.lsp.server.path"
         defaultValue=""

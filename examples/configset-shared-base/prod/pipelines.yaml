@@ -1,0 +1,6 @@
+service:
+  pipelines:
+    # Lean prod path: OTLP in → backend out.
+    traces:
+      receivers: [otlp]
+      exporters: [otlp/backend]

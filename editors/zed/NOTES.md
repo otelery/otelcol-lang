@@ -48,7 +48,7 @@ commit = "TBD"
 name = "OpenTelemetry Collector"
 grammar = "otelcol_yaml"
 path_suffixes = ["otelcol.yaml", "otelcol.yml"]
-first_line_pattern = "^#\\s*(otelcol|opentelemetry-collector|otelcol-configset:)\\b"
+first_line_pattern = "^#\\s*(otelcol\\b|opentelemetry-collector\\b|configset-otelcol:)"
 line_comments = ["# "]
 autoclose_before = ":,]}"
 brackets = [
@@ -60,7 +60,7 @@ brackets = [
 
 Detection caveats — see [SHARED.md §5](../SHARED.md#5-per-editor-is-this-an-otelcol-file-detection).
 Zed has no equivalent to the extension's runtime classifier, so we lose content-based
-retagging. The escape hatch is the `# otelcol-configset:` directive or naming files
+retagging. The escape hatch is the `# configset-otelcol:` directive or naming files
 `*.otelcol.yaml`.
 
 ### Rust extension entry (`src/otelcol.rs`)
@@ -152,10 +152,10 @@ install). Document this as a prereq in the extension README.
 - **`firstLine` detection equivalent:** Zed's `first_line_pattern` is regex,
   but is it run on every YAML file, or only on files matched by
   `path_suffixes`? If the latter, we can't retag a plain `foo.yaml` that
-  happens to have a `# otelcol-configset:` directive. Read source or test
+  happens to have a `# configset-otelcol:` directive. Read source or test
   empirically.
 - **Multi-file configset semantics:** the extension's sniffer retags
   fragment files (e.g. `receivers.yaml`) when an anchor or sidecar is
   present in the same directory. Zed has no hook for that. Either rely on
-  `# otelcol-configset:` directive on every fragment, or accept that
+  `# configset-otelcol:` directive on every fragment, or accept that
   fragments outside the anchor file get treated as plain YAML.

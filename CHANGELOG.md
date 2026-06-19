@@ -8,6 +8,17 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Completion at `service.pipelines.<cursor>` offers the four standard
+  signal names (`traces`, `metrics`, `logs`, `profiles`) as snippets that
+  scaffold the full pipeline body (`src/server/completion.ts`). Each
+  snippet expands to `traces/${1:name}:` followed by `receivers: [$2]`,
+  `processors: [$3]`, `exporters: [$0]` lines (relative indent +
+  `InsertTextMode.asIs` so the client re-applies the cursor line's
+  leading indent). The `/` between the signal name and the suffix
+  placeholder is literal — typing fills only the sub-pipeline name and
+  leaves `traces/foo:`; to get a plain `traces:` delete the `/name`
+  trailer. Useful entry point — before this branch existed, that cursor
+  position returned no suggestions at all.
 - Object-typed property completions now expand the full child structure
   on accept (`src/server/completion.ts`). When an inserted key's schema
   declares scalar children, the snippet body lists each child on its own
@@ -124,6 +135,31 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   unified `OTELCOL_DEV_WATCH=1` dev loop.
 
 ### Changed
+- Pipeline-body bucket completions (`receivers`, `processors`, `exporters`
+  inside `service.pipelines.<sig>`) now expand as snippets — each accepted
+  item inserts `<bucket>: [$0]` with the cursor parked inside the empty
+  flow array, ready to trigger the existing pipeline-ref completion for
+  defined component IDs. Already-defined buckets are filtered out of the
+  suggestion list via `siblingKeysAt(doc.text, segs)`, mirroring the
+  duplicate-key filter the property-keys branch already used — accepting
+  a bucket that's already present would otherwise produce a
+  `Map keys must be unique` diagnostic.
+- **Breaking:** renamed the config-set sidecar manifest from
+  `otelcol-configset.yaml` to `configset.otelcol.yaml`, and the inline
+  directive from `# otelcol-configset:` to `# configset-otelcol:`. The old
+  filename started with `otel`, which the SchemaStore.org catalog's
+  start-anchored `otel*.yaml` glob ("OpenTelemetry Declarative Configuration")
+  matched — so every SchemaStore-backed editor (JetBrains' built-in catalog,
+  VS Code via the Red Hat YAML extension) force-applied the unrelated
+  `opentelemetry_configuration.json` SDK schema to the manifest. The new name
+  keeps the `.otelcol.yaml` suffix the toolchain already recognises while no
+  longer matching the SchemaStore globs. `SIDECAR_NAME` /
+  `DIRECTIVE_MARKER_RE` (`src/common/yaml-classify.ts`,
+  `OtelcolYamlClassify.kt`) and every editor's detection config were updated;
+  the redundant explicit sidecar glob was dropped from the JetBrains, Helix,
+  and Zed configs since `*.otelcol.yaml` / the `otelcol.yaml` tail already
+  cover the new name. No back-compat alias — existing `otelcol-configset.yaml`
+  sidecars and `# otelcol-configset:` directives must be renamed.
 - VS Code packaging switched from a deny-list `.vscodeignore` to
   deny-by-default + explicit allow-list. The previous deny-list silently
   leaked any newly added top-level directory into the `.vsix` — `.idea/`
@@ -155,6 +191,35 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   class is caught at CI time.
 
 ### Fixed
+- Completion items in every label-only branch now carry an explicit
+  `textEdit` anchored to the typed identifier prefix via a new
+  `wordStartBefore` helper (`src/server/completion.ts`). LSP4IJ (JetBrains)
+  otherwise scans back to column 0 to compute the replace range, eating the
+  cursor line's leading indent and landing accepted keys at the wrong
+  column — e.g. accepting `batch` under `processors:` produced `batch` at
+  column 0 instead of `  batch`. The property-keys branch already had this
+  anchoring; it now also covers component types, pipeline-ref IDs,
+  pipeline-bucket names, and root keys. `insertText` is kept as the
+  fallback for clients that ignore `textEdit`.
+- Completion is suppressed when the cursor sits in scalar value position on
+  the same line as the parent key (`parent:|`). The `:` trigger character
+  was firing the key-list branches there, and accepting a suggestion
+  produced `parent:child` (invalid YAML, e.g. `processors:batch`). The
+  guard checks `lineToCursor` for a `:` not followed by a flow-collection
+  opener — so `receivers: [x|` and partial-key edits like `  prot|` still
+  surface their normal completions.
+- JetBrains detected otelcol config files by filename glob only, so a
+  config-set's member files (`base.yaml`, `pipelines.yaml`, …) never
+  switched to the "OpenTelemetry Collector" file type — only the
+  `configset.otelcol.yaml` manifest did, and that was the one file that
+  isn't itself collector config. `OtelcolFileType` now implements
+  `FileTypeIdentifiableByVirtualFile` and ports the VS Code content
+  sniffer (`src/common/yaml-sniff.ts` + `yaml-classify.ts`) into Kotlin
+  (`OtelcolYamlClassify`): `service.pipelines` anchors, ≥2 top-level
+  otelcol keys, the `# configset-otelcol:` directive, and the
+  sibling-sidecar / sibling-anchor scans are all recognised, so member
+  files of `examples/configset-sidecar/` are detected on open. The
+  filename globs remain as a no-I/O fast path.
 - JetBrains semantic-token references rendered as plain foreground
   (white in Darcula) because the non-declaration `class` token was
   mapped to `CLASS_REFERENCE`, whose default attributes are empty. Drop
@@ -204,8 +269,8 @@ as `opentelemetry-collector-config` on npm.
 - Language server (`src/server/`, 11 modules) providing:
   - YAML model parsing with anchor/alias tracking.
   - Config-set discovery (auto-scan via `service.pipelines:` anchors,
-    or explicit `otelcol-configset.yaml` sidecar / first-line
-    `# otelcol-configset:` directive).
+    or explicit `configset.otelcol.yaml` sidecar / first-line
+    `# configset-otelcol:` directive).
   - Pipeline graph validation: undefined refs, ambiguous refs,
     defined-but-unused components, signal compatibility.
   - Component-aware hover with signals, stability, codeowners,

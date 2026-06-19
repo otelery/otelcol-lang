@@ -84,7 +84,7 @@ JetBrains gives us full programmatic control via `FileTypeRegistry` and
 `FileTypeFactory`. We can replicate the extension's classifier exactly:
 
 - File-name patterns (`*.otelcol.yaml`, `*.otelcol.yml`,
-  `otelcol-configset.yaml`) registered via `FileNameMatcher`.
+  `configset.otelcol.yaml`) registered via `FileNameMatcher`.
 - Content sniffing via a custom `FileType` whose `isMyFileType(VirtualFile)`
   reads the first ~16KB and runs the same regex + top-level-key logic the
   extension uses. Worth porting the rules from

@@ -11,7 +11,7 @@
 #
 # Detection is glob-only (no content sniffing): files matching the
 # `file-types` patterns below get the otelcol language. A plain
-# foo.yaml with a `# otelcol-configset:` directive will NOT be
+# foo.yaml with a `# configset-otelcol:` directive will NOT be
 # auto-detected — rename to *.otelcol.yaml or use `:set-language otelcol`.
 
 [language-server.otelcol]
@@ -26,9 +26,8 @@ injection-regex = "otelcol"
 file-types = [
   { glob = "*.otelcol.yaml" },
   { glob = "*.otelcol.yml" },
-  { glob = "otelcol-configset.yaml" },
 ]
-roots = ["otelcol-configset.yaml", ".git"]
+roots = ["configset.otelcol.yaml", ".git"]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
 language-servers = ["otelcol"]

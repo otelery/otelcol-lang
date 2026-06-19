@@ -41,7 +41,7 @@ code --extensionDevelopmentPath="$(pwd)" examples/
 ```
 
 In the dev host, open any `*.otelcol.yaml` (or a `yaml` file with
-a `# otelcol-configset:` directive — the sniffer retags it).
+a `# configset-otelcol:` directive — the sniffer retags it).
 
 ## Testing
 

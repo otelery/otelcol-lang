@@ -43,7 +43,29 @@ export function completion(
     if (enumItems) return enumItems;
   }
 
+  // On `parent:|` (same-line, after the colon) the cursor is in value
+  // position — accepting a key there produces `parent:child`, invalid YAML.
+  // The `:` trigger character fires completion in that spot, so guard
+  // against it. Flow-collection cases like `receivers: [x|` are legitimate
+  // (cursor is inside `[…]`, not in scalar value position), so allow if a
+  // flow-open follows the most recent colon.
+  const lineToCursor =
+    (doc.text.split("\n")[pos.line] ?? "").slice(0, pos.character);
+  const colonIdx = lineToCursor.lastIndexOf(":");
+  if (colonIdx >= 0) {
+    const after = lineToCursor.slice(colonIdx + 1);
+    if (!after.includes("[") && !after.includes("{")) return [];
+  }
+
   const segs = pathAtPosition(doc.text, pos);
+
+  // Anchor the replacement range to the typed prefix only — LSP4IJ
+  // otherwise scans back to column 0 and eats the leading indent.
+  const prefixStart = wordStartBefore(doc.text, pos);
+  const editRange = {
+    start: { line: pos.line, character: prefixStart },
+    end: pos,
+  };
 
   // Inside one of the top-level component maps: suggest known types.
   const top = segs[0];
@@ -56,6 +78,8 @@ export function completion(
       documentation: c.description
         ? { kind: "markdown" as const, value: c.description }
         : undefined,
+      textEdit: { range: editRange, newText: c.type },
+      insertText: c.type,
     }));
   }
 
@@ -89,15 +113,6 @@ export function completion(
         const ownKey = keyOnLine(doc.text, pos.line);
         const existing = new Set(allSiblings);
         if (ownKey) existing.delete(ownKey);
-        // Anchor the replacement range to the typed prefix only — LSP4IJ
-        // otherwise scans back to column 0 and eats the leading indent,
-        // landing inserted keys at the wrong column. Identifier prefix =
-        // [A-Za-z0-9_].
-        const prefixStart = wordStartBefore(doc.text, pos);
-        const editRange = {
-          start: { line: pos.line, character: prefixStart },
-          end: pos,
-        };
         return Object.entries(node.properties).flatMap(([key, raw]) => {
           if (existing.has(key)) return [];
           const sub = resolveRef(raw, refRoot);
@@ -127,18 +142,53 @@ export function completion(
     }
   }
 
-  // Inside service.pipelines.<sig>: suggest the bucket names.
+  // Directly inside service.pipelines: suggest signal names as snippets
+  // that scaffold the receivers/processors/exporters skeleton. The optional
+  // `/<name>` suffix lets users disambiguate multiple pipelines per signal.
+  if (segs[0] === "service" && segs[1] === "pipelines" && segs.length === 2) {
+    const signals = ["traces", "metrics", "logs", "profiles"] as const;
+    return signals.map((sig) => {
+      const body =
+        `${sig}/\${1:name}:\n` +
+        `${INDENT_UNIT}receivers: [$2]\n` +
+        `${INDENT_UNIT}processors: [$3]\n` +
+        `${INDENT_UNIT}exporters: [$0]`;
+      return {
+        label: sig,
+        kind: CompletionItemKind.Module,
+        detail: `${sig.replace(/s$/, "")} pipeline`,
+        textEdit: { range: editRange, newText: body },
+        insertText: body,
+        insertTextFormat: InsertTextFormat.Snippet,
+        insertTextMode: InsertTextMode.asIs,
+      };
+    });
+  }
+
+  // Inside service.pipelines.<sig>: suggest the bucket names. Filter out
+  // buckets already defined in this pipeline — re-inserting them produces a
+  // duplicate-key error.
   if (segs[0] === "service" && segs[1] === "pipelines" && segs.length === 3) {
     const bucketDetails: Record<string, string> = {
       receivers: "data sources feeding this pipeline",
       processors: "ordered list of transforms",
       exporters: "data sinks for this pipeline",
     };
-    return ["receivers", "processors", "exporters"].map((k) => ({
-      label: k,
-      kind: CompletionItemKind.Property,
-      detail: bucketDetails[k],
-    }));
+    const existing = new Set(siblingKeysAt(doc.text, segs));
+    return ["receivers", "processors", "exporters"]
+      .filter((k) => !existing.has(k))
+      .map((k) => {
+        const body = `${k}: [$0]`;
+        return {
+          label: k,
+          kind: CompletionItemKind.Property,
+          detail: bucketDetails[k],
+          textEdit: { range: editRange, newText: body },
+          insertText: body,
+          insertTextFormat: InsertTextFormat.Snippet,
+          insertTextMode: InsertTextMode.asIs,
+        };
+      });
   }
 
   // Inside service.pipelines.<sig>.{receivers,processors,exporters}: suggest defined IDs.
@@ -159,6 +209,8 @@ export function completion(
         label: id,
         kind: CompletionItemKind.Reference,
         detail: `${refCls} · type ${entry.type}`,
+        textEdit: { range: editRange, newText: id },
+        insertText: id,
       });
     }
     for (const [id, entry] of model.components.connector) {
@@ -166,6 +218,8 @@ export function completion(
         label: id,
         kind: CompletionItemKind.Reference,
         detail: `connector · type ${entry.type}`,
+        textEdit: { range: editRange, newText: id },
+        insertText: id,
       });
     }
     return ids;
@@ -185,6 +239,8 @@ export function completion(
       label: k,
       kind: CompletionItemKind.Module,
       detail,
+      textEdit: { range: editRange, newText: k },
+      insertText: k,
     }));
   }
 

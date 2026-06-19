@@ -167,6 +167,100 @@ describe("completion: pipeline-body context", () => {
   });
 });
 
+// ─── (1b') pipeline signal-name snippets ────────────────────────────────
+
+describe("completion: pipeline signal names under service.pipelines", () => {
+  // service:
+  //   pipelines:
+  //     <cursor at column 4>
+  // Should offer traces/metrics/logs/profiles as snippets that scaffold
+  // the receivers/processors/exporters skeleton.
+  const text = "service:\n  pipelines:\n    \n";
+
+  it("suggests the four standard signal names", () => {
+    const items = complete(text, 2, 4);
+    const labels = items.map((i) => i.label);
+    for (const sig of ["traces", "metrics", "logs", "profiles"]) {
+      assert.ok(labels.includes(sig), `expected '${sig}'; got ${labels}`);
+    }
+  });
+
+  it("each signal item is a snippet that scaffolds the pipeline body", () => {
+    const items = complete(text, 2, 4);
+    const traces = items.find((i) => i.label === "traces");
+    assert.ok(traces, "no 'traces' suggestion");
+    assert.equal(traces.insertTextFormat, 2, "expected Snippet format (2)");
+    const body = traces.textEdit?.newText ?? traces.insertText ?? "";
+    assert.match(body, /^traces/, `body should start with 'traces'; got: ${body}`);
+    assert.match(body, /receivers:/, "body should scaffold receivers");
+    assert.match(body, /processors:/, "body should scaffold processors");
+    assert.match(body, /exporters:/, "body should scaffold exporters");
+  });
+
+  it("snippet keeps the '/' literal so typing fills only the suffix name", () => {
+    // Previously the snippet was `traces${1:/${2:name}}:` — typing the first
+    // character wiped the leading `/`. The slash should be a literal so the
+    // user types only the sub-pipeline name.
+    const items = complete(text, 2, 4);
+    const traces = items.find((i) => i.label === "traces");
+    const body = traces.textEdit?.newText ?? traces.insertText ?? "";
+    // Match `traces/${...}` — slash outside any placeholder.
+    assert.match(
+      body,
+      /^traces\/\$\{/,
+      `slash must be literal between label and first tabstop; got: ${body}`,
+    );
+  });
+});
+
+// ─── (1b'') pipeline-body filters out already-defined siblings ───────────
+
+describe("completion: pipeline-body filters existing siblings", () => {
+  it("offers nothing when receivers/processors/exporters are all set", () => {
+    // service:
+    //   pipelines:
+    //     logs:
+    //       receivers: [otlp]
+    //       processors: [batch]
+    //       exporters: [otlp/foo]
+    //       <cursor at column 6>
+    const text =
+      "receivers:\n  otlp:\nprocessors:\n  batch:\nexporters:\n  otlp/foo:\nservice:\n  pipelines:\n    logs:\n      receivers: [otlp]\n      processors: [batch]\n      exporters: [otlp/foo]\n      \n";
+    const items = complete(text, 12, 6);
+    const labels = items.map((i) => i.label);
+    for (const k of ["receivers", "processors", "exporters"]) {
+      assert.ok(
+        !labels.includes(k),
+        `'${k}' already defined — should not be re-suggested; got: ${labels}`,
+      );
+    }
+  });
+
+  it("bucket items expand as snippets with empty flow array and cursor inside", () => {
+    const text = "service:\n  pipelines:\n    traces:\n      \n";
+    const items = complete(text, 3, 6);
+    const receivers = items.find((i) => i.label === "receivers");
+    assert.ok(receivers, "no 'receivers' suggestion");
+    assert.equal(receivers.insertTextFormat, 2, "expected Snippet format (2)");
+    const body = receivers.textEdit?.newText ?? receivers.insertText ?? "";
+    assert.match(
+      body,
+      /^receivers: \[\$0\]$/,
+      `bucket should expand to 'receivers: [$0]'; got: ${body}`,
+    );
+  });
+
+  it("still offers the missing bucket when only some are set", () => {
+    const text =
+      "receivers:\n  otlp:\nexporters:\n  debug:\nservice:\n  pipelines:\n    logs:\n      receivers: [otlp]\n      \n";
+    const items = complete(text, 8, 6);
+    const labels = items.map((i) => i.label);
+    assert.ok(!labels.includes("receivers"), `'receivers' already set; got ${labels}`);
+    assert.ok(labels.includes("processors"), `'processors' missing; got ${labels}`);
+    assert.ok(labels.includes("exporters"), `'exporters' missing; got ${labels}`);
+  });
+});
+
 // ─── (1c) schema-driven property completion ─────────────────────────────
 
 describe("completion: schema-driven property keys", () => {
