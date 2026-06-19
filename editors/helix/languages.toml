@@ -23,10 +23,7 @@ config = { otelcol = { distribution = "otelcol-contrib", configSets = { autoDisc
 name = "otelcol"
 scope = "source.otelcol"
 injection-regex = "otelcol"
-file-types = [
-  { glob = "*.otelcol.yaml" },
-  { glob = "*.otelcol.yml" },
-]
+file-types = [{ glob = "*.otelcol.yaml" }, { glob = "*.otelcol.yml" }]
 roots = ["configset.otelcol.yaml", ".git"]
 comment-token = "#"
 indent = { tab-width = 2, unit = "  " }
