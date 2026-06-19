@@ -82,8 +82,8 @@ fi
 npm version "$VERSION" --no-git-tag-version --allow-same-version >/dev/null
 sed -i -E "s/^pluginVersion=.*/pluginVersion=${VERSION}/" editors/jetbrains/gradle.properties
 
-echo "prepare-release: running quality checks (make quality)"
-if ! make quality; then
+echo "prepare-release: running quality checks (make check)"
+if ! make check; then
   echo "prepare-release: quality checks failed; aborting release commit/tag. Please fix issues (including CHANGELOG.md formatting) and retry." >&2
   exit 1
 fi
