@@ -55,9 +55,9 @@ detected only via `file-types` globs:
 
 - `*.otelcol.yaml`
 - `*.otelcol.yml`
-- `otelcol-configset.yaml`
+- `configset.otelcol.yaml`
 
-A plain `foo.yaml` with a `# otelcol-configset:` directive will
+A plain `foo.yaml` with a `# configset-otelcol:` directive will
 **not** auto-detect. Workarounds:
 
 - Rename the file to match a glob.

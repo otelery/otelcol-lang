@@ -43,7 +43,7 @@ class PluginXmlSmokeTest : BasePlatformTestCase() {
 
   fun testFileTypeGlobsRegistered() {
     val xml = readPluginXml()
-    for (glob in listOf("*.otelcol.yaml", "*.otelcol.yml", "otelcol-configset.yaml")) {
+    for (glob in listOf("*.otelcol.yaml", "*.otelcol.yml")) {
       assertTrue("plugin.xml missing glob $glob", xml.contains(glob))
     }
   }

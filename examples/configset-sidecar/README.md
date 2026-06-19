@@ -1,10 +1,10 @@
 # Config-set with a sidecar declaration
 
 Multi-file config where membership and merge order are declared
-explicitly in `otelcol-configset.yaml`:
+explicitly in `configset.otelcol.yaml`:
 
 ```yaml
-# otelcol-configset.yaml
+# configset.otelcol.yaml
 members:
   - base.yaml
   - exporters.yaml
@@ -27,7 +27,7 @@ otelcol-contrib \
 ## How the extension finds it
 
 Opening any member file, the extension walks up to find
-`otelcol-configset.yaml` and treats every listed `members[*]` path
+`configset.otelcol.yaml` and treats every listed `members[*]` path
 (relative to the sidecar) as part of the same config-set. The anchor
 file (the one with `service.pipelines:`) must appear in the list.
 

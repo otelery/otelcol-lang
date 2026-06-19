@@ -111,10 +111,10 @@ VS Code uses the sniffer at `src/extension/sniffer.ts` (which now delegates
 to the shared classifier at `src/common/yaml-classify.ts`) to retag generic
 `yaml` documents as `otelcol`. Detection signals, in priority order:
 
-1. `# otelcol-configset: …` first-line directive
-   (regex: `^#\s*otelcol-configset:\s*(.+)$`)
+1. `# configset-otelcol: …` first-line directive
+   (regex: `^#\s*configset-otelcol:\s*(.+)$`)
 2. Top-level `service:` with `pipelines:` nested under it
-3. Sidecar file `otelcol-configset.yaml` in the same directory
+3. Sidecar file `configset.otelcol.yaml` in the same directory
 4. Filename heuristics (`*.otelcol.yaml`, `otelcol-*.yaml`, etc.)
 5. First-line marker comment (`^#\s*(otelcol|opentelemetry-collector)\b`)
 
@@ -135,7 +135,7 @@ not otelcol)? The latter would require editors to associate `*.yaml` with
 the otelcol server unconditionally, which is hostile to users with mixed YAML.
 
 Likely answer: lean on the filename + marker-comment paths for those editors,
-and document the convention. Promote the `# otelcol-configset:` directive
+and document the convention. Promote the `# configset-otelcol:` directive
 as the universal escape hatch.
 
 ## 6. Open questions worth carrying forward

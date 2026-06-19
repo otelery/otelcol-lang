@@ -5,13 +5,13 @@
 //     Helix) that can't retag client-side
 //
 // The rules — applied in order, first match wins — are:
-//   1. `# otelcol-configset:` directive marker anywhere in the head, OR
-//   2. filename basename is `otelcol-configset.yaml`, OR
+//   1. `# configset-otelcol:` directive marker anywhere in the head, OR
+//   2. filename basename is `configset.otelcol.yaml`, OR
 //   3. parsed structure has either `service.pipelines` (anchor) or ≥2
 //      top-level otelcol keys, OR
-//   4. a sibling `otelcol-configset.yaml` sidecar exists in the same dir, OR
+//   4. a sibling `configset.otelcol.yaml` sidecar exists in the same dir, OR
 //   5. a sibling YAML in the same dir either names this file via an
-//      `# otelcol-configset:` directive or is itself an anchor.
+//      `# configset-otelcol:` directive or is itself an anchor.
 
 import * as fs from "node:fs";
 import * as path from "node:path";

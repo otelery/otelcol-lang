@@ -30,13 +30,13 @@ export const FRAGMENT_KEYS = new Set([
   "extensions",
 ]);
 
-export const SIDECAR_NAME = "otelcol-configset.yaml";
+export const SIDECAR_NAME = "configset.otelcol.yaml";
 
-// `# otelcol-configset:` — matches anywhere in the head (sniffer uses this
+// `# configset-otelcol:` — matches anywhere in the head (sniffer uses this
 // for a "is this declared as part of a configset" check).
-export const DIRECTIVE_MARKER_RE = /^#\s*otelcol-configset:/m;
+export const DIRECTIVE_MARKER_RE = /^#\s*configset-otelcol:/m;
 // Same directive but captures the member list.
-export const DIRECTIVE_NAMES_RE = /^#\s*otelcol-configset:\s*(.+)$/m;
+export const DIRECTIVE_NAMES_RE = /^#\s*configset-otelcol:\s*(.+)$/m;
 
 export const HEAD_BYTES = 16 * 1024;
 
@@ -48,7 +48,7 @@ export interface YamlClassification {
   /** Whether any top-level key is in `FRAGMENT_KEYS` (receivers/…/extensions). */
   hasFragmentKeys: boolean;
   /**
-   * Members named by an `# otelcol-configset:` first-line directive, or `null`
+   * Members named by an `# configset-otelcol:` first-line directive, or `null`
    * if the file has no such directive. Names are returned verbatim (not
    * resolved to paths) — callers join with the file's directory.
    */
@@ -98,7 +98,7 @@ export function classifyYaml(text: string): YamlClassification {
 function parseDirective(head: string): string[] | null {
   const firstNewline = head.indexOf("\n");
   const firstLine = firstNewline === -1 ? head : head.slice(0, firstNewline);
-  const m = /^#\s*otelcol-configset:\s*(.+)$/.exec(firstLine);
+  const m = /^#\s*configset-otelcol:\s*(.+)$/.exec(firstLine);
   if (!m) return null;
   return m[1].trim().split(/\s+/).filter(Boolean);
 }

@@ -1,0 +1,8 @@
+# staging config-set. Same shared base as prod (via `../base/...`), plus a
+# staging-local debug exporter, then the staging anchor that stitches in an
+# extra debug pipeline.
+members:
+  - ../base/receivers.yaml
+  - ../base/exporters.yaml
+  - exporters.yaml
+  - pipelines.yaml

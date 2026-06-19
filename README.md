@@ -362,8 +362,8 @@ distribution-agnostic.
 
 The LSP resolves IDs across every member of a discovered **config set**
 (anchored on `service.pipelines:`, members are sibling fragments and
-subdirectory files; explicit overrides via `otelcol-configset.yaml`
-sidecar or first-line `# otelcol-configset:` directive). The graph below
+subdirectory files; explicit overrides via `configset.otelcol.yaml`
+sidecar or first-line `# configset-otelcol:` directive). The graph below
 shows which reference sites resolve to which definition maps. Solid
 edges are implemented today; dashed edges are upstream patterns on the
 roadmap.

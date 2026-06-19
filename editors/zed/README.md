@@ -29,9 +29,9 @@ section is independent — paste only what you need.
 
 By default the extension claims files matched by `path_suffixes` in
 `languages/otelcol/config.toml` (`otelcol.yaml`, `otelcol.yml`,
-`otelcol-configset.yaml`, `otelcol-config.yaml`, `otelcol-config.yml`)
+`configset.otelcol.yaml`, `otelcol-config.yaml`, `otelcol-config.yml`)
 plus anything whose first line matches `first_line_pattern`
-(`# otelcol-configset:` directive, `# otelcol`,
+(`# configset-otelcol:` directive, `# otelcol`,
 `# opentelemetry-collector`).
 
 Zed currently does not expose a way to glob-match files from
@@ -62,7 +62,7 @@ this extension and the VSCode integration treat it as an explicit
 opt-in:
 
 ```yaml
-# otelcol-configset: receivers.yaml processors.yaml exporters.yaml
+# configset-otelcol: receivers.yaml processors.yaml exporters.yaml
 ```
 
 If you'd rather opt into structural detection (the file parses with

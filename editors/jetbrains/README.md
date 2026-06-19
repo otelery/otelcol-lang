@@ -113,7 +113,7 @@ cd editors/jetbrains
 ## Known gaps
 
 - **No content-based filetype sniffing.** Files outside the glob
-  patterns won't auto-detect, even with the `# otelcol-configset:`
+  patterns won't auto-detect, even with the `# configset-otelcol:`
   directive. Porting `src/common/yaml-classify.ts` to Kotlin is a
   follow-up.
 - **TextMate engine divergences.** JetBrains' TextMate engine has
