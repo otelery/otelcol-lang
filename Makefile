@@ -361,10 +361,9 @@ package-helix: | $(DIST_PKG) ## Helix config + queries tarball (users extract in
 # JetBrains / Zed / Helix registry uploads aren't automated yet; the targets
 # print the manual steps so the Make surface is uniform across editors.
 
-publish: publish-vscode publish-npm ## Publish to both VS Code Marketplace and npm (automated channels). Prints reminder for jetbrains/zed/helix.
+publish: publish-vscode publish-npm publish-jetbrains ## Publish to VS Code Marketplace, npm, and JetBrains Marketplace. Prints reminder for zed/helix.
 	@echo
-	@echo "==> Reminder: JetBrains, Zed and Helix have manual steps:"
-	@echo "      make publish-jetbrains   # upload .zip to JetBrains Marketplace"
+	@echo "==> Reminder: Zed and Helix have manual steps:"
 	@echo "      make publish-zed         # open PR against zed-industries/extensions"
 	@echo "      make publish-helix       # tarball is for end-users to extract"
 
@@ -386,8 +385,9 @@ publish-npm: check ## Publish the otelcol-language-server binary to npm (require
 	  cp docs/dist/npm-readme.md README.md; \
 	  $(NPM) publish
 
-publish-jetbrains: package-jetbrains ## Print manual upload steps for the JetBrains Marketplace
-	@echo "Upload $(DIST_PKG)/*.zip to https://plugins.jetbrains.com/plugin/edit"
+publish-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Publish the JetBrains plugin to the Marketplace (requires JETBRAINS_MARKETPLACE_TOKEN)
+	@test -n "$$JETBRAINS_MARKETPLACE_TOKEN" || { echo "JETBRAINS_MARKETPLACE_TOKEN not set (generate one at https://plugins.jetbrains.com/author/me/tokens)"; exit 1; }
+	cd editors/jetbrains && $(GRADLEW) -x buildSearchableOptions publishPlugin
 
 publish-zed: package-zed ## Print steps for submitting the Zed extension to zed-industries/extensions
 	@echo "Open a PR against https://github.com/zed-industries/extensions"

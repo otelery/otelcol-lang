@@ -85,6 +85,10 @@ intellijPlatform {
       org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask.FailureLevel.NOT_DYNAMIC,
     )
   }
+
+  publishing {
+    token = providers.environmentVariable("JETBRAINS_MARKETPLACE_TOKEN")
+  }
 }
 
 kotlin {
