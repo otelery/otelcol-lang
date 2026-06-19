@@ -23,7 +23,7 @@ configset-shared-base/
 This is two independent config-sets — `prod/pipelines.yaml` and
 `staging/pipelines.yaml` are each an anchor (a file with
 `service.pipelines:`), and each finds the sidecar in its **own**
-directory. The shared `base/*.yaml` fragments are members of *both*.
+directory. The shared `base/*.yaml` fragments are members of _both_.
 
 ## prod vs. staging
 
@@ -38,7 +38,7 @@ Discovery only applies a sidecar to a `service.pipelines` file in the
 **same** directory, so the sidecar and the anchor `pipelines.yaml` sit
 together inside `prod/` and `staging/`. The shared fragments stay in
 `base/` and are referenced outward via `../base/...`. (A single
-top-level sidecar referencing anchors *inside* subfolders would not be
+top-level sidecar referencing anchors _inside_ subfolders would not be
 applied — the anchor and sidecar must be siblings.)
 
 ## Run
