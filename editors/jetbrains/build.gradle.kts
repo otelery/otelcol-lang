@@ -214,7 +214,7 @@ intellijPlatformTesting {
       val debugCats = (project.findProperty("logDebug") as String?)
         ?: "com.redhat.devtools.lsp4ij,org.eclipse.lsp4j"
       val traceCats = (project.findProperty("logTrace") as String?)
-        ?: "ch.snowgarden.otelcol"
+        ?: "dev.otelery.otelcol"
       systemProperty("idea.log.debug.categories", debugCats)
       systemProperty("idea.log.trace.categories", traceCats)
 

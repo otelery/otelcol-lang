@@ -1,4 +1,4 @@
-package ch.snowgarden.otelcol
+package dev.otelery.otelcol
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
@@ -14,7 +14,7 @@ class PluginXmlSmokeTest : BasePlatformTestCase() {
 
   fun testPluginIdMatches() {
     val xml = readPluginXml()
-    assertTrue("plugin.xml missing expected <id>", xml.contains("<id>ch.snowgarden.otelcol</id>"))
+    assertTrue("plugin.xml missing expected <id>", xml.contains("<id>dev.otelery.otelcol</id>"))
   }
 
   fun testLsp4ijDependency() {
@@ -29,7 +29,7 @@ class PluginXmlSmokeTest : BasePlatformTestCase() {
     val xml = readPluginXml()
     assertTrue(
       "plugin.xml missing LSP4IJ <server> extension",
-      xml.contains("factoryClass=\"ch.snowgarden.otelcol.OtelcolLspServerFactory\""),
+      xml.contains("factoryClass=\"dev.otelery.otelcol.OtelcolLspServerFactory\""),
     )
   }
 
@@ -56,7 +56,7 @@ class PluginXmlSmokeTest : BasePlatformTestCase() {
     assertTrue(
       "plugin.xml missing semanticTokensColorsProvider registration",
       xml.contains("<semanticTokensColorsProvider") &&
-        xml.contains("class=\"ch.snowgarden.otelcol.OtelcolSemanticTokensColorsProvider\""),
+        xml.contains("class=\"dev.otelery.otelcol.OtelcolSemanticTokensColorsProvider\""),
     )
   }
 

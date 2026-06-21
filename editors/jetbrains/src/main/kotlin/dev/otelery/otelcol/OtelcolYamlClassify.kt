@@ -1,4 +1,4 @@
-package ch.snowgarden.otelcol
+package dev.otelery.otelcol
 
 // Kotlin port of src/common/yaml-classify.ts. Kept structurally identical so
 // the JetBrains content-based file-type detection (OtelcolFileType) stays in
