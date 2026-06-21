@@ -2,19 +2,21 @@
 
 Releasing is **two phases**: _prepare_ (mutate the repo, commit, tag) and _publish_ (ship the tagged version to the registries). They are deliberately separate: preparing never publishes, and publishing never bumps a version.
 
-```
-edit CHANGELOG  →  make release-patch  →  git push --follow-tags  →  make publish
-   (Unreleased)        (prepare)              (share)                  (publish)
+```mermaid
+flowchart LR
+    A["edit CHANGELOG<br/>(Unreleased)"] --> B["make release-patch<br/>(prepare)"]
+    B --> C["git push --follow-tags<br/>(share)"]
+    C --> D["make publish<br/>(publish)"]
 ```
 
 ## One source of truth for the version
 
 A release ships from **three** version sources that MUST move in lockstep:
 
-| Source                                  | Drives                                  |
-| --------------------------------------- | --------------------------------------- |
-| `package.json` (+ `package-lock.json`)  | VS Code extension **and** the npm `otelcol-language-server` binary |
-| `editors/jetbrains/gradle.properties`   | the JetBrains plugin (`pluginVersion`)  |
+| Source                                 | Drives                                                             |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| `package.json` (+ `package-lock.json`) | VS Code extension **and** the npm `otelcol-language-server` binary |
+| `editors/jetbrains/gradle.properties`  | the JetBrains plugin (`pluginVersion`)                             |
 
 If they diverge, the JetBrains / Helix / Zed editors end up pinned to a stale LSP. `scripts/prepare-release.sh` is the **only** place a version is bumped, so all three always agree. Never run `npm version` by hand for a release.
 
@@ -22,11 +24,11 @@ If they diverge, the JetBrains / Helix / Zed editors end up pinned to a stale LS
 
 Authenticate against each registry, either by logging in once or exporting a token:
 
-| Registry            | Token env var                  | Interactive login        |
-| ------------------- | ------------------------------ | ------------------------ |
-| VS Code Marketplace | `VSCE_PAT`                     | `npx vsce login otelery` |
-| npm                 | `NPM_TOKEN`                    | `npm login`              |
-| JetBrains           | `JETBRAINS_MARKETPLACE_TOKEN`  | Token only; generate at https://plugins.jetbrains.com/author/me/tokens |
+| Registry            | Token env var                 | Interactive login                                                      |
+| ------------------- | ----------------------------- | ---------------------------------------------------------------------- |
+| VS Code Marketplace | `VSCE_PAT`                    | `npx vsce login otelery`                                               |
+| npm                 | `NPM_TOKEN`                   | `npm login`                                                            |
+| JetBrains           | `JETBRAINS_MARKETPLACE_TOKEN` | Token only; generate at https://plugins.jetbrains.com/author/me/tokens |
 
 ## Phase 1: Prepare
 
