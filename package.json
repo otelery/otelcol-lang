@@ -1,7 +1,7 @@
 {
   "name": "opentelemetry-collector-config",
   "displayName": "OpenTelemetry Collector Config",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Syntax highlighting, completion, hover, diagnostics and embedded OTTL for OpenTelemetry Collector configs.",
   "categories": [
     "Linters",

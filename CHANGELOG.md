@@ -10,12 +10,6 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 ### Changed
-- Renamed the JetBrains plugin namespace from `ch.snowgarden.otelcol` to
-  `dev.otelery.otelcol`, untying it from `ch.snowgarden`. This moves the
-  Kotlin package, the plugin `<id>`, and the `pluginGroup` coordinate, and
-  updates the vendor email to `opensource@otelery.dev`. Note: changing the
-  plugin `<id>` makes this a new identity on the JetBrains Marketplace —
-  existing installs will not auto-update across the rename.
 
 ### Deprecated
 
@@ -24,6 +18,16 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 ### Security
+
+## [0.4.0] - 2026-06-21
+
+### Changed
+- Renamed the JetBrains plugin namespace from `ch.snowgarden.otelcol` to
+  `dev.otelery.otelcol`, untying it from `ch.snowgarden`. This moves the
+  Kotlin package, the plugin `<id>`, and the `pluginGroup` coordinate, and
+  updates the vendor email to `opensource@otelery.dev`. Note: changing the
+  plugin `<id>` makes this a new identity on the JetBrains Marketplace —
+  existing installs will not auto-update across the rename.
 
 ## [0.3.0] - 2026-06-20
 
