@@ -43,7 +43,8 @@ The current bundle covers seven distributions: `otelcol`,
 
 Per editor, install the artefact produced by `make package-<editor>`
 (see [Build & test as a local package](#build--test-as-a-local-package-per-editor)
-below), or grab a pre-built one from the project's GitHub Releases.
+below). Where a published release exists, the same artefact can be installed
+from the editor's registry — see each per-editor README.
 
 ## Usage
 
@@ -298,44 +299,32 @@ see each per-editor README for the detection caveats), hover on a
 `receivers:` key, and confirm Markdown component docs come back. A
 broken pipeline reference should produce a diagnostic.
 
-## Publishing to the VS Code Marketplace
+## Releasing
 
-The extension is published under the `otelery` publisher namespace.
-
-**One-time setup** — authenticate against the Marketplace. Either log
-in interactively (cached in your home dir):
-
-```sh
-npx vsce login otelery
-# pastes a Personal Access Token from Azure DevOps; see:
-# https://code.visualstudio.com/api/working-with-extensions/publishing-extension#get-a-personal-access-token
-```
-
-Or set the PAT as an environment variable per-publish (good for CI):
+A release is two phases. **Prepare** is the only place a version is bumped — it
+rewrites the CHANGELOG, syncs all three version sources in lockstep
+(`package.json`, `package-lock.json`, `editors/jetbrains/gradle.properties`),
+runs `make check`, then commits and tags `vX.Y.Z` locally:
 
 ```sh
-export VSCE_PAT=<token>
+make release-patch        # 0.3.0 → 0.3.1   (or release-minor / release-major)
+# explicit version: scripts/prepare-release.sh 0.5.0
 ```
 
-**Publish** — runs the full quality gate first, then `vsce publish`:
+**Publish** ships that already-tagged version to the registries (VS Code
+Marketplace → npm → JetBrains; `release-guard` refuses to publish anything that
+isn't a clean `vX.Y.Z` tag). Zed/Helix uploads stay manual:
 
 ```sh
-make publish              # current package.json version
-# or bump and publish in one step:
-make publish-patch        # 0.1.0 → 0.1.1
-make publish-minor        # 0.1.0 → 0.2.0
-make publish-major        # 0.1.0 → 1.0.0
+git push --follow-tags
+make publish
 ```
 
-`vsce publish` automatically runs `vscode:prepublish` (sync schemas
-→ esbuild --production → copy to dist/), then uploads the produced
-`.vsix`. The bump variants also commit and tag the version change.
+Full runbook — prerequisites/tokens, what each step mutates, and the manual
+Zed/Helix steps: [`docs/RELEASING.md`](docs/RELEASING.md).
 
-For a local-only artefact without uploading:
-
-```sh
-make package      # writes opentelemetry-collector-config-<version>.vsix in the repo root
-```
+For a local-only artefact without uploading, use `make package-<editor>` (see
+[Build & test as a local package](#build--test-as-a-local-package-per-editor)).
 
 ## LSP
 
