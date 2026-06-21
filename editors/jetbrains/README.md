@@ -55,7 +55,7 @@ editors/jetbrains/
   settings.gradle.kts
   gradle.properties         # plugin coords + LSP4IJ version
   src/main/
-    kotlin/ch/snowgarden/otelcol/
+    kotlin/dev/otelery/otelcol/
       OtelcolLspServerFactory.kt    # spawns otelcol-language-server --stdio
       OtelcolTextMateBundle.kt      # registers ../syntaxes/ as a textmate bundle
       OtelcolFileType.kt            # glob registration (*.otelcol.yaml, ...)

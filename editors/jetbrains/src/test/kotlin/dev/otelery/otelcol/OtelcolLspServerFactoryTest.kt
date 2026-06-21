@@ -1,4 +1,4 @@
-package ch.snowgarden.otelcol
+package dev.otelery.otelcol
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.BasePlatformTestCase

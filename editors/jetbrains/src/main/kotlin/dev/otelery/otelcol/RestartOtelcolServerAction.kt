@@ -1,4 +1,4 @@
-package ch.snowgarden.otelcol
+package dev.otelery.otelcol
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction

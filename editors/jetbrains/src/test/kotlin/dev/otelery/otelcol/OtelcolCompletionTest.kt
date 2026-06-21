@@ -1,4 +1,4 @@
-package ch.snowgarden.otelcol
+package dev.otelery.otelcol
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.testFramework.fixtures.BasePlatformTestCase

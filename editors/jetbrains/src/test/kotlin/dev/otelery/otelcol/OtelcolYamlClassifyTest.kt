@@ -1,4 +1,4 @@
-package ch.snowgarden.otelcol
+package dev.otelery.otelcol
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
