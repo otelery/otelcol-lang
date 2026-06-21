@@ -1,8 +1,8 @@
 .PHONY: help bootstrap tools install build bundle test test-unit test-integration test-vscode test-vscode-packaged \
-        lint lint-fix format format-check typecheck audit package-check check \
+        lint lint-fix shellcheck format format-check typecheck audit package-check check \
         clean distclean package package-vscode package-jetbrains package-zed package-helix \
         publish publish-vscode publish-npm publish-jetbrains publish-zed publish-helix \
-        publish-patch publish-minor publish-major \
+        release-guard release-patch release-minor release-major \
         check-versions upgrade-tools outdated test-stdio test-helix test-helix-integration test-jetbrains \
         test-zed test-editors build-jetbrains build-zed build-editors
 
@@ -37,6 +37,7 @@ GRADLE_VERSION      := $(call mise_v,gradle)
 HELIX_VERSION       := $(call mise_v,helix)
 TS_VERSION          := $(call mise_v,tree-sitter)
 OSV_SCANNER_VERSION := $(call mise_v,osv-scanner)
+SHELLCHECK_VERSION  := $(call mise_v,shellcheck)
 
 # Sandbox mise into the project. ~/.local/share/mise stays untouched.
 export MISE_DATA_DIR    := $(CURDIR)/.ci-tools/data
@@ -61,6 +62,7 @@ OXFMT        := $(MISE_EXEC) oxfmt
 VSCE         := $(MISE_EXEC) vsce
 VSCODE_TEST  := $(MISE_EXEC) vscode-test
 OSV_SCANNER  := $(MISE_EXEC) osv-scanner
+SHELLCHECK   := $(MISE_EXEC) shellcheck
 NODE         := $(MISE_EXEC) node
 NPM          := $(MISE_EXEC) npm
 BUN          := $(MISE_EXEC) bun
@@ -92,7 +94,8 @@ tools: .ci-tools/node-$(NODE_VERSION) \
        .ci-tools/vsce-$(VSCE_VERSION) \
        .ci-tools/typescript-$(TYPESCRIPT_VERSION) \
        .ci-tools/vscode-test-cli-$(VSCODE_TEST_CLI_VERSION) \
-       .ci-tools/osv-scanner-$(OSV_SCANNER_VERSION)
+       .ci-tools/osv-scanner-$(OSV_SCANNER_VERSION) \
+       .ci-tools/shellcheck-$(SHELLCHECK_VERSION)
 
 bootstrap: tools ## Download mise and install all pinned toolchains into .ci-tools/
 
@@ -195,6 +198,11 @@ MISE_URL := https://github.com/jdx/mise/releases/download/v$(MISE_VERSION)/mise-
 	$(MISE) install osv-scanner@$(OSV_SCANNER_VERSION)
 	@touch $@
 
+.ci-tools/shellcheck-$(SHELLCHECK_VERSION): .ci-tools/mise-$(MISE_VERSION) .mise.toml
+	@rm -f .ci-tools/shellcheck-*
+	$(MISE) install shellcheck@$(SHELLCHECK_VERSION)
+	@touch $@
+
 # --- Project targets ----------------------------------------------------------
 
 # node_modules sentinel — touched after every successful `npm install`. Any
@@ -284,6 +292,9 @@ lint: .ci-tools/node-$(NODE_VERSION) ## Run oxlint
 lint-fix: .ci-tools/node-$(NODE_VERSION) ## Run oxlint with --fix
 	$(OXLINT) --fix
 
+shellcheck: .ci-tools/shellcheck-$(SHELLCHECK_VERSION) ## Lint shell scripts (scripts/*.sh)
+	$(SHELLCHECK) scripts/*.sh
+
 format: .ci-tools/node-$(NODE_VERSION) ## Auto-format files in place (oxfmt --write)
 	$(OXFMT) --write .
 
@@ -306,12 +317,12 @@ audit: .ci-tools/osv-scanner-$(OSV_SCANNER_VERSION) ## Vulnerability scan via os
 package-check: bundle ## Dry-run VSIX packaging (vsce ls); catches missing files
 	$(VSCE) ls
 
-check: lint format-check typecheck audit test package-check ## Run all quality gates (CI entry-point)
+check: lint shellcheck format-check typecheck audit test package-check ## Run all quality gates (CI entry-point)
 
 # --- packaging ----------------------------------------------------------------
 # Each per-editor target produces one distributable in dist/packages/. `package`
-# is the umbrella. `publish` still maps to VS Code only — JetBrains/Zed publish
-# flows aren't wired up yet.
+# is the umbrella. `make publish` uploads VS Code + npm + JetBrains; Zed/Helix
+# registry steps remain manual (see the publish section and docs/RELEASING.md).
 DIST_PKG := dist/packages
 # Parse without invoking node — Make evaluates $(shell ...) at parse time, before
 # bootstrap may have installed the pinned node. Matches the first `"version": "…"`
@@ -351,23 +362,30 @@ package-helix: | $(DIST_PKG) ## Helix config + queries tarball (users extract in
 	    -C editors/helix languages.toml runtime
 
 # --- publish ------------------------------------------------------------------
-# The root package.json drives two registries from one version:
-#   - VS Code Marketplace (`vsce publish`) — ships the bundled extension
-#   - npm (`npm publish`)                  — ships the standalone
+# PUBLISH ships the version that PREPARE already committed and tagged — it never
+# bumps a version itself (that's release-patch/minor/major, see above). One
+# tagged commit fans out to three registries that MUST stay in lockstep:
+#   - VS Code Marketplace (`vsce publish`)  — the bundled extension
+#   - npm (`npm publish`)                   — the standalone
 #       otelcol-language-server binary used by Zed / Helix / JetBrains
-# The two channels MUST stay in lockstep, otherwise the JetBrains/Helix/Zed
-# editors get a stale LSP. `make publish` is the aggregate; the bump targets bump the
-# version exactly once and then fan out to both raw publish targets.
-# JetBrains / Zed / Helix registry uploads aren't automated yet; the targets
-# print the manual steps so the Make surface is uniform across editors.
+#   - JetBrains Marketplace (`publishPlugin`) — driven by gradle.properties
+# If these diverge the JetBrains/Helix/Zed editors get a stale LSP, so every
+# publish target goes through `release-guard` first. Zed / Helix registry
+# uploads aren't automated; their targets print the manual steps.
 
-publish: publish-vscode publish-npm publish-jetbrains ## Publish to VS Code Marketplace, npm, and JetBrains Marketplace. Prints reminder for zed/helix.
+release-guard: ## Refuse to publish unless HEAD is exactly the vX.Y.Z tag matching package.json
+	@tag="v$(VERSION)"; \
+	  git diff --quiet && git diff --cached --quiet || { echo "release-guard: working tree dirty — commit or stash first"; exit 1; }; \
+	  git rev-parse -q --verify "refs/tags/$$tag" >/dev/null || { echo "release-guard: tag $$tag not found — run 'make release-patch|release-minor|release-major' first"; exit 1; }; \
+	  test "$$(git rev-parse HEAD)" = "$$(git rev-parse "$$tag^{commit}")" || { echo "release-guard: HEAD is not at $$tag — checkout the release commit before publishing"; exit 1; }
+
+publish: release-guard publish-vscode publish-npm publish-jetbrains ## Publish to VS Code Marketplace, npm, and JetBrains Marketplace. Prints reminder for zed/helix.
 	@echo
 	@echo "==> Reminder: Zed and Helix have manual steps:"
 	@echo "      make publish-zed         # open PR against zed-industries/extensions"
 	@echo "      make publish-helix       # tarball is for end-users to extract"
 
-publish-vscode: check ## Publish current version to the VS Code Marketplace (requires VSCE_PAT or `vsce login otelery`)
+publish-vscode: release-guard check ## Publish current version to the VS Code Marketplace (requires VSCE_PAT or `vsce login otelery`)
 	# Same README swap as package-vscode — vsce publish re-packages internally.
 	@set -e; \
 	  cp README.md .README.md.vsce-bak; \
@@ -375,7 +393,7 @@ publish-vscode: check ## Publish current version to the VS Code Marketplace (req
 	  cp docs/dist/vscode-readme.md README.md; \
 	  $(VSCE) publish
 
-publish-npm: check ## Publish the otelcol-language-server binary to npm (requires NPM_TOKEN or `npm login`)
+publish-npm: release-guard check ## Publish the otelcol-language-server binary to npm (requires NPM_TOKEN or `npm login`)
 	# npm always reads README.md from the package root. Swap in the LSP-
 	# specific README.npm.md for the duration of the publish, then restore.
 	# `trap` guarantees restore even on Ctrl-C or publish failure.
@@ -385,7 +403,7 @@ publish-npm: check ## Publish the otelcol-language-server binary to npm (require
 	  cp docs/dist/npm-readme.md README.md; \
 	  $(NPM) publish
 
-publish-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Publish the JetBrains plugin to the Marketplace (requires JETBRAINS_MARKETPLACE_TOKEN)
+publish-jetbrains: release-guard bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Publish the JetBrains plugin to the Marketplace (requires JETBRAINS_MARKETPLACE_TOKEN)
 	@test -n "$$JETBRAINS_MARKETPLACE_TOKEN" || { echo "JETBRAINS_MARKETPLACE_TOKEN not set (generate one at https://plugins.jetbrains.com/author/me/tokens)"; exit 1; }
 	cd editors/jetbrains && $(GRADLEW) -x buildSearchableOptions publishPlugin
 
@@ -398,17 +416,22 @@ publish-helix: package-helix ## Print install instructions for end-users
 	@echo "Helix has no central registry; ship $(DIST_PKG)/otelcol-helix-$(VERSION).tar.gz"
 	@echo "End-users extract it into ~/.config/helix/ and install the LSP via 'npm i -g opentelemetry-collector-config'"
 
-publish-patch: check ## Bump patch version (x.y.Z) and publish to vsce + npm
-	$(NPM) version patch --no-git-tag-version
-	$(MAKE) publish-vscode publish-npm
+# --- release (prepare) --------------------------------------------------------
+# Releasing is two phases. PREPARE (here) is the only place a version is bumped:
+# scripts/prepare-release.sh rewrites the CHANGELOG, syncs all three version
+# sources in lockstep (package.json, package-lock.json, gradle.properties), runs
+# `make check`, then commits `chore(release): X.Y.Z` and tags `vX.Y.Z` locally.
+# PUBLISH (the publish-* targets above) only ships an already-prepared tag.
+# See docs/RELEASING.md.
 
-publish-minor: check ## Bump minor version (x.Y.0) and publish to vsce + npm
-	$(NPM) version minor --no-git-tag-version
-	$(MAKE) publish-vscode publish-npm
+release-patch: ## Prepare a patch release (changelog + 3-way version sync + check + commit + tag)
+	scripts/prepare-release.sh patch
 
-publish-major: check ## Bump major version (X.0.0) and publish to vsce + npm
-	$(NPM) version major --no-git-tag-version
-	$(MAKE) publish-vscode publish-npm
+release-minor: ## Prepare a minor release
+	scripts/prepare-release.sh minor
+
+release-major: ## Prepare a major release
+	scripts/prepare-release.sh major
 
 check-versions: ## Show pinned vs latest versions for all .mise.toml tools (mise outdated --bump)
 	$(MISE) outdated --bump
