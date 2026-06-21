@@ -6,6 +6,10 @@ plugins {
   id("java")
   id("org.jetbrains.kotlin.jvm") version "2.4.0"
   id("org.jetbrains.intellij.platform") version "2.16.0"
+  // Renders the matching version section from the repo-root CHANGELOG.md into
+  // the plugin's <change-notes> (see `changeNotes` below). Without it the
+  // Marketplace Versions tab shows "didn't leave any update notes".
+  id("org.jetbrains.changelog") version "2.2.1"
   // Reports out-of-date dependencies via `gradle dependencyUpdates`.
   // Wired into the repo-level `make outdated`.
   id("com.github.ben-manes.versions") version "0.54.0"
@@ -63,6 +67,23 @@ intellijPlatform {
     // which Plugin Verifier rejects as TemplateWordInPluginName.
     version = providers.gradleProperty("pluginVersion")
 
+    // Marketplace "Change notes" for this version. Sourced from the single
+    // repo-root CHANGELOG.md (keep-a-changelog format) so notes stay in
+    // lockstep with the VS Code/npm release. `getOrNull(version)` matches the
+    // `## [X.Y.Z]` heading; falls back to the Unreleased section for local
+    // pre-release builds. HTML output — the Marketplace renders HTML, not
+    // Markdown.
+    changeNotes = provider {
+      with(changelog) {
+        renderItem(
+          (getOrNull(project.version.toString()) ?: getUnreleased())
+            .withHeader(false)
+            .withEmptySections(false),
+          org.jetbrains.changelog.Changelog.OutputType.HTML,
+        )
+      }
+    }
+
     ideaVersion {
       sinceBuild = providers.gradleProperty("pluginSinceBuild")
       untilBuild = providers.gradleProperty("pluginUntilBuild")
@@ -89,6 +110,16 @@ intellijPlatform {
   publishing {
     token = providers.environmentVariable("JETBRAINS_MARKETPLACE_TOKEN")
   }
+}
+
+// The changelog lives at the repo root (shared with the VS Code extension +
+// npm package), not in this standalone Gradle module. `rootDir` is
+// editors/jetbrains/, so the repo root is two levels up — mirrors the
+// `repoRoot` resolution used by runIdeDev below.
+changelog {
+  path = file("${rootDir.parentFile.parentFile}/CHANGELOG.md").canonicalPath
+  // `version` defaults to project.version (pluginVersion), which is the
+  // `## [X.Y.Z]` section selected by changeNotes above.
 }
 
 kotlin {
