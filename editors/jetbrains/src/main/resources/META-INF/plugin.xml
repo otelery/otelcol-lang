@@ -1,7 +1,7 @@
 <idea-plugin>
-  <id>ch.snowgarden.otelcol</id>
+  <id>dev.otelery.otelcol</id>
   <name>OpenTelemetry Collector Config</name>
-  <vendor email="opensource@snowgarden.ch" url="https://github.com/otelery/otelcol-lang">otelery</vendor>
+  <vendor email="opensource@otelery.dev" url="https://github.com/otelery/otelcol-lang">otelery</vendor>
 
   <description><![CDATA[
     Syntax highlighting and language support for OpenTelemetry Collector
@@ -22,7 +22,7 @@
     <server
         id="otelcol"
         name="OpenTelemetry Collector"
-        factoryClass="ch.snowgarden.otelcol.OtelcolLspServerFactory"/>
+        factoryClass="dev.otelery.otelcol.OtelcolLspServerFactory"/>
     <languageMapping
         language="yaml"
         serverId="otelcol"
@@ -33,17 +33,17 @@
          and they render as plain text. -->
     <semanticTokensColorsProvider
         serverId="otelcol"
-        class="ch.snowgarden.otelcol.OtelcolSemanticTokensColorsProvider"/>
+        class="dev.otelery.otelcol.OtelcolSemanticTokensColorsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.textmate">
-    <bundleProvider implementation="ch.snowgarden.otelcol.OtelcolTextMateBundle"/>
+    <bundleProvider implementation="dev.otelery.otelcol.OtelcolTextMateBundle"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileType
         name="OpenTelemetry Collector"
-        implementationClass="ch.snowgarden.otelcol.OtelcolFileType"
+        implementationClass="dev.otelery.otelcol.OtelcolFileType"
         fieldName="INSTANCE"
         patterns="*.otelcol.yaml;*.otelcol.yml"/>
     <registryKey
@@ -51,12 +51,12 @@
         defaultValue=""
         description="Absolute path to the otelcol LSP server.js. Leave blank to use the bundled copy. Restart the language server (Tools → Restart otelcol Language Server) after changing."
         restartRequired="false"/>
-    <postStartupActivity implementation="ch.snowgarden.otelcol.OtelcolDevWatcher"/>
+    <postStartupActivity implementation="dev.otelery.otelcol.OtelcolDevWatcher"/>
   </extensions>
 
   <actions>
     <action id="otelcol.RestartLspServer"
-            class="ch.snowgarden.otelcol.RestartOtelcolServerAction"
+            class="dev.otelery.otelcol.RestartOtelcolServerAction"
             text="Restart otelcol Language Server"
             description="Stop and start the otelcol LSP server process for the current project">
       <add-to-group group-id="ToolsMenu" anchor="last"/>

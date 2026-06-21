@@ -1,4 +1,4 @@
-package ch.snowgarden.otelcol
+package dev.otelery.otelcol
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.redhat.devtools.lsp4ij.client.features.LSPCompletionFeature

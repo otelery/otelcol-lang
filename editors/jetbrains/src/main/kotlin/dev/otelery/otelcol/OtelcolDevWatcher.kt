@@ -1,4 +1,4 @@
-package ch.snowgarden.otelcol
+package dev.otelery.otelcol
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
