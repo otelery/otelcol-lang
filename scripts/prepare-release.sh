@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 <X.Y.Z>" >&2
+  echo "Usage: $0 <patch|minor|major|X.Y.Z>" >&2
   exit 1
 }
 
@@ -10,7 +10,40 @@ if [[ $# -ne 1 ]]; then
   usage
 fi
 
-VERSION="$1"
+ARG="$1"
+
+# A bump keyword derives the next version from the current package.json so the
+# semver logic lives in exactly one place (Make's release-* targets just pass
+# the keyword through). An explicit X.Y.Z is taken verbatim.
+case "$ARG" in
+patch | minor | major)
+  # Same awk the Makefile uses to read VERSION: first `"version": "…"` pair.
+  current=$(awk -F'"' '/^[[:space:]]*"version"[[:space:]]*:/{print $4; exit}' package.json)
+  if [[ ! "$current" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    echo "prepare-release: cannot parse current version '$current' from package.json" >&2
+    exit 1
+  fi
+  major="${BASH_REMATCH[1]}"
+  minor="${BASH_REMATCH[2]}"
+  patch="${BASH_REMATCH[3]}"
+  case "$ARG" in
+  patch) patch=$((patch + 1)) ;;
+  minor)
+    minor=$((minor + 1))
+    patch=0
+    ;;
+  major)
+    major=$((major + 1))
+    minor=0
+    patch=0
+    ;;
+  esac
+  VERSION="${major}.${minor}.${patch}"
+  ;;
+*)
+  VERSION="$ARG"
+  ;;
+esac
 
 if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "prepare-release: invalid version '$VERSION' (expected X.Y.Z)" >&2
