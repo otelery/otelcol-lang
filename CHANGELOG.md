@@ -8,6 +8,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- The JetBrains plugin now populates its Marketplace "Change notes" from this
+  CHANGELOG. `editors/jetbrains/build.gradle.kts` wires the
+  `org.jetbrains.changelog` plugin to render the section matching the current
+  `pluginVersion` as HTML into the plugin's `<change-notes>`, replacing the
+  empty "didn't leave any update notes" placeholder on the Versions tab. Notes
+  stay in lockstep with the VS Code/npm release since `prepare-release.sh`
+  already stamps the matching `[X.Y.Z]` heading and `pluginVersion` together.
 
 ### Changed
 
