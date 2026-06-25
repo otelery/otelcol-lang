@@ -4,6 +4,7 @@
 // undefined for the purposes of pipeline-reference resolution. The user must
 // resolve the duplicate before the LSP will accept that id.
 
+import type { Range } from "vscode-languageserver";
 import type { ComponentClass } from "./components";
 import type {
   ComponentEntry,
@@ -24,6 +25,22 @@ export interface DuplicateEntry {
   definitions: ComponentEntry[];
 }
 
+// A pipeline id unioned across every config-set member that declares it. The
+// collector deep-merges all `--config` sources, so the effective pipeline is
+// the union of the per-file fragments — structural checks (has receivers / has
+// exporters) must run on this merged view, not on each fragment in isolation.
+// Diagnostics that survive the merge are attributed to the *last* definition
+// site (the override the user is most likely editing), matching last-wins.
+export interface MergedPipeline {
+  id: string;
+  signal: string;
+  receivers: PipelineRef[];
+  processors: PipelineRef[];
+  exporters: PipelineRef[];
+  lastSourceUri: string;
+  lastRange: Range;
+}
+
 export interface SetModel {
   set: ConfigSet;
   members: Map<string /* uri */, DocModel>;
@@ -31,6 +48,7 @@ export interface SetModel {
   duplicates: Map<string /* `${cls}::${id}` */, DuplicateEntry>;
   pipelines: PipelineEntry[];
   pipelinesById: Map<string, PipelineEntry>;
+  mergedPipelines: Map<string /* id */, MergedPipeline>;
   serviceExtensions: PipelineRef[];
   extensionRefs: ExtensionRef[];
   pipelineIdRefs: PipelineIdRef[];
@@ -60,6 +78,7 @@ export function buildSetModel(set: ConfigSet, contents: Map<string, string>): Se
   const duplicates = new Map<string, DuplicateEntry>();
   const pipelines: PipelineEntry[] = [];
   const pipelinesById = new Map<string, PipelineEntry>();
+  const mergedPipelines = new Map<string, MergedPipeline>();
   const serviceExtensions: PipelineRef[] = [];
   const extensionRefs: ExtensionRef[] = [];
   const pipelineIdRefs: PipelineIdRef[] = [];
@@ -93,6 +112,27 @@ export function buildSetModel(set: ConfigSet, contents: Map<string, string>): Se
       // flagged as set-level duplicates; if they become a real concern, hook
       // a `duplicatePipelines` table here.
       pipelinesById.set(p.id, p);
+      // Union the fragment into the merged view: concat each section's refs and
+      // advance the last-definition site (declared order ⇒ last fragment wins).
+      let merged = mergedPipelines.get(p.id);
+      if (!merged) {
+        merged = {
+          id: p.id,
+          signal: p.signal,
+          receivers: [],
+          processors: [],
+          exporters: [],
+          lastSourceUri: p.sourceUri,
+          lastRange: p.range,
+        };
+        mergedPipelines.set(p.id, merged);
+      }
+      merged.signal = p.signal;
+      merged.lastSourceUri = p.sourceUri;
+      merged.lastRange = p.range;
+      merged.receivers.push(...p.receivers);
+      merged.processors.push(...p.processors);
+      merged.exporters.push(...p.exporters);
     }
     for (const e of doc.serviceExtensions) serviceExtensions.push(e);
     for (const r of doc.extensionRefs) extensionRefs.push(r);
@@ -107,6 +147,7 @@ export function buildSetModel(set: ConfigSet, contents: Map<string, string>): Se
     duplicates,
     pipelines,
     pipelinesById,
+    mergedPipelines,
     serviceExtensions,
     extensionRefs,
     pipelineIdRefs,
