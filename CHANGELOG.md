@@ -15,6 +15,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   empty "didn't leave any update notes" placeholder on the Versions tab. Notes
   stay in lockstep with the VS Code/npm release since `prepare-release.sh`
   already stamps the matching `[X.Y.Z]` heading and `pluginVersion` together.
+- Inline rule-suppression directives `# otelcol-disable-next-line duplicate` and
+  `# otelcol-disable-line duplicate`. The next-line form silences the rule on the
+  following line; the line form silences it on its own line. Only the `duplicate`
+  rule is supported today, but directives are rule-scoped so more codes can be
+  added later (refs #10).
 
 ### Changed
 - Re-declaring a component id in a later config-set member is now a **Warning**
