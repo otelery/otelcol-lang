@@ -1,0 +1,6 @@
+# Explicit config set. Merge order (confmap semantics): staging first, then test.
+members:
+  - 00_receivers.yaml
+  - 01_staging_exporters.yaml
+  - 97_test_exporters.yaml
+  - 99_pipelines.yaml

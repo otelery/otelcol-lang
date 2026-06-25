@@ -8,7 +8,8 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
         "${workspaceFolder}/test",
-        "${workspaceFolder}/examples"
+        "${workspaceFolder}/examples",
+        "${workspaceFolder}/repro"
       ],
       "env": {
         "OTELCOL_DEV_WATCH": "1"

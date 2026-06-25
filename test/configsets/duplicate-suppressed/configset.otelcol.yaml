@@ -1,0 +1,5 @@
+# Explicit set so base.yaml + extras.yaml + pipelines.yaml merge in this order.
+members:
+  - base.yaml
+  - extras.yaml
+  - pipelines.yaml

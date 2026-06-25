@@ -53,6 +53,8 @@ export interface SetModel {
   extensionRefs: ExtensionRef[];
   pipelineIdRefs: PipelineIdRef[];
   ottlBlocks: OttlBlock[];
+  // Per-member inline rule suppressions: uri -> (0-based line -> rules).
+  suppressions: Map<string /* uri */, Map<number, Set<string>>>;
 }
 
 const CLASSES: ComponentClass[] = ["receiver", "processor", "exporter", "connector", "extension"];
@@ -83,12 +85,14 @@ export function buildSetModel(set: ConfigSet, contents: Map<string, string>): Se
   const extensionRefs: ExtensionRef[] = [];
   const pipelineIdRefs: PipelineIdRef[] = [];
   const ottlBlocks: OttlBlock[] = [];
+  const suppressions = new Map<string, Map<number, Set<string>>>();
 
   // Walk members in declared order. First definition wins the slot; later
   // definitions promote the slot into a DuplicateEntry record.
   for (const uri of set.members) {
     const doc = members.get(uri);
     if (!doc) continue;
+    suppressions.set(uri, doc.suppressions);
     for (const cls of CLASSES) {
       for (const [id, entry] of doc.components[cls]) {
         const k = dupKey(cls, id);
@@ -152,6 +156,7 @@ export function buildSetModel(set: ConfigSet, contents: Map<string, string>): Se
     extensionRefs,
     pipelineIdRefs,
     ottlBlocks,
+    suppressions,
   };
 }
 
@@ -161,6 +166,16 @@ export function isDuplicate(
   id: string,
 ): DuplicateEntry | null {
   return model.duplicates.get(dupKey(cls, id)) ?? null;
+}
+
+/** True when an inline directive suppresses `rule` at `line` (0-based) in `uri`. */
+export function isSuppressed(
+  model: SetModel,
+  uri: string,
+  line: number,
+  rule: string,
+): boolean {
+  return model.suppressions.get(uri)?.get(line)?.has(rule) ?? false;
 }
 
 /**
