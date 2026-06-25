@@ -8,6 +8,20 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.5.0] - 2026-06-26
+
+### Added
 - The JetBrains plugin now populates its Marketplace "Change notes" from this
   CHANGELOG. `editors/jetbrains/build.gradle.kts` wires the
   `org.jetbrains.changelog` plugin to render the section matching the current
@@ -29,10 +43,6 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `ambiguous reference … resolve the duplicate before this reference can be used`
   (refs #10).
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 - False `pipeline <id> has no receivers/exporters` errors when a pipeline is
   split or overridden across config-set members. A later member that re-declares
@@ -41,8 +51,6 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   confmap-merged view (the union of all member fragments) instead of each file in
   isolation. A genuine defect still surfaces, attributed to the last definition
   site (refs #9).
-
-### Security
 
 ## [0.4.0] - 2026-06-21
 
