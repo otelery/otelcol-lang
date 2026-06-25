@@ -169,12 +169,7 @@ export function isDuplicate(
 }
 
 /** True when an inline directive suppresses `rule` at `line` (0-based) in `uri`. */
-export function isSuppressed(
-  model: SetModel,
-  uri: string,
-  line: number,
-  rule: string,
-): boolean {
+export function isSuppressed(model: SetModel, uri: string, line: number, rule: string): boolean {
   return model.suppressions.get(uri)?.get(line)?.has(rule) ?? false;
 }
 
