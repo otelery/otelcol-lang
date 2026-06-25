@@ -212,25 +212,32 @@ describe("SetModel build + validatePipelines", () => {
     assert.equal(validatePipelines(buildFor(set), idx).length, 0);
   });
 
-  it("duplicates: ambiguous-ref + 2x duplicate-id, all errors", () => {
+  // Issue #10: a redefined component id is an override (confmap last-wins), not
+  // a conflict — a Warning, with references resolving to the last definition.
+  it("duplicates: override warning, references resolve (no ambiguous errors)", () => {
     const set = discoverSets("test/configsets/duplicates").allSets()[0];
     const model = buildFor(set);
     const diags = validatePipelines(model, idx);
+    // No hard errors any more, and the ref to the duplicated id resolves cleanly.
     const errs = diags.filter((d) => d.diagnostic.severity === 1);
-    assert.equal(errs.length, 3);
-    assert.equal(diags.filter((d) => /ambiguous reference/.test(d.diagnostic.message)).length, 1);
-    assert.equal(diags.filter((d) => /duplicate receiver id/.test(d.diagnostic.message)).length, 2);
-    // Ambiguous ref attributed to pipelines.yaml; duplicates to the defining files.
-    const ambig = diags.find((d) => /ambiguous/.test(d.diagnostic.message));
-    assert.ok(ambig.sourceUri.endsWith("/pipelines.yaml"));
-    const dupSources = diags
-      .filter((d) => /duplicate/.test(d.diagnostic.message))
-      .map((d) => d.sourceUri);
-    assert.ok(dupSources.some((u) => u.endsWith("/base.yaml")));
-    assert.ok(dupSources.some((u) => u.endsWith("/extras.yaml")));
+    assert.equal(
+      errs.length,
+      0,
+      `expected no errors, got: ${JSON.stringify(errs.map((d) => d.diagnostic.message))}`,
+    );
+    assert.equal(diags.filter((d) => /ambiguous reference/.test(d.diagnostic.message)).length, 0);
+    // Exactly one override warning, carrying the suppressible `duplicate` code,
+    // attributed to a defining site (not the referencing pipelines.yaml).
+    const overrides = diags.filter((d) =>
+      /duplicate receiver id "otlp" overrides/.test(d.diagnostic.message),
+    );
+    assert.equal(overrides.length, 1, `expected one override warning, got ${overrides.length}`);
+    assert.equal(overrides[0].diagnostic.severity, 2, "Warning");
+    assert.equal(overrides[0].diagnostic.code, "duplicate");
+    assert.match(overrides[0].sourceUri, /\/(base|extras)\.yaml$/);
   });
 
-  it("duplicates: diagnostic ranges land on the offending token", () => {
+  it("duplicates: override-warning range lands on the otlp token", () => {
     const set = discoverSets("test/configsets/duplicates").allSets()[0];
     const diags = validatePipelines(buildFor(set), idx);
     for (const d of diags) {
@@ -247,18 +254,16 @@ describe("SetModel build + validatePipelines", () => {
         `end must be after start, got ${JSON.stringify(r)}`,
       );
     }
-    // Duplicate "otlp" definition in extras.yaml is on line 1 (`  otlp:` at line index 1).
-    const extrasUri = memberUri(set, "extras.yaml");
-    const extrasText = readFileSync(extrasUri.replace(/^file:\/\//, ""), "utf8");
-    const dupInExtras = diags.find(
-      (d) => /duplicate receiver id/.test(d.diagnostic.message) && d.sourceUri === extrasUri,
+    const override = diags.find((d) =>
+      /duplicate receiver id "otlp" overrides/.test(d.diagnostic.message),
     );
-    assert.ok(dupInExtras, "expected the duplicate diag attributed to extras.yaml");
-    const lineText = extrasText.split("\n")[dupInExtras.diagnostic.range.start.line];
+    assert.ok(override, "expected an override warning");
+    const text = readFileSync(override.sourceUri.replace(/^file:\/\//, ""), "utf8");
+    const lineText = text.split("\n")[override.diagnostic.range.start.line];
     assert.match(
       lineText,
       /\botlp\b/,
-      `range points at line ${dupInExtras.diagnostic.range.start.line} = ${JSON.stringify(lineText)}; expected the line containing 'otlp'`,
+      `range points at line ${override.diagnostic.range.start.line} = ${JSON.stringify(lineText)}; expected the line containing 'otlp'`,
     );
   });
 

@@ -4,13 +4,18 @@
 //   - Each referenced component declares support for the pipeline's signal.
 //   - Each pipeline has at least one receiver and one exporter.
 //   - Reports component definitions that are never referenced (warning).
-//   - Reports duplicate component ids across files in a config set.
+//   - Reports duplicate component ids across files in a config set (warning;
+//     a later definition is an override, last-wins, and references resolve to it).
 
 import { Diagnostic, DiagnosticSeverity, DiagnosticTag, Range } from "vscode-languageserver";
 import type { ComponentClass, ComponentsIndex, Signal } from "./components";
 import { findComponent } from "./components";
 import type { SetModel } from "./set-model";
 import { isDuplicate } from "./set-model";
+
+// Rule code carried on the duplicate-override diagnostic so editors can group
+// and (later) suppress it by rule.
+const RULE_DUPLICATE = "duplicate";
 
 const SIGNAL_MAP: Record<string, Signal> = {
   traces: "traces",
@@ -80,44 +85,44 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
 
     for (const { bucket, cls } of BUCKETS) {
       for (const ref of pipe[bucket]) {
-        // Ambiguous: id is defined in multiple member files.
+        // A duplicated id is an override (confmap last-wins), not an error:
+        // resolve the reference to the LAST definition and validate that.
         const dupOwn = isDuplicate(model, cls, ref.id);
         const dupConn = isDuplicate(model, "connector", ref.id);
-        if (dupOwn || dupConn) {
-          const dup = dupOwn ?? dupConn!;
-          const where = dup.definitions.map((d) => shortName(d.sourceUri)).join(", ");
-          diags.push(
-            emit(
-              ref.sourceUri,
-              ref.range,
-              `ambiguous reference "${ref.id}": defined in ${dup.definitions.length} files (${where}); resolve the duplicate before this reference can be used`,
-              DiagnosticSeverity.Error,
-            ),
-          );
-          continue;
+
+        let entry;
+        let resolvedCls: ComponentClass;
+        if (dupOwn) {
+          entry = dupOwn.definitions[dupOwn.definitions.length - 1];
+          resolvedCls = cls;
+          referenced[cls].add(ref.id);
+        } else if (dupConn) {
+          entry = dupConn.definitions[dupConn.definitions.length - 1];
+          resolvedCls = "connector";
+          referenced.connector.add(ref.id);
+        } else {
+          // Connectors can act as receivers or exporters; check both maps.
+          const inOwn = model.components[cls].has(ref.id);
+          const inConn = model.components.connector.has(ref.id);
+          if (!inOwn && !inConn) {
+            diags.push(
+              emit(
+                ref.sourceUri,
+                ref.range,
+                `${cls} "${ref.id}" is not defined`,
+                DiagnosticSeverity.Error,
+              ),
+            );
+            continue;
+          }
+          if (inOwn) referenced[cls].add(ref.id);
+          if (inConn) referenced.connector.add(ref.id);
+          entry = inOwn
+            ? model.components[cls].get(ref.id)!
+            : model.components.connector.get(ref.id)!;
+          resolvedCls = inOwn ? cls : "connector";
         }
 
-        // Connectors can act as receivers or exporters; check both maps.
-        const inOwn = model.components[cls].has(ref.id);
-        const inConn = model.components.connector.has(ref.id);
-        if (!inOwn && !inConn) {
-          diags.push(
-            emit(
-              ref.sourceUri,
-              ref.range,
-              `${cls} "${ref.id}" is not defined`,
-              DiagnosticSeverity.Error,
-            ),
-          );
-          continue;
-        }
-        if (inOwn) referenced[cls].add(ref.id);
-        if (inConn) referenced.connector.add(ref.id);
-
-        const entry = inOwn
-          ? model.components[cls].get(ref.id)!
-          : model.components.connector.get(ref.id)!;
-        const resolvedCls = inOwn ? cls : "connector";
         const def = findComponent(idx, resolvedCls, entry.type);
         if (
           def &&
@@ -146,15 +151,8 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
       continue;
     }
     if (isDuplicate(model, "extension", ref.id)) {
-      // Duplicate-id pass below already errors on the defining sites; flag the use too.
-      diags.push(
-        emit(
-          ref.sourceUri,
-          ref.range,
-          `ambiguous reference "${ref.id}" (referenced from ${ref.fieldPath}); resolve the duplicate before this reference can be used`,
-          DiagnosticSeverity.Error,
-        ),
-      );
+      // Override (last-wins), not ambiguous: the reference resolves cleanly.
+      referenced.extension.add(ref.id);
       continue;
     }
     if (ref.strict) {
@@ -183,20 +181,12 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
     }
   }
 
-  // service.extensions entries: each must resolve to a defined extension;
-  // duplicates fall through to the existing duplicate-id pass below.
+  // service.extensions entries: each must resolve to a defined extension.
+  // A duplicated id is an override (last-wins), so it resolves normally; the
+  // duplicate-id pass below emits the override warning at the defining site.
   for (const ref of model.serviceExtensions) {
-    const dup = isDuplicate(model, "extension", ref.id);
-    if (dup) {
-      const where = dup.definitions.map((d) => shortName(d.sourceUri)).join(", ");
-      diags.push(
-        emit(
-          ref.sourceUri,
-          ref.range,
-          `ambiguous reference "${ref.id}": defined in ${dup.definitions.length} files (${where}); resolve the duplicate before this reference can be used`,
-          DiagnosticSeverity.Error,
-        ),
-      );
+    if (isDuplicate(model, "extension", ref.id)) {
+      referenced.extension.add(ref.id);
       continue;
     }
     if (!model.components.extension.has(ref.id)) {
@@ -213,18 +203,21 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
     referenced.extension.add(ref.id);
   }
 
-  // Duplicate-id errors: one diagnostic per defining site.
+  // Duplicate-id overrides: under confmap merge a later definition overrides an
+  // earlier one (last-wins, deep-merged), so this is a Warning, not an Error.
+  // Flag each override site (every definition after the first).
   for (const dup of model.duplicates.values()) {
-    const where = dup.definitions.map((d) => shortName(d.sourceUri));
-    for (let i = 0; i < dup.definitions.length; i++) {
+    const first = shortName(dup.definitions[0].sourceUri);
+    for (let i = 1; i < dup.definitions.length; i++) {
       const def = dup.definitions[i];
-      const others = where.filter((_, j) => j !== i).join(", ");
       diags.push(
         emit(
           def.sourceUri,
           def.idRange,
-          `duplicate ${dup.cls} id "${dup.id}" (also defined in ${others}); each id must be unique across the config set`,
-          DiagnosticSeverity.Error,
+          `duplicate ${dup.cls} id "${dup.id}" overrides the earlier definition in ${first} (last definition wins)`,
+          DiagnosticSeverity.Warning,
+          undefined,
+          RULE_DUPLICATE,
         ),
       );
     }
@@ -276,9 +269,11 @@ function emit(
   message: string,
   severity: DiagnosticSeverity,
   tags?: DiagnosticTag[],
+  code?: string,
 ): SetDiagnostic {
   const diagnostic: Diagnostic = { range, message, severity, source: "otelcol" };
   if (tags && tags.length) diagnostic.tags = tags;
+  if (code) diagnostic.code = code;
   return { sourceUri, diagnostic };
 }
 
