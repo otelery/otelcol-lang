@@ -44,39 +44,51 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
     extension: new Set(),
   };
 
-  for (const pipe of model.pipelines) {
-    const signal = SIGNAL_MAP[pipe.signal];
+  // Structural checks run on the *merged* pipeline view (confmap union across
+  // config-set members), so a pipeline split/overridden across files isn't
+  // flagged for a section an earlier member already supplied. Diagnostics are
+  // attributed to the last definition site (last-wins).
+  for (const merged of model.mergedPipelines.values()) {
+    const signal = SIGNAL_MAP[merged.signal];
     if (!signal) {
       diags.push(
         emit(
-          pipe.sourceUri,
-          pipe.range,
-          `unknown pipeline signal "${pipe.signal}" (expected traces, metrics, logs, or profiles)`,
+          merged.lastSourceUri,
+          merged.lastRange,
+          `unknown pipeline signal "${merged.signal}" (expected traces, metrics, logs, or profiles)`,
           DiagnosticSeverity.Error,
         ),
       );
       continue;
     }
-    if (pipe.receivers.length === 0) {
+    if (merged.receivers.length === 0) {
       diags.push(
         emit(
-          pipe.sourceUri,
-          pipe.range,
-          `pipeline ${pipe.id} has no receivers`,
+          merged.lastSourceUri,
+          merged.lastRange,
+          `pipeline ${merged.id} has no receivers`,
           DiagnosticSeverity.Error,
         ),
       );
     }
-    if (pipe.exporters.length === 0) {
+    if (merged.exporters.length === 0) {
       diags.push(
         emit(
-          pipe.sourceUri,
-          pipe.range,
-          `pipeline ${pipe.id} has no exporters`,
+          merged.lastSourceUri,
+          merged.lastRange,
+          `pipeline ${merged.id} has no exporters`,
           DiagnosticSeverity.Error,
         ),
       );
     }
+  }
+
+  // Reference resolution runs per fragment so each diagnostic lands on the
+  // actual ref site. The unknown-signal error is already emitted once above;
+  // here we just skip fragments whose signal we can't map.
+  for (const pipe of model.pipelines) {
+    const signal = SIGNAL_MAP[pipe.signal];
+    if (!signal) continue;
 
     for (const { bucket, cls } of BUCKETS) {
       for (const ref of pipe[bucket]) {
