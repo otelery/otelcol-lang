@@ -1,0 +1,7 @@
+# …and the later fragment only adds a processor. No member supplies a
+# receiver, so the merged pipeline genuinely has none — exactly one error,
+# attributed to this last definition site.
+service:
+  pipelines:
+    traces/x:
+      processors: [batch]

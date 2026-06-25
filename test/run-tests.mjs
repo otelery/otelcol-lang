@@ -312,6 +312,62 @@ describe("SetModel build + validatePipelines", () => {
     );
     assert.equal(span, "ghost", `range span = ${JSON.stringify(span)}; expected exactly 'ghost'`);
   });
+
+  // Issue #9: a pipeline split/overridden across config-set members must be
+  // validated against the confmap-merged view, not each fragment in isolation.
+  it("pipeline-split: no false 'has no receivers/exporters' on a merged/overridden pipeline", () => {
+    const set = discoverSets("test/configsets/pipeline-split").allSets()[0];
+    assert.ok(set, "expected one config set for pipeline-split");
+    assert.equal(set.members.length, 3, `expected 3 members, got ${set.members.length}`);
+    const diags = validatePipelines(buildFor(set), idx);
+    const structural = diags.filter((d) => /has no (receivers|exporters)/.test(d.diagnostic.message));
+    assert.equal(
+      structural.length,
+      0,
+      `expected no structural errors, got: ${JSON.stringify(structural.map((d) => d.diagnostic.message))}`,
+    );
+    // The whole fixture is well-formed once merged → zero diagnostics overall.
+    assert.equal(diags.length, 0, `expected zero diagnostics, got: ${JSON.stringify(diags)}`);
+  });
+
+  it("pipeline-split: merged view unions receivers/processors/exporters across members", () => {
+    const set = discoverSets("test/configsets/pipeline-split").allSets()[0];
+    const model = buildFor(set);
+    const merged = model.mergedPipelines.get("traces/output_internal");
+    assert.ok(merged, "expected a merged entry for traces/output_internal");
+    assert.deepEqual(
+      merged.receivers.map((r) => r.id),
+      ["otlp"],
+      "receiver carried over from the earlier member",
+    );
+    assert.deepEqual(merged.processors.map((p) => p.id), ["batch"]);
+    assert.deepEqual(
+      merged.exporters.map((e) => e.id).sort(),
+      ["debug", "file/internal"],
+      "exporters unioned across both members",
+    );
+    // Last-wins: the merged entry is attributed to the overriding member.
+    assert.ok(
+      merged.lastSourceUri.endsWith("/test_service.yaml"),
+      `lastSourceUri should be the override, got ${merged.lastSourceUri}`,
+    );
+  });
+
+  it("pipeline-missing-recv: a genuinely receiver-less merged pipeline yields exactly one error at the last site", () => {
+    const set = discoverSets("test/configsets/pipeline-missing-recv").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const noRecv = diags.filter((d) => /has no receivers/.test(d.diagnostic.message));
+    assert.equal(noRecv.length, 1, `expected exactly one 'has no receivers', got ${noRecv.length}`);
+    assert.equal(noRecv[0].diagnostic.severity, 1, "Error");
+    assert.match(noRecv[0].diagnostic.message, /traces\/x/);
+    // Attributed to the last member (last-wins), not the first.
+    assert.ok(
+      noRecv[0].sourceUri.endsWith("/b_service.yaml"),
+      `error should land on the last definition site, got ${noRecv[0].sourceUri}`,
+    );
+    // The merged pipeline does have an exporter, so no exporter error.
+    assert.equal(diags.filter((d) => /has no exporters/.test(d.diagnostic.message)).length, 0);
+  });
 });
 
 // ─── usage helpers (powers references + codelens + hover used-in) ────────

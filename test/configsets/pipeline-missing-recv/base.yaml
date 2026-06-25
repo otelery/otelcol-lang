@@ -1,0 +1,6 @@
+processors:
+  batch:
+
+exporters:
+  debug:
+    verbosity: detailed
