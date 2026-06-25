@@ -1,0 +1,7 @@
+# Explicit config-set declaration. Members are merged in this order (confmap
+# semantics). Both service files re-declare `traces/output_internal`; the
+# linter must validate the merged pipeline, not each fragment.
+members:
+  - base.yaml
+  - staging_service.yaml
+  - test_service.yaml
