@@ -288,7 +288,10 @@ describe("SetModel build + validatePipelines", () => {
     assert.ok(sup, "expected suppressions recorded for extras.yaml");
     // next-line form: the `otlp:` line is suppressed.
     const otlpLine = lines.findIndex((l) => /^\s*otlp:/.test(l));
-    assert.ok(sup.get(otlpLine)?.has("duplicate"), "otlp line should be suppressed (next-line form)");
+    assert.ok(
+      sup.get(otlpLine)?.has("duplicate"),
+      "otlp line should be suppressed (next-line form)",
+    );
     // line form: the `debug:` line carries its own trailing directive.
     const debugLine = lines.findIndex((l) => /^\s*debug:/.test(l));
     assert.ok(sup.get(debugLine)?.has("duplicate"), "debug line should be suppressed (line form)");
@@ -352,7 +355,9 @@ describe("SetModel build + validatePipelines", () => {
     assert.ok(set, "expected one config set for pipeline-split");
     assert.equal(set.members.length, 3, `expected 3 members, got ${set.members.length}`);
     const diags = validatePipelines(buildFor(set), idx);
-    const structural = diags.filter((d) => /has no (receivers|exporters)/.test(d.diagnostic.message));
+    const structural = diags.filter((d) =>
+      /has no (receivers|exporters)/.test(d.diagnostic.message),
+    );
     assert.equal(
       structural.length,
       0,
@@ -372,7 +377,10 @@ describe("SetModel build + validatePipelines", () => {
       ["otlp"],
       "receiver carried over from the earlier member",
     );
-    assert.deepEqual(merged.processors.map((p) => p.id), ["batch"]);
+    assert.deepEqual(
+      merged.processors.map((p) => p.id),
+      ["batch"],
+    );
     assert.deepEqual(
       merged.exporters.map((e) => e.id).sort(),
       ["debug", "file/internal"],
