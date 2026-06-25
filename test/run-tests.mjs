@@ -267,6 +267,33 @@ describe("SetModel build + validatePipelines", () => {
     );
   });
 
+  it("duplicate-suppressed: inline directives silence the override warnings", () => {
+    const set = discoverSets("test/configsets/duplicate-suppressed").allSets()[0];
+    assert.ok(set, "expected one config set for duplicate-suppressed");
+    const diags = validatePipelines(buildFor(set), idx);
+    assert.equal(
+      diags.length,
+      0,
+      `expected zero diagnostics (both forms suppressed), got: ${JSON.stringify(diags.map((d) => d.diagnostic.message))}`,
+    );
+  });
+
+  it("duplicate-suppressed: both directive forms are parsed onto the right line", () => {
+    const set = discoverSets("test/configsets/duplicate-suppressed").allSets()[0];
+    const model = buildFor(set);
+    const extrasUri = memberUri(set, "extras.yaml");
+    const extrasText = readFileSync(extrasUri.replace(/^file:\/\//, ""), "utf8");
+    const lines = extrasText.split("\n");
+    const sup = model.suppressions.get(extrasUri);
+    assert.ok(sup, "expected suppressions recorded for extras.yaml");
+    // next-line form: the `otlp:` line is suppressed.
+    const otlpLine = lines.findIndex((l) => /^\s*otlp:/.test(l));
+    assert.ok(sup.get(otlpLine)?.has("duplicate"), "otlp line should be suppressed (next-line form)");
+    // line form: the `debug:` line carries its own trailing directive.
+    const debugLine = lines.findIndex((l) => /^\s*debug:/.test(l));
+    assert.ok(sup.get(debugLine)?.has("duplicate"), "debug line should be suppressed (line form)");
+  });
+
   it("unused: one Information diagnostic with DiagnosticTag.Unnecessary", () => {
     const set = discoverSets("test/configsets/unused").allSets()[0];
     const diags = validatePipelines(buildFor(set), idx);

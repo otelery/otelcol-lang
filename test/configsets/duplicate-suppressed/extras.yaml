@@ -1,0 +1,14 @@
+# Intentional overrides of `otlp` and `debug` (also defined in base.yaml).
+# Both are silenced with inline directives, so this set has zero diagnostics:
+#   - next-line form sits above the id it silences
+#   - line form sits on the id's own line
+receivers:
+  # otelcol-disable-next-line duplicate
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  debug: # otelcol-disable-line duplicate
+    verbosity: normal

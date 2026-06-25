@@ -11,10 +11,10 @@ import { Diagnostic, DiagnosticSeverity, DiagnosticTag, Range } from "vscode-lan
 import type { ComponentClass, ComponentsIndex, Signal } from "./components";
 import { findComponent } from "./components";
 import type { SetModel } from "./set-model";
-import { isDuplicate } from "./set-model";
+import { isDuplicate, isSuppressed } from "./set-model";
 
-// Rule code carried on the duplicate-override diagnostic so editors can group
-// and (later) suppress it by rule.
+// Rule code carried on the duplicate-override diagnostic, matched by inline
+// `# otelcol-disable-(next-)line <rule>` directives to suppress it.
 const RULE_DUPLICATE = "duplicate";
 
 const SIGNAL_MAP: Record<string, Signal> = {
@@ -205,11 +205,13 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
 
   // Duplicate-id overrides: under confmap merge a later definition overrides an
   // earlier one (last-wins, deep-merged), so this is a Warning, not an Error.
-  // Flag each override site (every definition after the first).
+  // Flag each override site (every definition after the first), and let an
+  // inline `# otelcol-disable-(next-)line duplicate` directive silence it.
   for (const dup of model.duplicates.values()) {
     const first = shortName(dup.definitions[0].sourceUri);
     for (let i = 1; i < dup.definitions.length; i++) {
       const def = dup.definitions[i];
+      if (isSuppressed(model, def.sourceUri, def.idRange.start.line, RULE_DUPLICATE)) continue;
       diags.push(
         emit(
           def.sourceUri,
