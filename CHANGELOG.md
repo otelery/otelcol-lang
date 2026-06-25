@@ -17,6 +17,12 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   already stamps the matching `[X.Y.Z]` heading and `pluginVersion` together.
 
 ### Changed
+- Re-declaring a component id in a later config-set member is now a **Warning**
+  ("overrides the earlier definition; last definition wins") instead of an Error.
+  Under confmap merge a later definition is a legitimate override, so references
+  to the id resolve to the last definition instead of being reported as
+  `ambiguous reference … resolve the duplicate before this reference can be used`
+  (refs #10).
 
 ### Deprecated
 
