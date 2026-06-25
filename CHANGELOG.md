@@ -23,6 +23,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Removed
 
 ### Fixed
+- False `pipeline <id> has no receivers/exporters` errors when a pipeline is
+  split or overridden across config-set members. A later member that re-declares
+  a pipeline id without restating every section (e.g. omits `receivers:`) no
+  longer trips the structural check — pipelines are now validated against the
+  confmap-merged view (the union of all member fragments) instead of each file in
+  isolation. A genuine defect still surfaces, attributed to the last definition
+  site (refs #9).
 
 ### Security
 

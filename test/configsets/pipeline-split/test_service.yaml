@@ -1,0 +1,9 @@
+# Later member: overrides the same pipeline id with processors + exporters but
+# deliberately does NOT restate `receivers:`. Under confmap merge the receiver
+# from staging_service.yaml is retained, so this must NOT raise
+# "pipeline traces/output_internal has no receivers".
+service:
+  pipelines:
+    traces/output_internal:
+      processors: [batch]
+      exporters: [file/internal]

@@ -1,0 +1,5 @@
+# Merged pipeline `traces/x` has no receiver in any member — a real defect.
+members:
+  - base.yaml
+  - a_service.yaml
+  - b_service.yaml

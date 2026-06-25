@@ -1,0 +1,5 @@
+# First fragment of the pipeline — no receivers here…
+service:
+  pipelines:
+    traces/x:
+      exporters: [debug]

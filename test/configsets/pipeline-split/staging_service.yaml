@@ -1,0 +1,6 @@
+# Earlier member: declares the pipeline with its receiver + an exporter.
+service:
+  pipelines:
+    traces/output_internal:
+      receivers: [otlp]
+      exporters: [debug]
