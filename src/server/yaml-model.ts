@@ -37,6 +37,12 @@ export interface DocModel {
   diagnostics: ParseDiagnostic[];
   // Lookup table: byte offset -> path segments (for completion/hover context).
   rangeForKey: Map<Node, Range>;
+  // Inline rule-suppression directives, resolved to the (0-based) line they
+  // silence. `# otelcol-disable-line <rule>` targets its own line;
+  // `# otelcol-disable-next-line <rule>` targets the following line. Only the
+  // `duplicate` rule is honored today, but the map is rule-scoped so more codes
+  // can be added later.
+  suppressions: Map<number /* 0-based line */, Set<string /* rule */>>;
 }
 
 export interface ExtensionRef {
@@ -150,6 +156,7 @@ export function buildModel(text: string, sourceUri: string = ""): DocModel {
     ottlBlocks: [],
     diagnostics: [],
     rangeForKey: new Map(),
+    suppressions: collectSuppressions(text),
   };
 
   const doc = parseDocument(text, { keepSourceTokens: true });
@@ -178,6 +185,30 @@ export function buildModel(text: string, sourceUri: string = ""): DocModel {
   walkOttl(text, model, doc.contents, sourceUri);
 
   return model;
+}
+
+// Scan source lines for inline suppression directives and resolve each to the
+// line it silences. Modeled on ESLint's `eslint-disable-(next-)line`:
+//   # otelcol-disable-line <rule>       → silences this same line
+//   # otelcol-disable-next-line <rule>  → silences the following line
+// A rule token is the first whitespace-delimited word after the directive.
+const SUPPRESS_RE = /#\s*otelcol-disable-(next-line|line)\s+(\S+)/;
+
+function collectSuppressions(text: string): Map<number, Set<string>> {
+  const out = new Map<number, Set<string>>();
+  const lines = text.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const m = SUPPRESS_RE.exec(lines[i]);
+    if (!m) continue;
+    const target = m[1] === "next-line" ? i + 1 : i;
+    let set = out.get(target);
+    if (!set) {
+      set = new Set();
+      out.set(target, set);
+    }
+    set.add(m[2]);
+  }
+  return out;
 }
 
 function collectComponents(
