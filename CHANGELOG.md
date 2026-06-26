@@ -7,6 +7,20 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [0.5.1] - 2026-06-26
+
 ### Fixed
 
 - The JetBrains plugin logo now ships as `pluginIcon.svg` (the official CNCF
