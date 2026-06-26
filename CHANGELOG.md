@@ -7,6 +7,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- The JetBrains plugin logo now ships as `pluginIcon.svg` (the official CNCF
+  OpenTelemetry color mark) instead of `pluginIcon.png`. JetBrains only renders
+  `META-INF/pluginIcon.svg`, so the PNG was silently ignored and no logo
+  appeared on the Marketplace or in the IDE plugin list.
+
 ## [0.5.0] - 2026-06-26
 
 ### Added
