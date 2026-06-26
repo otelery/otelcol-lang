@@ -7,21 +7,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## [0.5.0] - 2026-06-26
 
 ### Added
+
 - The JetBrains plugin now populates its Marketplace "Change notes" from this
   CHANGELOG. `editors/jetbrains/build.gradle.kts` wires the
   `org.jetbrains.changelog` plugin to render the section matching the current
@@ -30,12 +19,15 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   stay in lockstep with the VS Code/npm release since `prepare-release.sh`
   already stamps the matching `[X.Y.Z]` heading and `pluginVersion` together.
 - Inline rule-suppression directives `# otelcol-disable-next-line duplicate` and
+
   `# otelcol-disable-line duplicate`. The next-line form silences the rule on the
+
   following line; the line form silences it on its own line. Only the `duplicate`
   rule is supported today, but directives are rule-scoped so more codes can be
   added later (refs #10).
 
 ### Changed
+
 - Re-declaring a component id in a later config-set member is now a **Warning**
   ("overrides the earlier definition; last definition wins") instead of an Error.
   Under confmap merge a later definition is a legitimate override, so references
@@ -44,6 +36,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (refs #10).
 
 ### Fixed
+
 - False `pipeline <id> has no receivers/exporters` errors when a pipeline is
   split or overridden across config-set members. A later member that re-declares
   a pipeline id without restating every section (e.g. omits `receivers:`) no
@@ -55,6 +48,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.4.0] - 2026-06-21
 
 ### Changed
+
 - Renamed the JetBrains plugin namespace from `ch.snowgarden.otelcol` to
   `dev.otelery.otelcol`, untying it from `ch.snowgarden`. This moves the
   Kotlin package, the plugin `<id>`, and the `pluginGroup` coordinate, and
@@ -65,6 +59,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.3.0] - 2026-06-20
 
 ### Added
+
 - `make publish-jetbrains` now uploads the plugin to the JetBrains
   Marketplace via the IntelliJ Platform Gradle plugin's `publishPlugin`
   task. Configured `intellijPlatform.publishing { token = … }` in
@@ -74,6 +69,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   end-to-end (Zed/Helix remain manual).
 
 ### Changed
+
 - `scripts/prepare-release.sh` now bumps `package.json`,
   `package-lock.json`, and `editors/jetbrains/gradle.properties`'s
   `pluginVersion` to the supplied `X.Y.Z` alongside the CHANGELOG
@@ -83,6 +79,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.2.0] - 2026-06-19
 
 ### Added
+
 - Completion at `service.pipelines.<cursor>` offers the four standard
   signal names (`traces`, `metrics`, `logs`, `profiles`) as snippets that
   scaffold the full pipeline body (`src/server/completion.ts`). Each
@@ -106,7 +103,6 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   resolve through `$ref` are now resolved before classifying their
   type, so the heuristic doesn't miscategorise a `$ref`-to-object child
   as a scalar.
-
 - LSP completion expanded well beyond top-level component types
   (`src/server/completion.ts`): component-instance property suggestions
   walk the component's JSON Schema along the trailing path and offer
@@ -222,6 +218,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `cargo install --locked` rules in the Makefile.
 
 ### Changed
+
 - Pipeline-body bucket completions (`receivers`, `processors`, `exporters`
   inside `service.pipelines.<sig>`) now expand as snippets — each accepted
   item inserts `<bucket>: [$0]` with the cursor parked inside the empty
@@ -234,6 +231,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Breaking:** renamed the config-set sidecar manifest from
   `otelcol-configset.yaml` to `configset.otelcol.yaml`, and the inline
   directive from `# otelcol-configset:` to `# configset-otelcol:`. The old
+
   filename started with `otel`, which the SchemaStore.org catalog's
   start-anchored `otel*.yaml` glob ("OpenTelemetry Declarative Configuration")
   matched — so every SchemaStore-backed editor (JetBrains' built-in catalog,
@@ -247,6 +245,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and Zed configs since `*.otelcol.yaml` / the `otelcol.yaml` tail already
   cover the new name. No back-compat alias — existing `otelcol-configset.yaml`
   sidecars and `# otelcol-configset:` directives must be renamed.
+
 - `.ncurc.json` keeps `@types/vscode` rejected from
   `npm-check-updates` runs so `make upgrade-npm` cannot bump it past
   the minimum `engines.vscode` (`^1.91.0`); the mismatch otherwise
@@ -291,6 +290,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   class is caught at CI time.
 
 ### Fixed
+
 - Completion items in every label-only branch now carry an explicit
   `textEdit` anchored to the typed identifier prefix via a new
   `wordStartBefore` helper (`src/server/completion.ts`). LSP4IJ (JetBrains)
@@ -317,6 +317,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   sniffer (`src/common/yaml-sniff.ts` + `yaml-classify.ts`) into Kotlin
   (`OtelcolYamlClassify`): `service.pipelines` anchors, ≥2 top-level
   otelcol keys, the `# configset-otelcol:` directive, and the
+
   sibling-sidecar / sibling-anchor scans are all recognised, so member
   files of `examples/configset-sidecar/` are detected on open. The
   filename globs remain as a no-I/O fast path.
@@ -363,6 +364,7 @@ Initial Marketplace / npm release. Published as
 as `opentelemetry-collector-config` on npm.
 
 ### Added
+
 - VS Code extension client (`src/extension/`) with automatic
   YAML→`otelcol` language detection (first-line comment or filename
   pattern).
@@ -371,6 +373,7 @@ as `opentelemetry-collector-config` on npm.
   - Config-set discovery (auto-scan via `service.pipelines:` anchors,
     or explicit `configset.otelcol.yaml` sidecar / first-line
     `# configset-otelcol:` directive).
+
   - Pipeline graph validation: undefined refs, ambiguous refs,
     defined-but-unused components, signal compatibility.
   - Component-aware hover with signals, stability, codeowners,
@@ -439,6 +442,7 @@ as `opentelemetry-collector-config` on npm.
   inside the artifacts.
 
 ### Changed
+
 - Package renamed from `vscode-otelcol` to `opentelemetry-collector-config`
   across `package.json`, `package-lock.json`, all editor READMEs, the
   JetBrains plugin display name, and the VS Code integration test
@@ -476,6 +480,7 @@ as `opentelemetry-collector-config` on npm.
   `npx --package=` pins are the source of truth.
 
 ### Fixed
+
 - Anchor detection no longer rejects files that contain a blank line
   inside the top-level `service:` block (between e.g. `telemetry:` and
   `pipelines:`). The previous regex-based check silently broke
