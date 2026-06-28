@@ -148,14 +148,16 @@ Snippets use `\t` for the body indent so LSP clients expand it relative to the c
 
 Whether a YAML file is classified as an OpenTelemetry Collector config and
 handed to the LSP involves two distinct stages that run at different points in
-time and in different processes:
+time and in different processes.
 
-```
-STAGE 1 — EDITOR LAYER         STAGE 2 — LSP LAYER
-"Is this file otelcol?"         "What configset does it belong to?"
-Runs on every file open.        Runs after the server accepts the file.
-Result: languageId assignment.  Result: cross-file reference resolution.
-```
+**Stage 1 — Editor layer** runs on every file open and answers _"is this file
+otelcol?"_. The result is a `languageId` assignment (or rejection). This is
+where the 5-rule detector fires, and where each editor differs.
+
+**Stage 2 — LSP layer** runs after the server accepts the file and answers
+_"what configset does it belong to?"_. The result is cross-file reference
+resolution (hover, go-to-definition, diagnostics). This stage is identical
+across all editors because it lives entirely in the shared server.
 
 ### Stage 1: the standard detection rules
 
