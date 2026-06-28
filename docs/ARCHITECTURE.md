@@ -141,3 +141,173 @@ Snippets use `\t` for the body indent so LSP clients expand it relative to the c
 - **Content sniffing** (VS Code): `src/extension/sniffer.ts` retags `*.yaml` files as `otelcol` when their content matches; the LSP server runs the same sniffer on the server side for editors that can't retag (`otelcol.sniffer.serverSide`).
 - **Semantic tokens**: VS Code consumes the LSP semantic-tokens response directly; JetBrains adds `OtelcolSemanticTokensColorsProvider` to map the LSP token types onto the user's theme palette (otherwise LSP4IJ renders them as plain text).
 - **Dev auto-restart**: both VS Code (`fs.watch` gated on `ExtensionMode.Development`) and JetBrains (`OtelcolDevWatcher` gated on an override path being set) watch `dist/server/server.js` and restart the client on change. Pairs with `npm run watch`. See [BUILD.md](BUILD.md#jetbrains) for the dev-loop details.
+
+---
+
+## File detection
+
+Whether a YAML file is classified as an OpenTelemetry Collector config and
+handed to the LSP involves two distinct stages that run at different points in
+time and in different processes:
+
+```
+STAGE 1 — EDITOR LAYER         STAGE 2 — LSP LAYER
+"Is this file otelcol?"         "What configset does it belong to?"
+Runs on every file open.        Runs after the server accepts the file.
+Result: languageId assignment.  Result: cross-file reference resolution.
+```
+
+### Stage 1: the standard detection rules
+
+The canonical detector lives in `src/common/yaml-sniff.ts`
+(`looksLikeOtelcol`) and `src/common/yaml-classify.ts` (`classifyYaml`).
+Every editor integration targets this behaviour — either by calling the shared
+code directly (server-side path) or by porting it to the editor's own language
+(JetBrains Kotlin port). Rules are applied in order; the first match wins.
+
+| #   | Rule                   | What is checked                                                                               |
+| --- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| 1   | **Directive marker**   | `# configset-otelcol:` comment present anywhere in the first 16 KB                            |
+| 2   | **Sidecar filename**   | Basename is exactly `configset.otelcol.yaml`                                                  |
+| 3a  | **Anchor structure**   | Top-level `service.pipelines:` key exists                                                     |
+| 3b  | **Fragment structure** | ≥ 2 top-level keys from `{receivers, processors, exporters, connectors, extensions, service}` |
+| 4   | **Sibling sidecar**    | A `configset.otelcol.yaml` file exists in the same directory                                  |
+| 5a  | **Sibling directive**  | A sibling YAML's `# configset-otelcol:` names this file                                       |
+| 5b  | **Sibling anchor**     | A sibling YAML has `service.pipelines:` at its root                                           |
+
+Rules 1–3 are pure content checks (fast, no filesystem I/O beyond reading the
+file itself). Rules 4–5 involve a bounded sibling scan (capped at 50 files)
+and only fire for single-key fragments (exactly 1 otelcol top-level key); a
+file with zero otelcol keys is rejected before the scan runs.
+
+### Stage 2: configset discovery (LSP, all editors)
+
+After the editor assigns `languageId = "otelcol"`, the server's
+`ConfigSetIndex` (`src/server/configset.ts`) uses the same `classifyYaml`
+primitive to stitch related files into a single virtual config set:
+
+- A file whose `classifyYaml` returns `hasPipelines: true` is the **anchor**.
+- Files named in its `# configset-otelcol:` directive are **explicit members**.
+- A `configset.otelcol.yaml` sidecar in the same directory lists members by
+  filename (rule-2 sidecar is the sidecar manifest, not a config fragment).
+- All YAML files in the workspace that share any of the above relationships
+  are unioned into one set model for hover, go-to-definition, find-references,
+  completion, and diagnostics.
+
+This stage is **editor-agnostic** — it runs identically in all four
+integrations because it lives entirely in the shared LSP server.
+
+### Per-editor coverage
+
+| Mechanism                                   |    VS Code     |   JetBrains    |          Zed          |  Helix  |
+| ------------------------------------------- | :------------: | :------------: | :-------------------: | :-----: |
+| `*.otelcol.yaml` / `*.otelcol.yml` glob     |       ✅       |       ✅       |          ✅           |   ✅    |
+| `first_line` / `firstLine` pattern (rule 1) |    ✅ auto     |   ✅ sniffer   | ✅ path-suffixed only |   ❌    |
+| Content sniff rules 3a–3b                   | ✅ client-side | ✅ client-side |        opt-in¹        | opt-in¹ |
+| Sibling scan rules 4–5                      | ✅ client-side | ✅ client-side |        opt-in¹        | opt-in¹ |
+| Configset stitching (stage 2)               |     ✅ LSP     |     ✅ LSP     |        ✅ LSP         | ✅ LSP  |
+
+¹ Enable `otelcol.attachToYaml: true` in LSP settings and route `*.yaml`
+files to the server (via `file_types` in `.zed/settings.json` or Helix's
+`language.file-types`). The server then runs `looksLikeOtelcol` server-side
+on every incoming YAML document and silently drops non-matching files.
+
+#### VS Code
+
+`package.json` registers `"firstLine": "^#\\s*(otelcol\\b|opentelemetry-collector\\b|configset-otelcol:)"` on the `otelcol` language, so VS Code itself applies rule 1 before any extension code runs. The extension additionally subscribes to `onLanguage:yaml` and calls `looksLikeOtelcol()` on every YAML document at open-time (`src/extension/extension.ts:37-46`), retagging matching files via `languages.setTextDocumentLanguage`. This is the only integration where **all five rules run client-side** with no extra user configuration.
+
+#### JetBrains
+
+`OtelcolFileType` implements `FileTypeIdentifiableByVirtualFile` — a JetBrains hook that runs before normal name matchers, allowing the plugin to claim a plain `*.yaml` file that the YAML plugin would otherwise own. `isMyFileType()` fast-paths glob-matched files (rules 2 + filename), then falls through to `looksLikeOtelcol()` — a **Kotlin port** of the TS function in `OtelcolFileType.kt:43-79`, explicitly kept in sync rule-by-rule. Full parity with VS Code; all five rules run client-side.
+
+#### Zed
+
+`languages/otelcol/config.toml` registers `path_suffixes` (rules 2 + filename) and `first_line_pattern` (rule 1). Zed only evaluates `first_line_pattern` on files already matched by `path_suffixes`, so a plain `config.yaml` with a `# configset-otelcol:` directive is **not** auto-detected by the extension alone. Rules 3–5 are unavailable client-side (no Zed API for runtime document reclassification). The server-side `attachToYaml` path fills the gap.
+
+#### Helix
+
+`editors/helix/languages.toml` registers `file-types` globs (`*.otelcol.yaml`, `*.otelcol.yml`) only. No `first-line-pattern` equivalent is configured. Detection is filename-only; the `# configset-otelcol:` directive and structural rules only take effect via the `attachToYaml` server-side path.
+
+---
+
+## LSP server delivery
+
+The server is a single esbuild bundle (`dist/server/server.js`) with one stdio
+entry point (`bin/otelcol-language-server.js`). How each editor obtains and
+launches it differs; all four eventually run the same bytes.
+
+### VS Code — bundled inside the `.vsix`
+
+`dist/server/server.js` is packed into the extension by `vsce`. At runtime
+`src/extension/extension.ts:120` locates it via
+`context.asAbsolutePath("dist/server/server.js")` and spawns it over IPC
+(the `vscode-languageclient` default transport). No Node binary resolution
+needed — VS Code supplies its own Node runtime for extension host processes.
+
+```
+.vsix
+└── dist/server/server.js   ← bundled by make bundle / vsce package
+Extension host (VS Code's Node) → require()s extension.js → spawns server.js over IPC
+```
+
+### JetBrains — bundled in the `.zip`, extracted to disk
+
+`make build-jetbrains` runs the Gradle `copyLanguageServer` task, which copies
+`dist/server/` into the plugin JAR under `language-server/`. On first use
+`OtelcolLspServerFactory.extractBundledServer()` extracts it to
+`~/.cache/JetBrains/<product>/otelcol-language-server/<version>/server/server.js`
+and writes a SHA-256 stamp; subsequent launches reuse the cache if the stamp
+matches. Node discovery uses `EnvironmentUtil` to read the **shell-inherited
+PATH** (GUI-launched IDEs on macOS/Linux otherwise see a stripped PATH that
+excludes Homebrew/nvm/pyenv-installed nodes):
+
+```
+Override priority:
+  PROP_COMMAND (-Dotelcol.lsp.command)  → full argv0, --stdio appended
+  PROP_NODE    (-Dotelcol.lsp.node)     → explicit node binary
+  shell PATH via EnvironmentUtil        → PathEnvironmentVariableUtil.findInPath("node")
+  literal "node"                        → inherits child process env (last resort)
+
+Server path priority:
+  PROP_SERVER  (-Dotelcol.lsp.server)   → dev: source-tree bundle
+  REG_SERVER_PATH (Help → Registry…)   → persistent user override
+  extractBundledServer()                → default: plugin-packaged copy
+```
+
+### Zed — npm auto-install via Zed's bundled Node
+
+`editors/zed/src/otelcol.rs` resolves the server in three tiers (first match
+wins). After resolution the server is always spawned with `--stdio`.
+
+```
+Tier 1: lsp.otelcol.binary.path in settings.json
+        → spawn that path directly (user-supplied args or default ["--stdio"])
+          Zed bypasses the WASM resolver entirely; `arguments` is required.
+
+Tier 2: worktree.which("otelcol-language-server")
+        → a globally-installed copy on PATH wins (npm i -g opentelemetry-collector-config)
+
+Tier 3: zed::npm_install_package("opentelemetry-collector-config", SERVER_VERSION)
+        → installs into the extension work dir on first use
+        → spawns zed::node_binary_path() with
+          ["node_modules/opentelemetry-collector-config/bin/otelcol-language-server.js", "--stdio"]
+        → status shown as "Checking for update…" / "Downloading…" in the LSP status bar
+        → falls back to a previously installed copy on transient network failure
+```
+
+`SERVER_VERSION` is `env!("CARGO_PKG_VERSION")` — the Rust crate version,
+which moves in lockstep with the npm package version via `prepare-release.sh`.
+This ensures each extension release pairs with the server it was tested
+against. The npm package name (`opentelemetry-collector-config`) differs from
+the bin name (`otelcol-language-server`), which is why `npm_install_package`
+must target the package rather than the binary.
+
+### Helix — external binary on PATH (user-managed)
+
+`editors/helix/languages.toml` sets `command = "otelcol-language-server"`.
+Helix resolves this via a plain `$PATH` lookup at startup; there is no
+download or extraction step. The user must have the npm package installed
+globally (`npm i -g opentelemetry-collector-config`) or have a local binary on
+PATH. No Node resolution is performed by the integration — Helix calls the
+shim directly as an executable (`#!/usr/bin/env node` shebangs work because
+the npm global install sets the executable bit).
