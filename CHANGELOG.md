@@ -9,13 +9,42 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- The Zed extension now installs the language server automatically. On first
+  use it fetches the `opentelemetry-collector-config` npm package into its work
+  directory and runs it with Zed's bundled Node — no manual `npm i -g` needed.
+  An explicit `lsp.otelcol.binary.path` or a server already on `PATH` still
+  take precedence.
+- Zed extension assets for the registry listing: `editors/zed/icon.svg` (parity
+  with the JetBrains plugin icon) and `editors/zed/LICENSE` (Apache-2.0,
+  required for the `path = "editors/zed"` registry submission). Both ship in the
+  `make package-zed` tarball.
+- First CI workflow (`.github/workflows/ci.yml`) running `make check` on push
+  and PR — lint, format-check, typecheck, audit, unit + per-editor tests
+  (including the Zed cargo suite and a packaged-tarball smoke), and packaging
+  dry-run.
+- `make test-zed-package` smoke-tests the packaged Zed tarball
+  (`scripts/zed-package-smoke.sh`): required contents, version match, and valid
+  WASM magic bytes. Wired into `test-editors`.
+
 ### Changed
+
+- The Zed extension version is now bumped in lockstep with the rest of the repo
+  (0.1.0 → 0.5.1). `scripts/prepare-release.sh` bumps
+  `editors/zed/{extension.toml,Cargo.toml}` alongside the other registries, and
+  a cargo test guards the match.
+- `make publish-zed` now prints the full `zed-industries/extensions` submission
+  runbook (fork, submodule, `path`/`version` entry, `pnpm sort-extensions`, PR)
+  instead of two vague lines.
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+
+- The Zed "server not found" error referenced the wrong npm package
+  (`vscode-otelcol`); the auto-install rewrite removes that path and the stale
+  message.
 
 ### Security
 

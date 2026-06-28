@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: make check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Makefile downloads mise and installs every pinned toolchain
+      # (Node, Rust + wasm32-wasip1, Java, Gradle, Helix, tree-sitter, …)
+      # into .ci-tools/. Cache that tree plus the per-ecosystem download
+      # caches so only the first run pays the install cost. Keyed on the
+      # version pins so a toolchain bump busts the cache automatically.
+      - name: Cache toolchains (.ci-tools)
+        uses: actions/cache@v4
+        with:
+          path: .ci-tools
+          key: ci-tools-${{ runner.os }}-${{ hashFiles('.mise.toml') }}
+
+      - name: Cache Cargo registry + Zed build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            editors/zed/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('editors/zed/Cargo.lock') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('editors/jetbrains/**/*.gradle*', 'editors/jetbrains/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      # Single quality gate — lint, format-check, typecheck, audit, unit +
+      # per-editor tests (incl. Zed cargo tests + packaged-tarball smoke),
+      # and packaging dry-run. Same target maintainers run locally. The
+      # Makefile installs npm deps with its pinned (mise-managed) Node as a
+      # prerequisite, so no separate `npm ci` step is needed.
+      - name: make check
+        run: make check

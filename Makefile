@@ -4,7 +4,7 @@
         publish publish-vscode publish-npm publish-jetbrains publish-zed publish-helix \
         release-guard release-patch release-minor release-major \
         check-versions upgrade-tools outdated test-stdio test-helix test-helix-integration test-jetbrains \
-        test-zed test-editors build-jetbrains build-zed build-editors
+        test-zed test-zed-package test-editors build-jetbrains build-zed build-editors
 
 # Runtime toolchains (node/rust/java/gradle/...) and npm CLI tools are all
 # pinned in .mise.toml and installed into .ci-tools/ by `make bootstrap`.
@@ -273,7 +273,10 @@ verify-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADL
 test-zed: .ci-tools/rust-wasm32-$(RUST_VERSION) ## Zed extension cargo tests (static TOML + query validation)
 	cd editors/zed && $(CARGO) test
 
-test-editors: test-helix test-vscode test-jetbrains test-zed test-stdio ## Run all per-editor suites + stdio smoke
+test-zed-package: package-zed ## Smoke-test the packaged Zed tarball (contents + version match)
+	scripts/zed-package-smoke.sh $(DIST_PKG)/otelcol-zed-$(VERSION).tar.gz $(VERSION)
+
+test-editors: test-helix test-vscode test-jetbrains test-zed test-zed-package test-stdio ## Run all per-editor suites + stdio smoke
 
 build-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Assemble JetBrains plugin distributable
 	cd editors/jetbrains && $(GRADLEW) assemble
@@ -351,10 +354,10 @@ package-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRAD
 	cd editors/jetbrains && $(GRADLEW) buildPlugin -x buildSearchableOptions
 	cp editors/jetbrains/build/distributions/*.zip $(DIST_PKG)/
 
-package-zed: .ci-tools/rust-wasm32-$(RUST_VERSION) | $(DIST_PKG) ## Zed extension tarball (release WASM + extension.toml + languages/)
+package-zed: .ci-tools/rust-wasm32-$(RUST_VERSION) | $(DIST_PKG) ## Zed extension tarball (release WASM + extension.toml + languages/ + icon + LICENSE)
 	cd editors/zed && $(CARGO) build --release --target wasm32-wasip1
 	tar czf $(DIST_PKG)/otelcol-zed-$(VERSION).tar.gz \
-	    -C editors/zed extension.toml languages \
+	    -C editors/zed extension.toml languages icon.svg LICENSE \
 	    -C target/wasm32-wasip1/release otelcol_zed.wasm
 
 package-helix: | $(DIST_PKG) ## Helix config + queries tarball (users extract into ~/.config/helix/)
@@ -407,10 +410,22 @@ publish-jetbrains: release-guard bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools
 	@test -n "$$JETBRAINS_MARKETPLACE_TOKEN" || { echo "JETBRAINS_MARKETPLACE_TOKEN not set (generate one at https://plugins.jetbrains.com/author/me/tokens)"; exit 1; }
 	cd editors/jetbrains && $(GRADLEW) -x buildSearchableOptions publishPlugin
 
-publish-zed: package-zed ## Print steps for submitting the Zed extension to zed-industries/extensions
-	@echo "Open a PR against https://github.com/zed-industries/extensions"
-	@echo "  - add/update the otelcol entry with version $(VERSION)"
-	@echo "  - users install via Zed's extension picker; tarball $(DIST_PKG)/otelcol-zed-$(VERSION).tar.gz is for reference"
+publish-zed: package-zed test-zed-package ## Print the runbook for submitting the Zed extension to zed-industries/extensions
+	@echo "Submit the Zed extension to the registry (one-time fork, then a PR per release):"
+	@echo "  1. Fork https://github.com/zed-industries/extensions to a personal account."
+	@echo "  2. git clone <your fork> && cd extensions && git submodule init && git submodule update"
+	@echo "  3. git submodule add https://github.com/otelery/otelcol-lang.git extensions/otelcol"
+	@echo "     (the whole repo is the submodule; the extension lives in the editors/zed/ subdir)"
+	@echo "  4. In extensions.toml add/update:"
+	@echo "       [otelcol]"
+	@echo "       submodule = \"extensions/otelcol\""
+	@echo "       path = \"editors/zed\""
+	@echo "       version = \"$(VERSION)\""
+	@echo "     (path requires editors/zed/LICENSE — Apache-2.0 — which is committed)"
+	@echo "  5. (cd extensions/otelcol && git checkout v$(VERSION)) then: git add extensions.toml extensions/otelcol"
+	@echo "  6. pnpm install && pnpm sort-extensions"
+	@echo "  7. Open a PR against zed-industries/extensions; CI builds the WASM and publishes on merge."
+	@echo "  Reference tarball (not uploaded; registry builds from source): $(DIST_PKG)/otelcol-zed-$(VERSION).tar.gz"
 
 publish-helix: package-helix ## Print install instructions for end-users
 	@echo "Helix has no central registry; ship $(DIST_PKG)/otelcol-helix-$(VERSION).tar.gz"
