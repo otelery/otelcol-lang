@@ -1,4 +1,0 @@
-# "staging" member: first definition of file/sampled.
-exporters:
-  file/sampled:
-    path: ./output/otel-collector-sampled.json

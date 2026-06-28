@@ -1,5 +1,0 @@
-service:
-  pipelines:
-    traces:
-      receivers: [otlp]
-      exporters: [file/sampled]
