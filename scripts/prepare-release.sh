@@ -110,10 +110,13 @@ fi
 
 # Sync the single version source across registries: root package.json drives
 # the VS Code extension + npm package; editors/jetbrains/gradle.properties
-# drives the JetBrains plugin. They MUST move in lockstep or `make publish`
-# will ship mismatched artefacts.
+# drives the JetBrains plugin; editors/zed/{extension.toml,Cargo.toml} drive the
+# Zed extension (which also installs the npm server at this exact version). They
+# MUST move in lockstep or `make publish` will ship mismatched artefacts.
 npm version "$VERSION" --no-git-tag-version --allow-same-version >/dev/null
 sed -i -E "s/^pluginVersion=.*/pluginVersion=${VERSION}/" editors/jetbrains/gradle.properties
+sed -i -E "s/^version = \".*\"/version = \"${VERSION}\"/" editors/zed/extension.toml
+sed -i -E "s/^version = \".*\"/version = \"${VERSION}\"/" editors/zed/Cargo.toml
 
 echo "prepare-release: running quality checks (make check)"
 if ! make check; then
@@ -121,7 +124,8 @@ if ! make check; then
   exit 1
 fi
 
-git add CHANGELOG.md package.json package-lock.json editors/jetbrains/gradle.properties
+git add CHANGELOG.md package.json package-lock.json editors/jetbrains/gradle.properties \
+  editors/zed/extension.toml editors/zed/Cargo.toml
 git commit -m "chore(release): ${VERSION}"
 git tag "v$VERSION"
 

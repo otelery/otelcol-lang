@@ -11,8 +11,21 @@ below.
 
 ## Pre-requisites
 
-You need the language server on `PATH` (or pointed at via Zed
-settings). Install from npm:
+**Zero-config:** on first use the extension installs the
+`opentelemetry-collector-config` npm package into its own work
+directory and runs it with Zed's bundled Node — nothing to install by
+hand.
+
+The extension resolves the server in this order (first match wins):
+
+1. `lsp.otelcol.binary.path` from your settings (local-dev override —
+   see [Pointing Zed at a local build](#pointing-zed-at-a-local-build)).
+2. `otelcol-language-server` on your `PATH` (e.g. a global
+   `npm i -g opentelemetry-collector-config`).
+3. The auto-installed npm copy (the default).
+
+So a global install is optional — use it only if you want one shared
+server across editors:
 
 ```sh
 npm i -g opentelemetry-collector-config
@@ -248,7 +261,9 @@ filetype detection snippet above, the status bar should read
 editors/zed/
   extension.toml              # grammar pin, language-server binding
   Cargo.toml
-  src/otelcol.rs              # Rust → WASM, locates and spawns the LSP
+  icon.svg                    # extension mark (shipped for parity/forward-compat)
+  LICENSE                     # Apache-2.0 (required for the registry submodule path)
+  src/otelcol.rs              # Rust → WASM, locates/installs and spawns the LSP
   languages/otelcol/
     config.toml               # language metadata, path_suffixes, brackets
     highlights.scm            # YAML highlight queries (vendored)
@@ -287,11 +302,6 @@ make build-zed
   Until one ships, the `injections.scm` query is inert. OTTL
   diagnostics still surface if `ottl-lsp` is configured on the
   server side.
-- **No npm auto-install yet.** The npm package is
-  `opentelemetry-collector-config` (not `otelcol-language-server`),
-  so Zed cannot `npm_install_package` it on first use. Use the
-  `lsp.otelcol.binary.path` setting or a global install
-  (`npm i -g opentelemetry-collector-config`).
 
 ## Notes
 
