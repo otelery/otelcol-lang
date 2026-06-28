@@ -204,7 +204,7 @@ integrations because it lives entirely in the shared LSP server.
 | Mechanism                                   |    VS Code     |   JetBrains    |          Zed          |  Helix  |
 | ------------------------------------------- | :------------: | :------------: | :-------------------: | :-----: |
 | `*.otelcol.yaml` / `*.otelcol.yml` glob     |       ✅       |       ✅       |          ✅           |   ✅    |
-| `first_line` / `firstLine` pattern (rule 1) |    ✅ auto     |   ✅ sniffer   | ✅ path-suffixed only |   ❌    |
+| `first_line` / `firstLine` pattern (rule 1) |  ✅ built-in²  |   ✅ sniffer   | ✅ path-suffixed only |   ❌    |
 | Content sniff rules 3a–3b                   | ✅ client-side | ✅ client-side |        opt-in¹        | opt-in¹ |
 | Sibling scan rules 4–5                      | ✅ client-side | ✅ client-side |        opt-in¹        | opt-in¹ |
 | Configset stitching (stage 2)               |     ✅ LSP     |     ✅ LSP     |        ✅ LSP         | ✅ LSP  |
@@ -213,6 +213,10 @@ integrations because it lives entirely in the shared LSP server.
 files to the server (via `file_types` in `.zed/settings.json` or Helix's
 `language.file-types`). The server then runs `looksLikeOtelcol` server-side
 on every incoming YAML document and silently drops non-matching files.
+
+² VS Code evaluates the `firstLine` regex declared in `package.json` itself,
+before any extension code runs. No sniffer call is needed for rule 1 — the
+editor platform handles it as part of language association.
 
 #### VS Code
 
