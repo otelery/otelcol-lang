@@ -30,6 +30,9 @@ jobs:
           path: .ci-tools
           key: ci-tools-${{ runner.os }}-${{ hashFiles('.mise.toml') }}
 
+      # Cargo.lock is gitignored (the Zed registry regenerates it), so key on
+      # the tracked Cargo.toml instead — an empty hash would pin a constant key
+      # that never re-saves, freezing the cache on the first run.
       - name: Cache Cargo registry + Zed build
         uses: actions/cache@v4
         with:
@@ -37,9 +40,20 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             editors/zed/target
-          key: cargo-${{ runner.os }}-${{ hashFiles('editors/zed/Cargo.lock') }}
+          key: cargo-${{ runner.os }}-${{ hashFiles('editors/zed/Cargo.toml') }}
           restore-keys: |
             cargo-${{ runner.os }}-
+
+      # npm download cache. `make check` runs `npm install` (via the typecheck
+      # prerequisite), so caching ~/.npm keyed on the lockfile avoids re-fetching
+      # every dependency each run.
+      - name: Cache npm downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
 
       - name: Cache Gradle
         uses: actions/cache@v4
