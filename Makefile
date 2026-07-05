@@ -1,7 +1,7 @@
 .PHONY: help bootstrap tools install build bundle test test-unit test-integration test-vscode test-vscode-packaged \
         lint lint-fix shellcheck format format-check typecheck audit package-check check \
         clean distclean package package-vscode package-jetbrains package-zed package-helix \
-        publish publish-vscode publish-npm publish-jetbrains publish-zed publish-helix \
+        publish publish-vscode publish-npm publish-jetbrains publish-zed publish-zed-repo publish-helix \
         release-guard release-patch release-minor release-major \
         check-versions upgrade-tools outdated test-stdio test-helix test-helix-integration test-jetbrains \
         test-zed test-zed-package test-editors build-jetbrains build-zed build-editors
@@ -382,11 +382,11 @@ release-guard: ## Refuse to publish unless HEAD is exactly the vX.Y.Z tag matchi
 	  git rev-parse -q --verify "refs/tags/$$tag" >/dev/null || { echo "release-guard: tag $$tag not found — run 'make release-patch|release-minor|release-major' first"; exit 1; }; \
 	  test "$$(git rev-parse HEAD)" = "$$(git rev-parse "$$tag^{commit}")" || { echo "release-guard: HEAD is not at $$tag — checkout the release commit before publishing"; exit 1; }
 
-publish: release-guard publish-vscode publish-npm publish-jetbrains ## Publish to VS Code Marketplace, npm, and JetBrains Marketplace. Prints reminder for zed/helix.
+publish: release-guard publish-vscode publish-npm publish-jetbrains publish-zed-repo ## Publish to VS Code Marketplace, npm, JetBrains Marketplace, and otelery/zed-otelcol. Prints reminder for helix.
 	@echo
-	@echo "==> Reminder: Zed and Helix have manual steps:"
-	@echo "      make publish-zed         # open PR against zed-industries/extensions"
+	@echo "==> Reminder: Helix has manual steps:"
 	@echo "      make publish-helix       # tarball is for end-users to extract"
+	@echo "==> Zed: otelery/zed-otelcol is up to date. Open a PR at zed-industries/extensions to bump the version."
 
 publish-vscode: release-guard check ## Publish current version to the VS Code Marketplace (requires VSCE_PAT or `vsce login otelery`)
 	# Same README swap as package-vscode — vsce publish re-packages internally.
@@ -414,7 +414,7 @@ publish-zed: package-zed test-zed-package ## Print the runbook for submitting th
 	@echo "Submit the Zed extension to the registry (one-time fork, then a PR per release):"
 	@echo "  1. Fork https://github.com/zed-industries/extensions to a personal account."
 	@echo "  2. git clone <your fork> && cd extensions && git submodule init && git submodule update"
-	@echo "  3. git submodule add https://github.com/otelery/otelcol-lang.git extensions/otelcol"
+	@echo "  3. git submodule add https://github.com/otelery/otelcol-zed.git extensions/otelcol"
 	@echo "     (the whole repo is the submodule; the extension lives in the editors/zed/ subdir)"
 	@echo "  4. In extensions.toml add/update:"
 	@echo "       [otelcol]"
@@ -426,6 +426,20 @@ publish-zed: package-zed test-zed-package ## Print the runbook for submitting th
 	@echo "  6. pnpm install && pnpm sort-extensions"
 	@echo "  7. Open a PR against zed-industries/extensions; CI builds the WASM and publishes on merge."
 	@echo "  Reference tarball (not uploaded; registry builds from source): $(DIST_PKG)/otelcol-zed-$(VERSION).tar.gz"
+
+publish-zed-repo: release-guard ## Sync editors/zed/ to otelery/otelcol-zed on GitHub and push tag v$(VERSION)
+	$(eval ZED_REPO_DIR := $(shell mktemp -d))
+	gh repo view otelery/otelcol-zed --json name >/dev/null 2>&1 || \
+	  gh repo create otelery/otelcol-zed --public --description "Zed extension for OpenTelemetry Collector config"
+	git clone https://github.com/otelery/otelcol-zed.git $(ZED_REPO_DIR)
+	rsync -av --delete --exclude=target/ --exclude=.git/ editors/zed/ $(ZED_REPO_DIR)/
+	git -C $(ZED_REPO_DIR) add -A
+	git -C $(ZED_REPO_DIR) diff --cached --quiet || \
+	  git -C $(ZED_REPO_DIR) commit -m "release: v$(VERSION)"
+	git -C $(ZED_REPO_DIR) tag -f v$(VERSION)
+	git -C $(ZED_REPO_DIR) push origin HEAD
+	git -C $(ZED_REPO_DIR) push origin v$(VERSION) --force
+	rm -rf $(ZED_REPO_DIR)
 
 publish-helix: package-helix ## Print install instructions for end-users
 	@echo "Helix has no central registry; ship $(DIST_PKG)/otelcol-helix-$(VERSION).tar.gz"
