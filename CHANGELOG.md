@@ -76,6 +76,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+- Updated anyhow in zed/Cargo.lock due to security finding
+
 ## [0.5.1] - 2026-06-26
 
 ### Fixed
