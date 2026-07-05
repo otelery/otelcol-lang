@@ -70,5 +70,9 @@ jobs:
       # and packaging dry-run. Same target maintainers run locally. The
       # Makefile installs npm deps with its pinned (mise-managed) Node as a
       # prerequisite, so no separate `npm ci` step is needed.
+      #
+      # Run under xvfb: the VS Code integration tests (`test-vscode`) launch a
+      # real VS Code/Electron instance, which needs a display and otherwise
+      # segfaults on the headless runner. xvfb is preinstalled on ubuntu-latest.
       - name: make check
-        run: make check
+        run: xvfb-run -a make check
