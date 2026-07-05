@@ -25,6 +25,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `make test-zed-package` smoke-tests the packaged Zed tarball
   (`scripts/zed-package-smoke.sh`): required contents, version match, and valid
   WASM magic bytes. Wired into `test-editors`.
+- `make publish-zed-repo` target syncs the Zed extension from `editors/zed/`
+  into the standalone `otelery/otelcol-zed` registry repository, commits,
+  tags, and pushes — required by the Zed extension registry submission process
+  which expects extension.toml at the repo root.
 
 ### Changed
 
@@ -35,6 +39,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `make publish-zed` now prints the full `zed-industries/extensions` submission
   runbook (fork, submodule, `path`/`version` entry, `pnpm sort-extensions`, PR)
   instead of two vague lines.
+- The Zed extension's workspace configuration now detects YAML files under
+  `examples/` and `test/` directories as OpenTelemetry Collector files, allowing
+  generic-named fragments (base.yaml, pipelines.yaml, receivers.yaml,
+  exporters.yaml) to open with the extension's language and syntax highlighting
+  instead of plain YAML.
 
 ### Deprecated
 
@@ -49,6 +58,19 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   exec'ing it directly, for both a `lsp.otelcol.binary.path` override and a
   `PATH` hit. Pointing either at the package's `#!/usr/bin/env node` bin shim
   previously failed to spawn because Zed does not honour the shebang.
+- The `typecheck` target now correctly depends on `$(NPM_INSTALL_STAMP)`, so
+  TypeScript definitions are available on clean CI runners. Previously it would
+  fail with TS2688 (cannot find type definition file for 'node') when
+  `node_modules` was absent, though it passed locally due to developer caches.
+- CI linter warnings in completion.ts (String.includes → Set.has for
+  unicorn/prefer-set-has) and yaml-classify.ts (parseDocument logLevel:"silent"
+  to suppress YAML collection-as-key warnings).
+- Headed VS Code tests in CI now run under xvfb-run to provide a virtual
+  framebuffer; previously Electron failed with "Missing X server" and SIGSEGV.
+- CI npm download cache was not being reused due to a missing
+  `~/.npm` cache declaration. Added cache keyed on package-lock.json. Also fixed
+  the Cargo cache key, which was hashing the gitignored Cargo.lock instead of
+  the tracked Cargo.toml, causing the cache to freeze on first use.
 
 ### Security
 
