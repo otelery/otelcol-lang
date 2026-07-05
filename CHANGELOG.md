@@ -48,6 +48,9 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   instead of plain YAML.
 - `editors/zed/Cargo.lock` is now tracked in git to keep Zed extension
   dependency resolution reproducible across local builds and CI.
+- `scripts/prepare-release.sh` now refreshes `editors/zed/Cargo.lock` after
+  bumping `editors/zed/Cargo.toml` and includes the lockfile in the release
+  commit.
 
 ### Deprecated
 
