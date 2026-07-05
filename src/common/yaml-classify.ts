@@ -74,7 +74,7 @@ export function classifyYaml(text: string): YamlClassification {
 
   let js: unknown;
   try {
-    js = parseDocument(head).toJS();
+    js = parseDocument(head, { logLevel: "silent" }).toJS();
   } catch {
     return { ...EMPTY, directive };
   }
