@@ -70,6 +70,12 @@ if git rev-parse --verify --quiet "refs/tags/v$VERSION" >/dev/null; then
   exit 1
 fi
 
+echo "prepare-release: running quality checks (make check)"
+if ! make check; then
+  echo "prepare-release: quality checks failed; aborting release commit/tag." >&2
+  exit 1
+fi
+
 # Remove empty markdown level-3 subsections (e.g. "### Deprecated")
 # when they contain only blank lines before the next ###/## heading or EOF.
 sed -z -E -i '

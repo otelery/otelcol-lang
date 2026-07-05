@@ -29,6 +29,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   into the standalone `otelery/otelcol-zed` registry repository, commits,
   tags, and pushes — required by the Zed extension registry submission process
   which expects extension.toml at the repo root.
+- Add `make check` to prepare release script to run the quality gates before
+  modifying release files.
 
 ### Changed
 
