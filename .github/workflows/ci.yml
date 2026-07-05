@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: make check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Makefile downloads mise and installs every pinned toolchain
+      # (Node, Rust + wasm32-wasip1, Java, Gradle, Helix, tree-sitter, …)
+      # into .ci-tools/. Cache that tree plus the per-ecosystem download
+      # caches so only the first run pays the install cost. Keyed on the
+      # version pins so a toolchain bump busts the cache automatically.
+      - name: Cache toolchains (.ci-tools)
+        uses: actions/cache@v4
+        with:
+          path: .ci-tools
+          key: ci-tools-${{ runner.os }}-${{ hashFiles('.mise.toml') }}
+
+      # Cargo.lock is gitignored (the Zed registry regenerates it), so key on
+      # the tracked Cargo.toml instead — an empty hash would pin a constant key
+      # that never re-saves, freezing the cache on the first run.
+      - name: Cache Cargo registry + Zed build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            editors/zed/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('editors/zed/Cargo.toml') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-
+
+      # npm download cache. `make check` runs `npm install` (via the typecheck
+      # prerequisite), so caching ~/.npm keyed on the lockfile avoids re-fetching
+      # every dependency each run.
+      - name: Cache npm downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('editors/jetbrains/**/*.gradle*', 'editors/jetbrains/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      # Single quality gate — lint, format-check, typecheck, audit, unit +
+      # per-editor tests (incl. Zed cargo tests + packaged-tarball smoke),
+      # and packaging dry-run. Same target maintainers run locally. The
+      # Makefile installs npm deps with its pinned (mise-managed) Node as a
+      # prerequisite, so no separate `npm ci` step is needed.
+      #
+      # Run under xvfb: the VS Code integration tests (`test-vscode`) launch a
+      # real VS Code/Electron instance, which needs a display and otherwise
+      # segfaults on the headless runner. xvfb is preinstalled on ubuntu-latest.
+      - name: make check
+        run: xvfb-run -a make check

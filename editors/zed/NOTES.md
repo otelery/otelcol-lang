@@ -65,9 +65,18 @@ retagging. The escape hatch is the `# configset-otelcol:` directive or naming fi
 
 ### Rust extension entry (`src/otelcol.rs`)
 
+**Status (shipped):** `language_server_command` now resolves in three tiers —
+(1) `lsp.otelcol.binary.path` override, (2) `worktree.which()` on PATH, (3)
+auto-install the `opentelemetry-collector-config` npm package via
+`zed::npm_install_package` and run its bin shim with `zed::node_binary_path()`.
+Tier 3 is the zero-config default; the npm package name differs from the bin
+name (`otelcol-language-server`), so we install the package explicitly and
+resolve the shim path ourselves. The original PATH-only sketch below is kept
+for context.
+
 Zed's extension API requires a `LanguageServer` impl that returns the binary
-to spawn. The cleanest path is to require the user to install
-`otelcol-language-server` via `npm i -g` and look it up on PATH:
+to spawn. The original sketch required the user to install
+`otelcol-language-server` via `npm i -g` and looked it up on PATH:
 
 ```rust
 use zed_extension_api::{self as zed, Result};
@@ -131,13 +140,22 @@ Two stages:
    standalone scaffold, point Zed at it via Install Dev Extension. Iterate
    on grammar + LSP.
 2. **Publish:** submit to [`zed-industries/extensions`](https://github.com/zed-industries/extensions)
-   monorepo as a Git submodule. Zed auto-builds Rust extensions to WASM
-   server-side. Tree-sitter grammars are pulled from the URL/commit pinned
-   in `extension.toml`.
+   monorepo as a Git submodule. The whole `otelcol-lang` repo is the
+   submodule; the registry `extensions.toml` entry sets `path = "editors/zed"`
+   to point at this subdirectory, which requires a license at that path —
+   hence `editors/zed/LICENSE` (Apache-2.0). Zed auto-builds Rust extensions to
+   WASM server-side. Tree-sitter grammars are pulled from the URL/commit pinned
+   in `extension.toml`. `make publish-zed` prints the full runbook.
 
-LSP binary distribution is decoupled from the extension itself —
-`otelcol-language-server` must already be on the user's PATH (npm global
-install). Document this as a prereq in the extension README.
+LSP binary distribution is decoupled from the extension itself, but the
+extension no longer requires a manual install: on first use it installs the
+`opentelemetry-collector-config` npm package into its work dir and runs it with
+Zed's bundled Node (PATH and `binary.path` still take precedence). See
+`docs/investigations/zed-finalize.md`.
+
+**Icon:** `editors/zed/icon.svg` (shared OpenTelemetry mark) ships in the
+package tarball for parity with the JetBrains plugin. Zed's `extension.toml`
+has no `icon` field today, so it is not referenced — kept for forward-compat.
 
 ## Open questions
 

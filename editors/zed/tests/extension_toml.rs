@@ -33,6 +33,23 @@ fn language_server_languages_match_config() {
 }
 
 #[test]
+fn version_is_lockstep_with_crate() {
+    // The extension version, the Cargo crate version, and the npm server
+    // version all move together (scripts/prepare-release.sh bumps them as a
+    // unit). `env!("CARGO_PKG_VERSION")` is the Cargo.toml side; assert
+    // extension.toml agrees so a half-applied bump fails the suite. The Rust
+    // extension installs the npm server at exactly CARGO_PKG_VERSION, so a
+    // mismatch here would ship an extension paired with the wrong server.
+    let v = extension_toml();
+    assert_eq!(
+        v["version"].as_str(),
+        Some(env!("CARGO_PKG_VERSION")),
+        "extension.toml version must match Cargo.toml (lockstep release); \
+         run scripts/prepare-release.sh to bump both"
+    );
+}
+
+#[test]
 fn declares_yaml_grammar() {
     // Zed extensions can't reference the editor's built-in YAML grammar —
     // every tree-sitter grammar a language config names must be declared

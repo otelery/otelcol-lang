@@ -17,6 +17,8 @@ import {
 } from "./hover";
 import type { SetModel } from "./set-model";
 
+const FLOW_OPENERS = new Set(["[", "{"]);
+
 const PARENT_TO_CLASS: Record<string, ComponentClass> = {
   receivers: "receiver",
   processors: "processor",
@@ -53,7 +55,7 @@ export function completion(
   const colonIdx = lineToCursor.lastIndexOf(":");
   if (colonIdx >= 0) {
     const after = lineToCursor.slice(colonIdx + 1);
-    if (!after.includes("[") && !after.includes("{")) return [];
+    if (![...after].some((c) => FLOW_OPENERS.has(c))) return [];
   }
 
   const segs = pathAtPosition(doc.text, pos);

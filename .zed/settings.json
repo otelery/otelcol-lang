@@ -1,0 +1,15 @@
+{
+  // Force every YAML under examples/ to the extension's language, so
+  // generic-named fragments (base.yaml, pipelines.yaml, receivers.yaml,
+  // exporters.yaml, ...) are detected without renaming or a directive.
+  // Zed has no client-side content classifier, so this glob is the
+  // documented escape hatch (editors/zed/README.md "Filetype detection").
+  "file_types": {
+    "OpenTelemetry Collector": [
+      "**/examples/**/*.yaml",
+      "**/examples/**/*.yml",
+      "**/test/**/*.yaml",
+      "**/test/**/*.yml"
+    ]
+  }
+}
