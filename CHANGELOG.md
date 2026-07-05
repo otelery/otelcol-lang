@@ -44,6 +44,8 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   generic-named fragments (base.yaml, pipelines.yaml, receivers.yaml,
   exporters.yaml) to open with the extension's language and syntax highlighting
   instead of plain YAML.
+- `editors/zed/Cargo.lock` is now tracked in git to keep Zed extension
+  dependency resolution reproducible across local builds and CI.
 
 ### Deprecated
 

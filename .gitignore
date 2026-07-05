@@ -21,7 +21,6 @@ editors/jetbrains/build/
 editors/jetbrains/bin/
 editors/jetbrains/.gradle/
 editors/zed/target/
-editors/zed/Cargo.lock
 # Vendored tree-sitter-yaml grammar (built locally for the Zed extension).
 editors/zed/grammars/
 # Built tree-sitter-yaml WASM artifact produced by the Zed extension build.
