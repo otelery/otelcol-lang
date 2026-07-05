@@ -45,6 +45,10 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The Zed "server not found" error referenced the wrong npm package
   (`vscode-otelcol`); the auto-install rewrite removes that path and the stale
   message.
+- The Zed extension now runs a `.js` server target through Node instead of
+  exec'ing it directly, for both a `lsp.otelcol.binary.path` override and a
+  `PATH` hit. Pointing either at the package's `#!/usr/bin/env node` bin shim
+  previously failed to spawn because Zed does not honour the shebang.
 
 ### Security
 

@@ -287,8 +287,7 @@ wins). After resolution the server is always spawned with `--stdio`.
 
 ```
 Tier 1: lsp.otelcol.binary.path in settings.json
-        → spawn that path directly (user-supplied args or default ["--stdio"])
-          Zed bypasses the WASM resolver entirely; `arguments` is required.
+        → spawn that path (user-supplied args or default ["--stdio"])
 
 Tier 2: worktree.which("otelcol-language-server")
         → a globally-installed copy on PATH wins (npm i -g opentelemetry-collector-config)
@@ -300,6 +299,12 @@ Tier 3: zed::npm_install_package("opentelemetry-collector-config", SERVER_VERSIO
         → status shown as "Checking for update…" / "Downloading…" in the LSP status bar
         → falls back to a previously installed copy on transient network failure
 ```
+
+Tiers 1 and 2 share one command builder: a resolved target ending in `.js`
+(the package's raw bin shim, whether from the `binary.path` override or a
+PATH hit) is spawned through `zed::node_binary_path()` with the script as the
+first argument, because Zed runs the command directly and does not honour the
+shim's `#!/usr/bin/env node` shebang. A native executable is spawned as-is.
 
 `SERVER_VERSION` is `env!("CARGO_PKG_VERSION")` — the Rust crate version,
 which moves in lockstep with the npm package version via `prepare-release.sh`.

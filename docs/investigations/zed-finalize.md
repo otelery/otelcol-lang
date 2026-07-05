@@ -28,6 +28,13 @@ first match wins:
    (`node_modules/opentelemetry-collector-config/bin/otelcol-language-server.js`)
    with Zed's bundled Node (`zed::node_binary_path()`) and `--stdio`.
 
+Tiers 1 and 2 share one command builder: a resolved target ending in `.js`
+(the raw bin shim, from either the `binary.path` override or a `PATH` hit) is
+run through `zed::node_binary_path()` with the script as the first argument,
+because Zed spawns the command without honouring its `#!/usr/bin/env node`
+shebang. The override path matters in practice: a `binary.path` pointed at the
+shim `.js` would otherwise fail to spawn with no obvious cause.
+
 `set_language_server_installation_status` drives the `Checking for
 update…` / `Downloading…` UI; a failed install falls back to any
 previously-installed copy before erroring.
