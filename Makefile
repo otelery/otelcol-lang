@@ -304,7 +304,7 @@ format: .ci-tools/node-$(NODE_VERSION) ## Auto-format files in place (oxfmt --wr
 format-check: .ci-tools/node-$(NODE_VERSION) ## Verify formatting (oxfmt --check); non-zero on diff
 	$(OXFMT) --check .
 
-typecheck: .ci-tools/node-$(NODE_VERSION) ## TypeScript type check (tsc --noEmit) for server + VS Code extension
+typecheck: $(NPM_INSTALL_STAMP) ## TypeScript type check (tsc --noEmit) for server + VS Code extension
 	$(TSC) --noEmit -p .
 	$(TSC) --noEmit -p editors/vscode
 
