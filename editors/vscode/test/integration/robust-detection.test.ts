@@ -63,7 +63,7 @@ describe("Robust Detection Integration", () => {
   // Checked-in fixture: an anchor with a blank line inside `service:`
   // (between `telemetry:` and `pipelines:`) used to break the old regex
   // detector. Exercises the same VS Code retag pathway F5 uses.
-  // Compiled to out/test/integration/robust-detection.test.js — 3 levels
+  // Compiled to out/test/integration/robust-detection.test.js - 3 levels
   // up lands at the repo root.
   const BLANK_LINE_DIR = path.resolve(
     __dirname,

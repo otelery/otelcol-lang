@@ -54,7 +54,7 @@ export PATH             := $(CURDIR)/.ci-tools/bin:$(PATH)
 MISE          := $(CURDIR)/.ci-tools/bin/mise
 MISE_EXEC     := $(MISE) exec --
 
-# Tool shorthands — every command goes through `mise exec` so the pinned
+# Tool shorthands - every command goes through `mise exec` so the pinned
 # .ci-tools/ versions win over anything in $PATH.
 TSC          := $(MISE_EXEC) tsc
 OXLINT       := $(MISE_EXEC) oxlint
@@ -127,7 +127,7 @@ MISE_URL := https://github.com/jdx/mise/releases/download/v$(MISE_VERSION)/mise-
 	@touch $@
 
 # Per-tool sentinels. Same shape for every tool; the prerequisite on .mise.toml
-# is belt-and-suspenders — version-in-filename already invalidates on bump.
+# is belt-and-suspenders - version-in-filename already invalidates on bump.
 .ci-tools/node-$(NODE_VERSION): .ci-tools/mise-$(MISE_VERSION) .mise.toml
 	@rm -f .ci-tools/node-*
 	$(MISE) install node@$(NODE_VERSION)
@@ -167,7 +167,7 @@ MISE_URL := https://github.com/jdx/mise/releases/download/v$(MISE_VERSION)/mise-
 	$(MISE) install tree-sitter@$(TS_VERSION)
 	@touch $@
 
-# npm CLI tool sentinels — versions come from .mise.toml "npm:…" entries.
+# npm CLI tool sentinels - versions come from .mise.toml "npm:…" entries.
 .ci-tools/oxlint-$(OXLINT_VERSION): .ci-tools/node-$(NODE_VERSION) .mise.toml
 	@rm -f .ci-tools/oxlint-*
 	$(MISE) install npm:oxlint@$(OXLINT_VERSION)
@@ -205,11 +205,11 @@ MISE_URL := https://github.com/jdx/mise/releases/download/v$(MISE_VERSION)/mise-
 
 # --- Project targets ----------------------------------------------------------
 
-# node_modules sentinel — touched after every successful `npm install`. Any
+# node_modules sentinel - touched after every successful `npm install`. Any
 # target needing project deps (esbuild, vsce, tsc against vscode types, …)
 # depends on this; npm install only re-runs when package.json or
 # package-lock.json change. distclean wipes .ci-tools/ which forces a fresh
-# install. Don't depend on node_modules/ mtime — npm doesn't bump it reliably.
+# install. Don't depend on node_modules/ mtime - npm doesn't bump it reliably.
 NPM_INSTALL_STAMP := .ci-tools/npm-install.stamp
 
 $(NPM_INSTALL_STAMP): package.json package-lock.json | .ci-tools/node-$(NODE_VERSION)
@@ -222,7 +222,7 @@ build: $(NPM_INSTALL_STAMP) ## Compile TS to out/ + copy schemas (for unit tests
 	$(TSC) -p .
 	$(NODE) scripts/copy-schemas.mjs
 
-bundle: $(NPM_INSTALL_STAMP) ## Bundle extension + server with esbuild to dist/ (shared by all editors + integration tests)
+bundle: $(NPM_INSTALL_STAMP) ## Bundle extension + server with esbuild to editors/vscode/dist/ (shared by all editors + integration tests)
 	$(NODE) esbuild.js --production
 
 test: test-unit test-editors ## Run unit + per-editor tests (all editors: VS Code, JetBrains, Helix, Zed)
@@ -235,7 +235,7 @@ test-vscode: bundle ## VS Code Extension Host integration tests (~30s)
 	$(TSC) -p editors/vscode/tsconfig.test.json
 	$(VSCODE_TEST) --config editors/vscode/.vscode-test.mjs
 
-test-integration: test-vscode ## Deprecated alias for test-vscode — remove after one release
+test-integration: test-vscode ## Deprecated alias for test-vscode - remove after one release
 
 test-vscode-packaged: package-vscode ## VS Code Extension Host tests against the packaged .vsix (catches .vscodeignore regressions)
 	# Extract the just-built .vsix into a temp dir and point vscode-test at
@@ -318,7 +318,7 @@ audit: .ci-tools/osv-scanner-$(OSV_SCANNER_VERSION) ## Vulnerability scan via os
 	  .
 
 package-check: bundle ## Dry-run VSIX packaging (vsce ls); catches missing files
-	$(VSCE) ls
+	cd editors/vscode && $(VSCE) ls
 
 check: lint shellcheck format-check typecheck audit test package-check ## Run all quality gates (CI entry-point)
 
@@ -327,7 +327,7 @@ check: lint shellcheck format-check typecheck audit test package-check ## Run al
 # is the umbrella. `make publish` uploads VS Code + npm + JetBrains; Zed/Helix
 # registry steps remain manual (see the publish section and docs/RELEASING.md).
 DIST_PKG := dist/packages
-# Parse without invoking node — Make evaluates $(shell ...) at parse time, before
+# Parse without invoking node - Make evaluates $(shell ...) at parse time, before
 # bootstrap may have installed the pinned node. Matches the first `"version": "…"`
 # pair in package.json.
 VERSION  := $(shell awk -F'"' '/^[[:space:]]*"version"[[:space:]]*:/{print $$4; exit}' package.json)
@@ -338,17 +338,7 @@ $(DIST_PKG):
 package: package-vscode package-jetbrains package-zed package-helix ## Build every editor's distributable into dist/packages/
 
 package-vscode: bundle | $(DIST_PKG) ## VS Code .vsix → dist/packages/
-	# vsce reads README.md and package.json from the repo root. Swap in:
-	#   - docs/dist/vscode-readme.md as README.md
-	#   - editors/vscode/package.json as package.json (VS Code manifest)
-	# `trap` guarantees restore on Ctrl-C or failure.
-	@set -e; \
-	  cp README.md .README.md.vsce-bak; \
-	  cp package.json .package.json.vsce-bak; \
-	  trap 'mv .README.md.vsce-bak README.md; mv .package.json.vsce-bak package.json' EXIT INT TERM; \
-	  cp docs/dist/vscode-readme.md README.md; \
-	  cp editors/vscode/package.json package.json; \
-	  $(VSCE) package --out $(DIST_PKG)/
+	cd editors/vscode && $(VSCE) package --out $(CURDIR)/$(DIST_PKG)/
 
 package-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) | $(DIST_PKG) ## JetBrains plugin .zip → dist/packages/
 	# buildSearchableOptions launches a headless IDE to build a search index;
@@ -368,22 +358,22 @@ package-helix: | $(DIST_PKG) ## Helix config + queries tarball (users extract in
 	    -C editors/helix languages.toml runtime
 
 # --- publish ------------------------------------------------------------------
-# PUBLISH ships the version that PREPARE already committed and tagged — it never
+# PUBLISH ships the version that PREPARE already committed and tagged - it never
 # bumps a version itself (that's release-patch/minor/major, see above). One
 # tagged commit fans out to three registries that MUST stay in lockstep:
-#   - VS Code Marketplace (`vsce publish`)  — the bundled extension
-#   - npm (`npm publish`)                   — the standalone
+#   - VS Code Marketplace (`vsce publish`)  - the bundled extension
+#   - npm (`npm publish`)                   - the standalone
 #       otelcol-language-server binary used by Zed / Helix / JetBrains
-#   - JetBrains Marketplace (`publishPlugin`) — driven by gradle.properties
+#   - JetBrains Marketplace (`publishPlugin`) - driven by gradle.properties
 # If these diverge the JetBrains/Helix/Zed editors get a stale LSP, so every
 # publish target goes through `release-guard` first. Zed / Helix registry
 # uploads aren't automated; their targets print the manual steps.
 
 release-guard: ## Refuse to publish unless HEAD is exactly the vX.Y.Z tag matching package.json
 	@tag="v$(VERSION)"; \
-	  git diff --quiet && git diff --cached --quiet || { echo "release-guard: working tree dirty — commit or stash first"; exit 1; }; \
-	  git rev-parse -q --verify "refs/tags/$$tag" >/dev/null || { echo "release-guard: tag $$tag not found — run 'make release-patch|release-minor|release-major' first"; exit 1; }; \
-	  test "$$(git rev-parse HEAD)" = "$$(git rev-parse "$$tag^{commit}")" || { echo "release-guard: HEAD is not at $$tag — checkout the release commit before publishing"; exit 1; }
+	  git diff --quiet && git diff --cached --quiet || { echo "release-guard: working tree dirty - commit or stash first"; exit 1; }; \
+	  git rev-parse -q --verify "refs/tags/$$tag" >/dev/null || { echo "release-guard: tag $$tag not found - run 'make release-patch|release-minor|release-major' first"; exit 1; }; \
+	  test "$$(git rev-parse HEAD)" = "$$(git rev-parse "$$tag^{commit}")" || { echo "release-guard: HEAD is not at $$tag - checkout the release commit before publishing"; exit 1; }
 
 publish: release-guard publish-vscode publish-npm publish-jetbrains publish-zed-repo ## Publish to VS Code Marketplace, npm, JetBrains Marketplace, and otelery/zed-otelcol. Prints reminder for helix.
 	@echo
@@ -392,14 +382,7 @@ publish: release-guard publish-vscode publish-npm publish-jetbrains publish-zed-
 	@echo "==> Zed: otelery/zed-otelcol is up to date. Open a PR at zed-industries/extensions to bump the version."
 
 publish-vscode: release-guard check ## Publish current version to the VS Code Marketplace (requires VSCE_PAT or `vsce login otelery`)
-	# Same README + manifest swap as package-vscode — vsce publish re-packages internally.
-	@set -e; \
-	  cp README.md .README.md.vsce-bak; \
-	  cp package.json .package.json.vsce-bak; \
-	  trap 'mv .README.md.vsce-bak README.md; mv .package.json.vsce-bak package.json' EXIT INT TERM; \
-	  cp docs/dist/vscode-readme.md README.md; \
-	  cp editors/vscode/package.json package.json; \
-	  $(VSCE) publish
+	cd editors/vscode && $(VSCE) publish
 
 publish-npm: release-guard check ## Publish the otelcol-language-server binary to npm (requires NPM_TOKEN or `npm login`)
 	# npm always reads README.md from the package root. Swap in the LSP-
@@ -426,7 +409,7 @@ publish-zed: package-zed test-zed-package ## Print the runbook for submitting th
 	@echo "       submodule = \"extensions/otelcol\""
 	@echo "       path = \"editors/zed\""
 	@echo "       version = \"$(VERSION)\""
-	@echo "     (path requires editors/zed/LICENSE — Apache-2.0 — which is committed)"
+	@echo "     (path requires editors/zed/LICENSE - Apache-2.0 - which is committed)"
 	@echo "  5. (cd extensions/otelcol && git checkout v$(VERSION)) then: git add extensions.toml extensions/otelcol"
 	@echo "  6. pnpm install && pnpm sort-extensions"
 	@echo "  7. Open a PR against zed-industries/extensions; CI builds the WASM and publishes on merge."
@@ -470,7 +453,7 @@ release-major: ## Prepare a major release
 check-versions: ## Show pinned vs latest versions for all .mise.toml tools (mise outdated --bump)
 	$(MISE) outdated --bump
 
-# cargo-backed plugins — versions in .mise.toml under "cargo:…". Lazy-installed
+# cargo-backed plugins - versions in .mise.toml under "cargo:…". Lazy-installed
 # (not part of `make bootstrap`) since they're only needed by `outdated` /
 # `upgrade-cargo-zed`. mise compiles from source on first install (~2 min hit
 # cached behind the sentinel).
@@ -517,8 +500,8 @@ upgrade-jetbrains: upgrade-gradle-jetbrains ## Upgrade all deps for the JetBrain
 
 upgrade-deps: upgrade-tools upgrade-npm upgrade-zed upgrade-jetbrains ## Upgrade every dep ecosystem reported by `make outdated` (mise + npm + cargo + gradle)
 
-clean: ## Remove build artefacts (dist/, out/, .vscode-test cache, editor build dirs). Keeps .ci-tools/ — wipe with `make distclean`.
-	rm -rf dist out .vscode-test
+clean: ## Remove build artefacts (dist/, editors/vscode/dist/, out/, .vscode-test cache, editor build dirs). Keeps .ci-tools/ - wipe with `make distclean`.
+	rm -rf dist out .vscode-test editors/vscode/dist
 	rm -rf editors/jetbrains/build editors/zed/target
 	rm -f *.vsix
 

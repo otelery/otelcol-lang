@@ -6,18 +6,15 @@ How `otelcol-lang` is put together: the repo layout, the LSP server and its sett
 
 ```
 otelcol-lang/
-├── package.json                              Shared manifest: VS Code extension + npm bin for the LSP server
-├── syntaxes/
-│   ├── otelcol-yaml.tmLanguage.json          YAML + OTTL injection (VS Code + JetBrains)
-│   └── ottl.tmLanguage.json                  vendored from ottl-lang
+├── package.json                              npm package manifest (@otelery/otelcol-lang)
 ├── src/
 │   ├── common/                               shared YAML classifier (sniffer)
 │   └── server/                               LSP server (transport-agnostic)
 ├── bin/
 │   └── otelcol-language-server                stdio shim used by Zed/Helix/JetBrains/Neovim
 ├── editors/
-│   ├── vscode/                               VS Code extension (client + tests + language-configuration)
-│   ├── zed/                                  Rust → WASM extension + language config + queries
+│   ├── vscode/                               VS Code extension (self-contained: manifest, dist/, syntaxes/, icon)
+│   ├── zed/                                  Rust WASM extension + language config + queries
 │   ├── helix/                                languages.toml + runtime/queries/
 │   ├── jetbrains/                            Gradle/Kotlin LSP4IJ plugin
 │   └── neovim/                               notes (no shipped integration)
@@ -25,14 +22,14 @@ otelcol-lang/
 │   ├── distributions/                         per-distribution component metadata index
 │   └── json/                                  publishable JSON Schemas + catalog
 ├── scripts/
-│   ├── copy-schemas.mjs                      copies schemas into out/ or dist/ at build time
+│   ├── copy-schemas.mjs                      copies schemas into out/ or editors/vscode/dist/ at build time
 │   ├── check-runtime-paths.mjs               build-time sanity check
 │   ├── smoke.mjs                             headless validator
 │   └── smoke-stdio.mjs                       end-to-end stdio handshake smoke
 └── test/                                     shared fixture workspaces (simple/, complex/, configsets/)
 ```
 
-The LSP server (`src/server/`), shared YAML classifier (`src/common/`), TextMate grammars (`syntaxes/`), and test fixtures (`test/`) live at the repo root and are reused across every editor. Cross-editor design notes: [`editors/SHARED.md`](../editors/SHARED.md).
+The LSP server (`src/server/`), shared YAML classifier (`src/common/`), and test fixtures (`test/`) live at the repo root and are shared across editors. TextMate grammars (`editors/vscode/syntaxes/`) and the VS Code extension manifest (`editors/vscode/package.json`) live under `editors/vscode/`, making it a self-contained root for `vsce`. Cross-editor design notes: [`editors/SHARED.md`](../editors/SHARED.md).
 
 ## LSP
 
@@ -150,11 +147,11 @@ Whether a YAML file is classified as an OpenTelemetry Collector config and
 handed to the LSP involves two distinct stages that run at different points in
 time and in different processes.
 
-**Stage 1 — Editor layer** runs on every file open and answers _"is this file
+**Stage 1 - Editor layer** runs on every file open and answers _"is this file
 otelcol?"_. The result is a `languageId` assignment (or rejection). This is
 where the 5-rule detector fires, and where each editor differs.
 
-**Stage 2 — LSP layer** runs after the server accepts the file and answers
+**Stage 2 - LSP layer** runs after the server accepts the file and answers
 _"what configset does it belong to?"_. The result is cross-file reference
 resolution (hover, go-to-definition, diagnostics). This stage is identical
 across all editors because it lives entirely in the shared server.
@@ -163,7 +160,7 @@ across all editors because it lives entirely in the shared server.
 
 The canonical detector lives in `src/common/yaml-sniff.ts`
 (`looksLikeOtelcol`) and `src/common/yaml-classify.ts` (`classifyYaml`).
-Every editor integration targets this behaviour — either by calling the shared
+Every editor integration targets this behaviour - either by calling the shared
 code directly (server-side path) or by porting it to the editor's own language
 (JetBrains Kotlin port). Rules are applied in order; the first match wins.
 
@@ -196,7 +193,7 @@ primitive to stitch related files into a single virtual config set:
   are unioned into one set model for hover, go-to-definition, find-references,
   completion, and diagnostics.
 
-This stage is **editor-agnostic** — it runs identically in all four
+This stage is **editor-agnostic** - it runs identically in all four
 integrations because it lives entirely in the shared LSP server.
 
 ### Per-editor coverage
@@ -215,7 +212,7 @@ files to the server (via `file_types` in `.zed/settings.json` or Helix's
 on every incoming YAML document and silently drops non-matching files.
 
 ² VS Code evaluates the `firstLine` regex declared in `package.json` itself,
-before any extension code runs. No sniffer call is needed for rule 1 — the
+before any extension code runs. No sniffer call is needed for rule 1 - the
 editor platform handles it as part of language association.
 
 #### VS Code
@@ -224,7 +221,7 @@ editor platform handles it as part of language association.
 
 #### JetBrains
 
-`OtelcolFileType` implements `FileTypeIdentifiableByVirtualFile` — a JetBrains hook that runs before normal name matchers, allowing the plugin to claim a plain `*.yaml` file that the YAML plugin would otherwise own. `isMyFileType()` fast-paths glob-matched files (rules 2 + filename), then falls through to `looksLikeOtelcol()` — a **Kotlin port** of the TS function in `OtelcolFileType.kt:43-79`, explicitly kept in sync rule-by-rule. Full parity with VS Code; all five rules run client-side.
+`OtelcolFileType` implements `FileTypeIdentifiableByVirtualFile` - a JetBrains hook that runs before normal name matchers, allowing the plugin to claim a plain `*.yaml` file that the YAML plugin would otherwise own. `isMyFileType()` fast-paths glob-matched files (rules 2 + filename), then falls through to `looksLikeOtelcol()` - a **Kotlin port** of the TS function in `OtelcolFileType.kt:43-79`, explicitly kept in sync rule-by-rule. Full parity with VS Code; all five rules run client-side.
 
 #### Zed
 
@@ -242,13 +239,13 @@ The server is a single esbuild bundle (`dist/server/server.js`) with one stdio
 entry point (`bin/otelcol-language-server.js`). How each editor obtains and
 launches it differs; all four eventually run the same bytes.
 
-### VS Code — bundled inside the `.vsix`
+### VS Code - bundled inside the `.vsix`
 
 `dist/server/server.js` is packed into the extension by `vsce`. At runtime
 `src/extension/extension.ts:120` locates it via
 `context.asAbsolutePath("dist/server/server.js")` and spawns it over IPC
 (the `vscode-languageclient` default transport). No Node binary resolution
-needed — VS Code supplies its own Node runtime for extension host processes.
+needed - VS Code supplies its own Node runtime for extension host processes.
 
 ```
 .vsix
@@ -256,7 +253,7 @@ needed — VS Code supplies its own Node runtime for extension host processes.
 Extension host (VS Code's Node) → require()s extension.js → spawns server.js over IPC
 ```
 
-### JetBrains — bundled in the `.zip`, extracted to disk
+### JetBrains - bundled in the `.zip`, extracted to disk
 
 `make build-jetbrains` runs the Gradle `copyLanguageServer` task, which copies
 `dist/server/` into the plugin JAR under `language-server/`. On first use
@@ -280,7 +277,7 @@ Server path priority:
   extractBundledServer()                → default: plugin-packaged copy
 ```
 
-### Zed — npm auto-install via Zed's bundled Node
+### Zed - npm auto-install via Zed's bundled Node
 
 `editors/zed/src/otelcol.rs` resolves the server in three tiers (first match
 wins). After resolution the server is always spawned with `--stdio`.
@@ -306,19 +303,19 @@ PATH hit) is spawned through `zed::node_binary_path()` with the script as the
 first argument, because Zed runs the command directly and does not honour the
 shim's `#!/usr/bin/env node` shebang. A native executable is spawned as-is.
 
-`SERVER_VERSION` is `env!("CARGO_PKG_VERSION")` — the Rust crate version,
+`SERVER_VERSION` is `env!("CARGO_PKG_VERSION")` - the Rust crate version,
 which moves in lockstep with the npm package version via `prepare-release.sh`.
 This ensures each extension release pairs with the server it was tested
 against. The npm package name (`@otelery/otelcol-lang`) differs from
 the bin name (`otelcol-language-server`), which is why `npm_install_package`
 must target the package rather than the binary.
 
-### Helix — external binary on PATH (user-managed)
+### Helix - external binary on PATH (user-managed)
 
 `editors/helix/languages.toml` sets `command = "otelcol-language-server"`.
 Helix resolves this via a plain `$PATH` lookup at startup; there is no
 download or extraction step. The user must have the npm package installed
 globally (`npm i -g @otelery/otelcol-lang`) or have a local binary on
-PATH. No Node resolution is performed by the integration — Helix calls the
+PATH. No Node resolution is performed by the integration - Helix calls the
 shim directly as an executable (`#!/usr/bin/env node` shebangs work because
 the npm global install sets the executable bit).

@@ -14,10 +14,6 @@
   },
   "publisher": "otelery",
   "main": "./dist/extension/extension.js",
-  "engines": {
-    "vscode": "^1.91.0"
-  },
-  "icon": "docs/assets/otel-logo.png",
   "contributes": {
     "languages": [
       {
@@ -28,7 +24,7 @@
         ],
         "extensions": [],
         "firstLine": "^#\\s*(otelcol\\b|opentelemetry-collector\\b|configset-otelcol:)",
-        "configuration": "./editors/vscode/language-configuration.json"
+        "configuration": "./language-configuration.json"
       },
       {
         "id": "ottl",
@@ -39,7 +35,7 @@
         "extensions": [
           ".ottl"
         ],
-        "configuration": "./editors/vscode/language-configuration.json"
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
@@ -236,5 +232,9 @@
   "activationEvents": [
     "onLanguage:otelcol",
     "onLanguage:yaml"
-  ]
+  ],
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.91.0"
+  }
 }

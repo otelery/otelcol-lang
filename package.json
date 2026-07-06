@@ -10,6 +10,11 @@
   "bin": {
     "otelcol-language-server": "./bin/otelcol-language-server.js"
   },
+  "files": [
+    "bin/",
+    "editors/vscode/dist/server/",
+    "editors/vscode/dist/schemas/"
+  ],
   "scripts": {
     "watch": "node esbuild.js --watch",
     "compile": "node esbuild.js",

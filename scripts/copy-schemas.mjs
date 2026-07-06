@@ -3,8 +3,8 @@
 // resolves them at runtime without walking back to the repo root.
 //
 // Two trees are needed:
-//   schemas/distributions/   — per-distribution component metadata index
-//   schemas/json/            — per-distribution JSON Schema with resolved refs
+//   schemas/distributions/   - per-distribution component metadata index
+//   schemas/json/            - per-distribution JSON Schema with resolved refs
 
 import { copyFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
@@ -15,7 +15,7 @@ const root = resolve(__dirname, "..");
 
 function copyAllJson(srcDir, dstDir, label) {
   if (!existsSync(srcDir)) {
-    console.error(`${label}/ missing — skipping (run the matching build script first).`);
+    console.error(`${label}/ missing - skipping (run the matching build script first).`);
     return 0;
   }
   mkdirSync(dstDir, { recursive: true });

@@ -21,7 +21,7 @@ async function waitFor<T>(
 
 // Open a scratch document inside the test workspace with the given filename
 // + initial text. Must live in the workspace (not /tmp/) so the otelcol
-// language client attaches — VS Code only routes LSP traffic for files
+// language client attaches - VS Code only routes LSP traffic for files
 // inside the open workspace folder. Caller passes a unique name; the file
 // is unlinked in afterEach via the scratchFiles array.
 const scratchFiles: string[] = [];
@@ -147,7 +147,7 @@ describe("opentelemetry-collector-config extension", () => {
       const doc = await vscode.workspace.openTextDocument(uri);
       await vscode.window.showTextDocument(doc);
 
-      // Sniffer runs asynchronously after activation — wait for the retag.
+      // Sniffer runs asynchronously after activation - wait for the retag.
       const finalDoc = await waitFor(() =>
         vscode.workspace.textDocuments.find(
           (d) => d.uri.toString() === uri.toString() && d.languageId === "otelcol",
@@ -159,7 +159,7 @@ describe("opentelemetry-collector-config extension", () => {
     it("does NOT retag generic YAML files that are not collector configs", async () => {
       // A YAML file with only one top-level key that isn't an otelcol section,
       // alone in its directory (no sibling anchor, no sidecar, no directive).
-      // The sniffer's rules a–f should ALL miss this — languageId must stay 'yaml'.
+      // The sniffer's rules a–f should ALL miss this - languageId must stay 'yaml'.
       const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "otelcol-notretag-"));
       const tmpFile = path.join(tmpDir, "package-info.yaml");
       fs.writeFileSync(
@@ -185,7 +185,7 @@ describe("opentelemetry-collector-config extension", () => {
           `generic YAML was incorrectly retagged to ${current.languageId}; sniffer false positive`,
         );
 
-        // No diagnostics should be published — the otelcol LSP must not process
+        // No diagnostics should be published - the otelcol LSP must not process
         // documents it didn't claim.
         const diags = vscode.languages.getDiagnostics(uri);
         assert.equal(
@@ -287,14 +287,14 @@ describe("opentelemetry-collector-config extension", () => {
       );
     });
 
-    // The next four tests defend post-acceptance buffer state — they apply
+    // The next four tests defend post-acceptance buffer state - they apply
     // the LSP CompletionItem to the document and assert resulting text.
     // Unit tests in test/unit-completion.test.mjs validate the LSP item
     // shape; these guard the *client-side application* (snippet expansion,
     // textEdit range honored, sibling filtering visible in the picker).
     // Mirrored 1:1 in editors/jetbrains/.../OtelcolCompletionTest.kt.
 
-    // 1. Multi-line snippet indent — array property under a 4-space-indented
+    // 1. Multi-line snippet indent - array property under a 4-space-indented
     //    blank line. `metadata_keys:` must land at col 4; `- ` at col 6.
     it("array property indents continuation line correctly post-acceptance", async () => {
       const text = "processors:\n  batch:\n    \n";
@@ -308,7 +308,7 @@ describe("opentelemetry-collector-config extension", () => {
       );
     });
 
-    // 2. textEdit range pinning — typing `met` on a 4-space-indented line
+    // 2. textEdit range pinning - typing `met` on a 4-space-indented line
     //    and accepting `metadata_keys` must NOT eat the leading indent.
     it("textEdit range preserves the leading indent post-acceptance", async () => {
       const text = "processors:\n  batch:\n    met\n";
@@ -322,7 +322,7 @@ describe("opentelemetry-collector-config extension", () => {
       );
     });
 
-    // 3. Sibling-key filtering — keys already present in the mapping aren't
+    // 3. Sibling-key filtering - keys already present in the mapping aren't
     //    re-suggested (would otherwise create a YAML duplicate-key error).
     it("filters out sibling keys already present in the mapping", async () => {
       const text = "processors:\n  batch:\n    send_batch_size: 1024\n    timeout: 5s\n    \n";
@@ -332,19 +332,19 @@ describe("opentelemetry-collector-config extension", () => {
       const labels = await completionLabels(editor.document.uri, pos);
       assert.ok(
         !labels.includes("send_batch_size"),
-        `send_batch_size already set on line 2 — must not be suggested; got: ${labels.join(",")}`,
+        `send_batch_size already set on line 2 - must not be suggested; got: ${labels.join(",")}`,
       );
       assert.ok(
         !labels.includes("timeout"),
-        `timeout already set on line 3 — must not be suggested; got: ${labels.join(",")}`,
+        `timeout already set on line 3 - must not be suggested; got: ${labels.join(",")}`,
       );
       assert.ok(
         labels.includes("metadata_keys"),
-        `metadata_keys not yet defined — should still surface; got: ${labels.join(",")}`,
+        `metadata_keys not yet defined - should still surface; got: ${labels.join(",")}`,
       );
     });
 
-    // 4. keyOnLine carve-out — cursor parked on an existing key line still
+    // 4. keyOnLine carve-out - cursor parked on an existing key line still
     //    surfaces that key, so re-editing / replacing it works.
     it("re-suggests the key on the cursor's own line", async () => {
       const text =
@@ -356,7 +356,7 @@ describe("opentelemetry-collector-config extension", () => {
       const labels = await completionLabels(editor.document.uri, pos);
       assert.ok(
         labels.includes("endpoint"),
-        `cursor is on 'endpoint:' itself — must still appear; got: ${labels.slice(0, 15).join(",")}`,
+        `cursor is on 'endpoint:' itself - must still appear; got: ${labels.slice(0, 15).join(",")}`,
       );
     });
   });
@@ -374,7 +374,7 @@ describe("opentelemetry-collector-config extension", () => {
       assert.ok(offset > 0, "expected `otlp` receiver in test fixture");
       const position = doc.positionAt(offset + 1);
 
-      // The LSP may not be ready immediately after activation — retry until
+      // The LSP may not be ready immediately after activation - retry until
       // the hover provider yields content (server has loaded its schema/component registry).
       const hovers = await waitFor(
         async () => {

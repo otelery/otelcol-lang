@@ -27,7 +27,7 @@ let client: LanguageClient | undefined;
 let snifferLog: OutputChannel | undefined;
 
 // Set `otelcol.sniffer.trace` to true in settings to see per-file decisions in
-// the "Otelcol Sniffer" output channel. Cheap when disabled — no work happens
+// the "Otelcol Sniffer" output channel. Cheap when disabled - no work happens
 // because the logger callback is undefined.
 function snifferTraceEnabled(): boolean {
   return workspace.getConfiguration("otelcol").get<boolean>("sniffer.trace", false);
@@ -144,7 +144,7 @@ export function activate(context: ExtensionContext) {
 
   // Dev convenience: when OTELCOL_DEV_WATCH=1, watch the bundled server.js
   // and restart the LSP client on change. Pairs with `npm run watch`
-  // (esbuild --watch). Unified flag across VS Code + JetBrains — neither
+  // (esbuild --watch). Unified flag across VS Code + JetBrains - neither
   // editor's "dev mode" auto-enables it; opt in explicitly.
   if (process.env.OTELCOL_DEV_WATCH === "1") {
     let pending: NodeJS.Timeout | undefined;
@@ -167,7 +167,7 @@ export function activate(context: ExtensionContext) {
       const w = fs.watch(serverModule, () => trigger());
       context.subscriptions.push({ dispose: () => w.close() });
     } catch {
-      // server.js doesn't exist yet (first compile) — fine, dev watcher is best-effort.
+      // server.js doesn't exist yet (first compile) - fine, dev watcher is best-effort.
     }
   }
 }

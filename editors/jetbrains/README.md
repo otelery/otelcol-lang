@@ -1,4 +1,4 @@
-# JetBrains plugin — OpenTelemetry Collector
+# JetBrains plugin - OpenTelemetry Collector
 
 LSP4IJ-based plugin that delegates highlighting to the shared
 TextMate grammars and all language intelligence to the standalone
@@ -34,7 +34,7 @@ In the sandbox:
 1. Open the repo root as a project (`File → Open` → pick the
    `otelcol-lang-idea` directory).
 2. Open `examples/simple/otelcol-config.yaml`.
-3. The file currently has no `.otelcol.yaml` suffix — for the v0.1
+3. The file currently has no `.otelcol.yaml` suffix - for the v0.1
    glob detection to fire, copy it to
    `otelcol-config.otelcol.yaml`. Alternatively, right-click the
    tab → `Override File Type` → `OpenTelemetry Collector`.
@@ -68,8 +68,8 @@ editors/jetbrains/
 ```
 
 The `copySyntaxes` task in `build.gradle.kts` copies grammars from
-`../../syntaxes/` on every build — the repo root remains the single
-source of truth.
+`../../editors/vscode/syntaxes/` on every build. TextMate grammars live
+under the VS Code extension root, which is the single source of truth.
 
 ## Settings
 
@@ -86,7 +86,7 @@ Plugin unit tests use the IntelliJ Platform test framework
 the LSP server factory's command-build and initialization options,
 and the plugin.xml extension wiring.
 
-First-time setup (bootstraps the gradle wrapper — requires a system
+First-time setup (bootstraps the gradle wrapper - requires a system
 `gradle` installation; install via SDKMAN or your package manager):
 
 ```sh
@@ -120,7 +120,7 @@ cd editors/jetbrains
   documented differences from VS Code's around begin/end patterns
   with back-references. The grammars in `syntaxes/` work on both
   today; revisit if changes break JetBrains rendering.
-- **No Configurable UI** for `otelcol.distribution` —
+- **No Configurable UI** for `otelcol.distribution` -
   see settings note above.
 - **Embedded OTTL diagnostics** require `ottl-lsp` on PATH; document
   per the server's `otelcol.ottlLspPath` setting.

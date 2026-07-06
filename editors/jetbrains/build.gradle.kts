@@ -35,14 +35,14 @@ dependencies {
       providers.gradleProperty("platformVersion"),
     )
 
-    // Bundled TextMate plugin — used to render highlighting from the
+    // Bundled TextMate plugin - used to render highlighting from the
     // shared syntaxes/*.tmLanguage.json grammars.
     bundledPlugin("org.jetbrains.plugins.textmate")
 
-    // YAML plugin — required for YAMLLanguage.INSTANCE in OtelcolFileType.
+    // YAML plugin - required for YAMLLanguage.INSTANCE in OtelcolFileType.
     bundledPlugin("org.jetbrains.plugins.yaml")
 
-    // LSP4IJ — Marketplace plugin that gives Community editions an
+    // LSP4IJ - Marketplace plugin that gives Community editions an
     // LSP client. Both client and SDK come from this dep.
     plugin(
       providers.gradleProperty("lsp4ijPluginId").get(),
@@ -71,7 +71,7 @@ intellijPlatform {
     // repo-root CHANGELOG.md (keep-a-changelog format) so notes stay in
     // lockstep with the VS Code/npm release. `getOrNull(version)` matches the
     // `## [X.Y.Z]` heading; falls back to the Unreleased section for local
-    // pre-release builds. HTML output — the Marketplace renders HTML, not
+    // pre-release builds. HTML output - the Marketplace renders HTML, not
     // Markdown.
     changeNotes = provider {
       with(changelog) {
@@ -90,7 +90,7 @@ intellijPlatform {
     }
   }
 
-  // Plugin Verifier — official JetBrains static-analysis tool.
+  // Plugin Verifier - official JetBrains static-analysis tool.
   // Catches undeclared <depends>, missing classes, deprecated API across the
   // declared sinceBuild..untilBuild range. Would have caught the
   // YAMLLanguage NoClassDefFoundError that slipped past unit tests, because
@@ -114,7 +114,7 @@ intellijPlatform {
 
 // The changelog lives at the repo root (shared with the VS Code extension +
 // npm package), not in this standalone Gradle module. `rootDir` is
-// editors/jetbrains/, so the repo root is two levels up — mirrors the
+// editors/jetbrains/, so the repo root is two levels up - mirrors the
 // `repoRoot` resolution used by runIdeDev below.
 changelog {
   path = file("${rootDir.parentFile.parentFile}/CHANGELOG.md").canonicalPath
@@ -132,11 +132,11 @@ kotlin {
 // land on the plugin classpath. The LSP server is extracted from the jar to
 // a stable PathManager cache on first activation (OtelcolLspServerFactory).
 
-val syntaxesSource = file("../../syntaxes")
+val syntaxesSource = file("../../editors/vscode/syntaxes")
 val syntaxesTarget = file("src/main/resources/textmate")
 
-val languageServerSource = file("../../dist/server")
-val schemasSource = file("../../dist/schemas")
+val languageServerSource = file("../../editors/vscode/dist/server")
+val schemasSource = file("../../editors/vscode/dist/schemas")
 val languageServerTarget = file("src/main/resources/language-server")
 
 val copySyntaxes by tasks.registering(Copy::class) {
@@ -151,10 +151,10 @@ val copyLanguageServer by tasks.registering(Copy::class) {
   description = "Stage bundled otelcol-language-server (esbuild output) + JSON schemas into plugin resources"
   doFirst {
     require(file("$languageServerSource/server.js").exists()) {
-      "Missing dist/server/server.js — run `make bundle` from the repo root first."
+      "Missing dist/server/server.js - run `make bundle` from the repo root first."
     }
     require(schemasSource.exists()) {
-      "Missing dist/schemas/ — run `make bundle` from the repo root first."
+      "Missing dist/schemas/ - run `make bundle` from the repo root first."
     }
   }
   from(languageServerSource) {
@@ -176,7 +176,7 @@ val copyLanguageServer by tasks.registering(Copy::class) {
       .sorted()
     file("$languageServerTarget/manifest.txt").writeText(manifest.joinToString("\n") + "\n")
     // Content hash of the bundled tree. OtelcolLspServerFactory uses this to
-    // invalidate its on-disk extraction cache when the bundled bytes change —
+    // invalidate its on-disk extraction cache when the bundled bytes change -
     // so reinstalling a freshly-built zip no longer requires manually wiping
     // ~/.cache/JetBrains/.../otelcol-language-server/.
     val md = MessageDigest.getInstance("SHA-256")
@@ -194,7 +194,7 @@ tasks.named("processResources") {
   dependsOn(copySyntaxes, copyLanguageServer)
 }
 
-// `./gradlew runIdeDev` — sandbox IDE pre-wired for plugin development.
+// `./gradlew runIdeDev` - sandbox IDE pre-wired for plugin development.
 // Decoupled from the build's `platformVersion` (which targets sinceBuild=243
 // as a compile-time floor) by registering a separate runIde task pinned to
 // `runIdeVersion` from gradle.properties. Mirrors VS Code's F5 setup: opens
@@ -205,7 +205,7 @@ tasks.named("processResources") {
 // Override project:    -PsandboxProject=/abs/path
 intellijPlatformTesting {
   runIde.register("runIdeDev") {
-    // Starting with 2025.3 (253), JetBrains dropped the IC/IU split — there
+    // Starting with 2025.3 (253), JetBrains dropped the IC/IU split - there
     // is only one `intellijIdea` artifact. Use the unified type so 2026.x
     // versions resolve.
     type = org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdea
@@ -237,7 +237,7 @@ intellijPlatformTesting {
       // the file schema drifts across IDE versions.
       //
       // Auto-trust + skipping the Trust dialog is done via options/
-      // trusted-paths.xml — idea.trust.all.projects=true is unreliable on
+      // trusted-paths.xml - idea.trust.all.projects=true is unreliable on
       // 2025.3+ since JetBrains tightened the gate.
       //
       // Override via gradle property if needed:
@@ -296,7 +296,7 @@ intellijPlatformTesting {
         )
       }
       // `idea.is.internal=true` is already set by the platform plugin in
-      // sandbox mode — that's what unlocks the in-log error-reporter dialog
+      // sandbox mode - that's what unlocks the in-log error-reporter dialog
       // and the extra assertion checks. No extra wiring needed.
     }
   }

@@ -1,80 +1,58 @@
-# VS Code — OpenTelemetry Collector
+# OpenTelemetry Collector Config
 
-The original target editor. Bundles a TextMate grammar layer for
-syntax highlighting and a thin client that spawns the LSP server
-(`src/server/`) over IPC. The `bin/otelcol-language-server` stdio
-shim used by the other editors is built from the same server
-sources.
+Editor support for [OpenTelemetry Collector][otelcol] configuration
+files inside VS Code: syntax highlighting, completion, hover docs,
+diagnostics, cross-file references, and embedded
+[OTTL][ottl] support - powered by a bundled language server.
 
-## Layout
+[otelcol]: https://github.com/open-telemetry/opentelemetry-collector
+[ottl]: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl
 
-```
-editors/vscode/
-  src/
-    extension.ts                # activation, LSP client, commands
-    sniffer.ts                  # retag plain `yaml` docs as `otelcol`
-  test/
-    integration/                # @vscode/test-cli Extension Host tests
-  .vscode-test.mjs              # test runner config (paths repo-relative)
-  language-configuration.json   # comments, brackets, indent
-  tsconfig.json                 # noEmit typecheck for the extension
-  tsconfig.test.json            # compiles test/integration/*.ts → out/test/
-  README.md
-```
+## Features
 
-Shared with the rest of the repo (not under `editors/vscode/`):
+- **Diagnostics** - unknown components, malformed pipelines, type
+  mismatches checked against the collector JSON schemas.
+- **Completion + hover** - component IDs, signal types, field names,
+  with descriptions sourced from the collector schemas.
+- **Cross-file references** - go-to-definition and find-references
+  across multi-file config-set layouts.
+- **Embedded OTTL** - range-restricted parsing inside `statements`,
+  `conditions` and similar OTTL-bearing keys.
+- **Workspace heuristics** - automatic grouping of
+  `otelcol-config*.yaml` files into a single logical config set.
 
-- `src/server/`, `src/common/` — LSP server + shared YAML classifier.
-- `syntaxes/` — TextMate grammars (also consumed by JetBrains).
-- `package.json` — single manifest for both the VS Code extension
-  and the npm `otelcol-language-server` bin. Splitting into two
-  manifests is a future refactor.
-- `test/{simple,complex,configsets}/` — fixture workspaces shared
-  with the server unit tests.
+## Activation
 
-## Dev install
+The extension claims:
 
-```sh
-# from repo root:
-make bundle           # esbuild → dist/extension/extension.js + dist/server/server.js
-code --extensionDevelopmentPath="$(pwd)" examples/
-```
+- Files matching `otelcol*.yaml` / `otelcol*.yml` / `otelcol-configset.yaml`.
+- Any YAML file whose first line is `# otelcol-configset:`, `# otelcol`,
+  or `# opentelemetry-collector`.
 
-In the dev host, open any `*.otelcol.yaml` (or a `yaml` file with
-a `# configset-otelcol:` directive — the sniffer retags it).
-
-## Testing
-
-```sh
-make test-vscode
-```
-
-Compiles `editors/vscode/tsconfig.test.json` and runs the
-Extension Host against the two workspace fixtures defined in
-`.vscode-test.mjs` (`../../test/simple` and `../../test/complex`).
-
-The legacy `make test-integration` alias still works for one
-release; prefer the new name.
-
-## Packaging the VSIX
-
-```sh
-make package-vscode   # → dist/packages/opentelemetry-collector-config-<version>.vsix
-# (`make package` builds every editor's distributable in one go.)
-```
-
-`vsce package` runs at the repo root because `package.json` is
-there. The root `.vscodeignore` controls which files land in the
-archive; sibling editor directories (`editors/{helix,jetbrains,zed,neovim}/`)
-and the stdio shim under `bin/` are excluded, so the VSIX only carries:
-
-- `dist/` — bundled extension + server + schemas
-- `syntaxes/` — TextMate grammars
-- `editors/vscode/language-configuration.json`
-- `package.json`, `README.md`, `LICENSE`
+For other naming schemes, set the file's language manually via
+`Change Language Mode → OpenTelemetry Collector`.
 
 ## Settings
 
-Same config schema documented at the repo root's `package.json`:
-`otelcol.distribution`, `otelcol.contribPath`, `otelcol.ottlLspPath`,
-`otelcol.configSets.*`, `otelcol.trace.server`, `otelcol.sniffer.trace`.
+| Setting                 | Purpose                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| `otelcol.distribution`  | Which collector distribution to validate against (defaults to `otelcol-contrib`).                       |
+| `otelcol.contribPath`   | Optional local `opentelemetry-collector-contrib` checkout - used to surface component READMEs on hover. |
+| `otelcol.ottlLspPath`   | Path to `ottl-lsp` for embedded OTTL diagnostics.                                                       |
+| `otelcol.autoConfigSet` | Auto-group config fragments by `service.pipelines:` anchors (default on).                               |
+| `otelcol.trace.server`  | Trace LSP traffic for debugging.                                                                        |
+| `otelcol.sniffer.trace` | Log per-file retag decisions to the `Otelcol Sniffer` output channel.                                   |
+
+See the full list in _Settings → Extensions → OpenTelemetry Collector
+Config_.
+
+## Other editors
+
+The same language server backs Zed, Helix and JetBrains via the
+[`@otelery/otelcol-lang`](https://www.npmjs.com/package/@otelery/otelcol-lang)
+npm package. See the per-editor docs in the
+[GitHub repository](https://github.com/otelery/otelcol-lang).
+
+## License
+
+Apache-2.0.

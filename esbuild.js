@@ -37,13 +37,13 @@ async function main() {
   const extension = await esbuild.context({
     ...shared,
     entryPoints: ["editors/vscode/src/extension.ts"],
-    outfile: "dist/extension/extension.js",
+    outfile: "editors/vscode/dist/extension/extension.js",
   });
 
   const server = await esbuild.context({
     ...shared,
     entryPoints: ["src/server/server.ts"],
-    outfile: "dist/server/server.js",
+    outfile: "editors/vscode/dist/server/server.js",
   });
 
   if (watch) {
@@ -53,7 +53,7 @@ async function main() {
     await extension.dispose();
     await server.rebuild();
     await server.dispose();
-    execSync("node scripts/copy-schemas.mjs --outDir=dist", {
+    execSync("node scripts/copy-schemas.mjs --outDir=editors/vscode/dist", {
       stdio: "inherit",
     });
   }

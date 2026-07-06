@@ -3,4 +3,4 @@
 // vscode-languageserver/node picks the transport from process.argv
 // (--stdio, --node-ipc, --socket=PORT). Editors should invoke this as
 //   otelcol-language-server --stdio
-require("../dist/server/server.js");
+require("../editors/vscode/dist/server/server.js");

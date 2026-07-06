@@ -1,14 +1,14 @@
 import { defineConfig } from "@vscode/test-cli";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname } from "node:path";
 
-// package.json lives at the repo root (single manifest for both the
-// VS Code extension and the npm bin). Point @vscode/test-cli there
-// so it can read the extension manifest for dependency wiring.
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+// editors/vscode/ is the self-contained extension root: it contains package.json,
+// dist/, syntaxes/, language-configuration.json, icon.png, README.md, LICENSE,
+// and CHANGELOG.md. No file swaps needed - the Extension Host reads this directory.
+const extensionRoot = dirname(fileURLToPath(import.meta.url));
 
 const mocha = { ui: "bdd", timeout: 20000 };
-const shared = { extensionDevelopmentPath: repoRoot };
+const shared = { extensionDevelopmentPath: extensionRoot };
 
 export default defineConfig([
   {

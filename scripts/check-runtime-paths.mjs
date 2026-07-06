@@ -2,12 +2,12 @@
 // Guards the invariant that runtime code (extension + server) loads its
 // peers from `dist/`, never from `out/`. This invariant exists because:
 //
-//   - esbuild populates `dist/` (the runtime / VSIX output).
+//   - esbuild populates `editors/vscode/dist/` (the runtime / VSIX output).
 //   - tsc populates `out/` (test infrastructure only).
 //
 // A single forgotten `path.join("out", ...)` inside src/extension/ silently
 // reroutes the running extension to load a server compiled by a tool that
-// nothing in the dev loop refreshes — exactly the bug we hit while wiring
+// nothing in the dev loop refreshes - exactly the bug we hit while wiring
 // semantic tokens. This script catches it before it ships.
 
 import { readdirSync, readFileSync } from "node:fs";
@@ -18,7 +18,7 @@ const root = join(fileURLToPath(import.meta.url), "..", "..");
 const targets = [join(root, "editors", "vscode", "src"), join(root, "src", "server")];
 
 // Matches: `"out"` or `'out'` inside a path.join / asAbsolutePath / require / import argument.
-// The quoted literal is the actionable signal — accidental ID references like
+// The quoted literal is the actionable signal - accidental ID references like
 // `out_of_band` won't trip because they're identifiers, not strings.
 const FORBIDDEN = /(?:path\.join|asAbsolutePath|require|import)\s*\([^)]*?["']out["']/;
 
@@ -26,7 +26,7 @@ const offenders = [];
 for (const dir of targets) walk(dir);
 
 if (offenders.length) {
-  console.error("check-runtime-paths: runtime source references `out/` — must use `dist/`:");
+  console.error("check-runtime-paths: runtime source references `out/` - must use `dist/`:");
   for (const { file, line, text } of offenders) {
     console.error(`  ${relative(root, file)}:${line}: ${text.trim()}`);
   }

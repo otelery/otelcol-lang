@@ -1,7 +1,7 @@
 // Tokenizer tests for the env-var / confmap substitution injection grammar.
 //
 // Loads the project's TextMate grammar(s) through vscode-textmate +
-// vscode-oniguruma — the same engine VS Code uses — and asserts that
+// vscode-oniguruma - the same engine VS Code uses - and asserts that
 // ${env:VAR}, ${env:VAR:-default}, other confmap providers, and the legacy
 // ${VAR} form produce the expected scope stacks. Catches regressions if the
 // regex or scope names drift.
@@ -29,13 +29,16 @@ const onigLib = Promise.resolve({
 });
 
 const grammarRoot = JSON.parse(
-  readFileSync(resolve(root, "syntaxes/otelcol-yaml.tmLanguage.json"), "utf8"),
+  readFileSync(resolve(root, "editors/vscode/syntaxes/otelcol-yaml.tmLanguage.json"), "utf8"),
 );
 const grammarInjection = JSON.parse(
-  readFileSync(resolve(root, "syntaxes/otelcol-substitution.injection.json"), "utf8"),
+  readFileSync(
+    resolve(root, "editors/vscode/syntaxes/otelcol-substitution.injection.json"),
+    "utf8",
+  ),
 );
 const grammarOttl = JSON.parse(
-  readFileSync(resolve(root, "syntaxes/ottl.tmLanguage.json"), "utf8"),
+  readFileSync(resolve(root, "editors/vscode/syntaxes/ottl.tmLanguage.json"), "utf8"),
 );
 
 // Minimal stand-in for source.yaml so we can verify the injection still fires
@@ -127,7 +130,7 @@ function hasScope(token, scope) {
 
 // ─── ${env:VAR:-default} in a quoted string ─────────────────────────────
 
-describe("confmap substitution — env with default, quoted", () => {
+describe("confmap substitution - env with default, quoted", () => {
   const line = '        username: "${env:KAFKA_USER:-otelcol}"';
   let tokens;
   before(() => {
@@ -168,7 +171,7 @@ describe("confmap substitution — env with default, quoted", () => {
 
   it("default literal gets string.unquoted.default scope", () => {
     // The 'otelcol' here is the default value INSIDE the substitution, not
-    // the surrounding YAML language tag — distinguishable by scope.
+    // the surrounding YAML language tag - distinguishable by scope.
     const defaultToken = tokens.find(
       (t) => t.text === "otelcol" && hasScope(t, "string.unquoted.default.otelcol"),
     );
@@ -198,7 +201,7 @@ describe("confmap substitution — env with default, quoted", () => {
 
   it("injection composes with quoted-string host scope", () => {
     // The 'env' token is inside the YAML double-quoted string per the stub
-    // grammar — both scopes must be present at once.
+    // grammar - both scopes must be present at once.
     const t = find(tokens, "env");
     assert.ok(
       hasScope(t, "string.quoted.double.yaml"),
@@ -209,7 +212,7 @@ describe("confmap substitution — env with default, quoted", () => {
 
 // ─── ${env:VAR} unquoted ────────────────────────────────────────────────
 
-describe("confmap substitution — env, unquoted", () => {
+describe("confmap substitution - env, unquoted", () => {
   const line = "      x-tenant-id: ${env:TENANT_ID}";
   let tokens;
   before(() => {
@@ -233,10 +236,10 @@ describe("confmap substitution — env, unquoted", () => {
 
 // ─── adjacent substitutions joined by ':' (host:port pattern) ──────────
 
-describe("confmap substitution — two adjacent ${env:…} joined by ':'", () => {
+describe("confmap substitution - two adjacent ${env:…} joined by ':'", () => {
   // The exact construct from examples/env-vars/otelcol-config.yaml: two
   // substitutions separated by a literal colon. The colon must not bleed
-  // into either substitution's scope — each ${...} must close cleanly
+  // into either substitution's scope - each ${...} must close cleanly
   // before the next begins, and BOTH variable bodies must carry our
   // variable.other scope.
   const line = "        endpoint: ${env:OTLP_GRPC_HOST}:${env:OTLP_GRPC_PORT}";
@@ -299,7 +302,7 @@ describe("confmap substitution — two adjacent ${env:…} joined by ':'", () =>
 
 // ─── other confmap providers ────────────────────────────────────────────
 
-describe("confmap substitution — other providers", () => {
+describe("confmap substitution - other providers", () => {
   it("recognises file: provider", () => {
     const tokens = tokenize("authorization: Bearer ${file:/etc/otel/token}");
     const t = find(tokens, "file");
@@ -326,7 +329,7 @@ describe("confmap substitution — other providers", () => {
 
 // ─── legacy ${VAR} (no scheme) ──────────────────────────────────────────
 
-describe("confmap substitution — legacy bare form", () => {
+describe("confmap substitution - legacy bare form", () => {
   it("marks ${VAR} body as invalid.deprecated", () => {
     const tokens = tokenize("password: ${KAFKA_PASS}");
     const t = find(tokens, "KAFKA_PASS");
@@ -348,7 +351,7 @@ describe("confmap substitution — legacy bare form", () => {
 
 // ─── negatives: don't over-match ────────────────────────────────────────
 
-describe("confmap substitution — negative cases", () => {
+describe("confmap substitution - negative cases", () => {
   it("a bare $VAR (no braces) is NOT a substitution", () => {
     const tokens = tokenize("note: see $HOME for details");
     const t = tokens.find((x) => x.text === "$HOME");
@@ -360,7 +363,7 @@ describe("confmap substitution — negative cases", () => {
 
   it("an unterminated ${... does not introduce substitution scopes on the line", () => {
     // No closing brace before EOL. The scheme rule begins on the line, but
-    // without a } it stays open — the test is that no token on the line
+    // without a } it stays open - the test is that no token on the line
     // claims the end-punctuation scope (no spurious }).
     const tokens = tokenize("broken: ${env:FOO");
     const hasEndPunct = tokens.some((t) =>
@@ -446,7 +449,7 @@ describe("ottl-block-sequence: keys that introduce OTTL sequence values", () => 
     assert.ok(setTok, "expected 'set' inside the OTTL block");
 
     // After the block ends, the 'error_mode: ignore' line falls through to
-    // the source.yaml stub and is left untokenised — but importantly, none
+    // the source.yaml stub and is left untokenised - but importantly, none
     // of its tokens carry meta.embedded.block.ottl.
     const errLineTokens = tokens.filter((t) => t.line.includes("error_mode"));
     assert.ok(errLineTokens.length > 0, "missing tokens for the error_mode line");
@@ -469,7 +472,7 @@ describe("ottl-block-sequence: keys that introduce OTTL sequence values", () => 
     assert.ok(hasScope(trueTok, "meta.embedded.block.ottl"));
 
     // The surrounding quotes are tagged as YAML string punctuation, NOT
-    // as OTTL string punctuation — by design, since YAML owns the quotes.
+    // as OTTL string punctuation - by design, since YAML owns the quotes.
     const quotes = tokens.filter(
       (t) =>
         t.text === '"' &&
@@ -526,7 +529,7 @@ describe("ottl-inline-scalar: condition / statement single-line embeds", () => {
 
 // ─── OTTL primitives (covered through the inline embed) ─────────────────
 
-describe("OTTL grammar — full token coverage via condition: embed", () => {
+describe("OTTL grammar - full token coverage via condition: embed", () => {
   // One snippet exercises a wide range of OTTL constructs. Each token's
   // expected scope below comes from syntaxes/ottl.tmLanguage.json.
   const line =
@@ -544,7 +547,7 @@ describe("OTTL grammar — full token coverage via condition: embed", () => {
     ["body", "entity.other.attribute-name.ottl"],
     ["severity_number", "entity.other.attribute-name.ottl"],
     ["SEVERITY_NUMBER_WARN", "constant.other.enum.ottl"],
-    ["where", null], // not present here — just sanity-check we didn't misclassify
+    ["where", null], // not present here - just sanity-check we didn't misclassify
     ["and", "keyword.operator.logical.ottl"],
     ["or", "keyword.operator.logical.ottl"],
     ["not", "keyword.operator.logical.ottl"],
@@ -561,7 +564,7 @@ describe("OTTL grammar — full token coverage via condition: embed", () => {
 
   for (const [text, scope] of cases) {
     if (scope === null) {
-      it(`'${text}' is not in this snippet — sanity-skip`, () => {
+      it(`'${text}' is not in this snippet - sanity-skip`, () => {
         assert.equal(findAll(tokens, text).length, 0, `unexpectedly found '${text}'`);
       });
       continue;
