@@ -290,12 +290,12 @@ Tier 1: lsp.otelcol.binary.path in settings.json
         → spawn that path (user-supplied args or default ["--stdio"])
 
 Tier 2: worktree.which("otelcol-language-server")
-        → a globally-installed copy on PATH wins (npm i -g opentelemetry-collector-config)
+        → a globally-installed copy on PATH wins (npm i -g @otelery/otelcol-lang)
 
-Tier 3: zed::npm_install_package("opentelemetry-collector-config", SERVER_VERSION)
+Tier 3: zed::npm_install_package("@otelery/otelcol-lang", SERVER_VERSION)
         → installs into the extension work dir on first use
         → spawns zed::node_binary_path() with
-          ["node_modules/opentelemetry-collector-config/bin/otelcol-language-server.js", "--stdio"]
+          ["node_modules/@otelery/otelcol-lang/bin/otelcol-language-server.js", "--stdio"]
         → status shown as "Checking for update…" / "Downloading…" in the LSP status bar
         → falls back to a previously installed copy on transient network failure
 ```
@@ -309,7 +309,7 @@ shim's `#!/usr/bin/env node` shebang. A native executable is spawned as-is.
 `SERVER_VERSION` is `env!("CARGO_PKG_VERSION")` — the Rust crate version,
 which moves in lockstep with the npm package version via `prepare-release.sh`.
 This ensures each extension release pairs with the server it was tested
-against. The npm package name (`opentelemetry-collector-config`) differs from
+against. The npm package name (`@otelery/otelcol-lang`) differs from
 the bin name (`otelcol-language-server`), which is why `npm_install_package`
 must target the package rather than the binary.
 
@@ -318,7 +318,7 @@ must target the package rather than the binary.
 `editors/helix/languages.toml` sets `command = "otelcol-language-server"`.
 Helix resolves this via a plain `$PATH` lookup at startup; there is no
 download or extraction step. The user must have the npm package installed
-globally (`npm i -g opentelemetry-collector-config`) or have a local binary on
+globally (`npm i -g @otelery/otelcol-lang`) or have a local binary on
 PATH. No Node resolution is performed by the integration — Helix calls the
 shim directly as an executable (`#!/usr/bin/env node` shebangs work because
 the npm global install sets the executable bit).

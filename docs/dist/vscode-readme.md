@@ -49,7 +49,7 @@ Config*.
 ## Other editors
 
 The same language server backs Zed, Helix and JetBrains via the
-[`opentelemetry-collector-config`](https://www.npmjs.com/package/opentelemetry-collector-config)
+[`@otelery/otelcol-lang`](https://www.npmjs.com/package/@otelery/otelcol-lang)
 npm package. See the per-editor docs in the
 [GitHub repository](https://github.com/otelery/otelcol-lang).
 

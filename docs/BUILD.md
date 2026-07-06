@@ -45,10 +45,10 @@ Every editor can be installed from the artefacts in `dist/packages/` without tou
 
 ```sh
 make package-vscode
-# → dist/packages/opentelemetry-collector-config-<version>.vsix
+# → dist/packages/otelcol-<version>.vsix
 
 # install into your local VS Code:
-code --install-extension dist/packages/opentelemetry-collector-config-*.vsix
+code --install-extension dist/packages/otelcol-*.vsix
 # or: Extensions view → "…" menu → "Install from VSIX…"
 ```
 
@@ -76,8 +76,8 @@ make package-zed
 The Zed extension shells out to `otelcol-language-server` on `PATH`, so first install the server locally:
 
 ```sh
-npm pack                                  # → opentelemetry-collector-config-<version>.tgz
-npm i -g ./opentelemetry-collector-config-*.tgz           # exposes otelcol-language-server
+npm pack                                  # → otelcol-<version>.tgz
+npm i -g ./otelcol-*.tgz   # exposes otelcol-language-server
 which otelcol-language-server
 ```
 
@@ -93,7 +93,7 @@ make package-helix
 tar xzf dist/packages/otelcol-helix-*.tar.gz -C ~/.config/helix/
 ```
 
-The server also needs to be on `PATH` (same `npm i -g ./opentelemetry-collector-config-*.tgz` step as for Zed). See [`editors/helix/README.md`](../editors/helix/README.md) for the symlink-based dev variant that lets query edits flow through without re-packaging.
+The server also needs to be on `PATH` (same `npm i -g ./otelcol-*.tgz` step as for Zed). See [`editors/helix/README.md`](../editors/helix/README.md) for the symlink-based dev variant that lets query edits flow through without re-packaging.
 
 ### JetBrains
 

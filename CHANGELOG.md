@@ -10,7 +10,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - The Zed extension now installs the language server automatically. On first
-  use it fetches the `opentelemetry-collector-config` npm package into its work
+  use it fetches the `@otelery/otelcol-lang` npm package into its work
   directory and runs it with Zed's bundled Node — no manual `npm i -g` needed.
   An explicit `lsp.otelcol.binary.path` or a server already on `PATH` still
   take precedence.

@@ -6,7 +6,7 @@
 
 Syntax highlighting, completion, hover, diagnostics and embedded OTTL for OpenTelemetry Collector configs.
 
-`otelcol-lang` is editor tooling for [OpenTelemetry Collector][otelcol] configurations: completion, hover docs, diagnostics, cross-file references and embedded OTTL, delivered through one shared LSP server plus a thin integration per editor. The package ships as `opentelemetry-collector-config` on the VS Code Marketplace and npm; this repo directory is `otelcol-lang-release`.
+`otelcol-lang` is editor tooling for [OpenTelemetry Collector][otelcol] configurations: completion, hover docs, diagnostics, cross-file references and embedded OTTL, delivered through one shared LSP server plus a thin integration per editor. The package ships as `otelery.otelcol-lang` on the VS Code Marketplace and `@otelery/otelcol-lang` on npm; this repo directory is `otelcol-lang-release`.
 
 [otelcol]: https://github.com/open-telemetry/opentelemetry-collector
 

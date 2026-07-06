@@ -404,7 +404,7 @@ publish-npm: release-guard check ## Publish the otelcol-language-server binary t
 	  cp README.md .README.md.publish-bak; \
 	  trap 'mv .README.md.publish-bak README.md' EXIT INT TERM; \
 	  cp docs/dist/npm-readme.md README.md; \
-	  $(NPM) publish
+	  $(NPM) publish --access public
 
 publish-jetbrains: release-guard bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Publish the JetBrains plugin to the Marketplace (requires JETBRAINS_MARKETPLACE_TOKEN)
 	@test -n "$$JETBRAINS_MARKETPLACE_TOKEN" || { echo "JETBRAINS_MARKETPLACE_TOKEN not set (generate one at https://plugins.jetbrains.com/author/me/tokens)"; exit 1; }
@@ -443,7 +443,7 @@ publish-zed-repo: release-guard ## Sync editors/zed/ to otelery/otelcol-zed on G
 
 publish-helix: package-helix ## Print install instructions for end-users
 	@echo "Helix has no central registry; ship $(DIST_PKG)/otelcol-helix-$(VERSION).tar.gz"
-	@echo "End-users extract it into ~/.config/helix/ and install the LSP via 'npm i -g opentelemetry-collector-config'"
+	@echo "End-users extract it into ~/.config/helix/ and install the LSP via 'npm i -g @otelery/otelcol-lang'"
 
 # --- release (prepare) --------------------------------------------------------
 # Releasing is two phases. PREPARE (here) is the only place a version is bumped:

@@ -1,5 +1,5 @@
 {
-  "name": "opentelemetry-collector-config",
+  "name": "otelcol-lang",
   "displayName": "OpenTelemetry Collector Config",
   "version": "0.5.1",
   "description": "Syntax highlighting, completion, hover, diagnostics and embedded OTTL for OpenTelemetry Collector configs.",

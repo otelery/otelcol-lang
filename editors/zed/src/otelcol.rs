@@ -12,12 +12,12 @@ const SERVER_ID: &str = "otelcol";
 // (`otelcol-language-server`) differs from the package name, so Zed can't
 // install it by the binary name, so we install the package explicitly and then
 // spawn its bin shim with Zed's bundled Node.
-const NPM_PACKAGE: &str = "opentelemetry-collector-config";
+const NPM_PACKAGE: &str = "@otelery/otelcol-lang";
 
 // Path to the server's bin shim inside the installed package, relative to the
 // extension's working directory (where Zed runs `npm install`). The shim is a
 // `#!/usr/bin/env node` script that boots the stdio language server.
-const SERVER_ENTRY: &str = "node_modules/opentelemetry-collector-config/bin/otelcol-language-server.js";
+const SERVER_ENTRY: &str = "node_modules/@otelery/otelcol-lang/bin/otelcol-language-server.js";
 
 // Install the npm package version that matches this extension (the repo keeps
 // the extension and the npm package in lockstep), so a given extension release

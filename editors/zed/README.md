@@ -12,7 +12,7 @@ below.
 ## Pre-requisites
 
 **Zero-config:** on first use the extension installs the
-`opentelemetry-collector-config` npm package into its own work
+`@otelery/otelcol-lang` npm package into its own work
 directory and runs it with Zed's bundled Node — nothing to install by
 hand.
 
@@ -21,14 +21,14 @@ The extension resolves the server in this order (first match wins):
 1. `lsp.otelcol.binary.path` from your settings (local-dev override —
    see [Pointing Zed at a local build](#pointing-zed-at-a-local-build)).
 2. `otelcol-language-server` on your `PATH` (e.g. a global
-   `npm i -g opentelemetry-collector-config`).
+   `npm i -g @otelery/otelcol-lang`).
 3. The auto-installed npm copy (the default).
 
 So a global install is optional — use it only if you want one shared
 server across editors:
 
 ```sh
-npm i -g opentelemetry-collector-config
+npm i -g @otelery/otelcol-lang
 which otelcol-language-server   # should print a path
 ```
 
