@@ -49,7 +49,7 @@ typically invoke it with `--stdio`.
 | Zed       | [`otelcol` extension](https://github.com/otelery/otelcol-lang/tree/main/editors/zed) — install this npm package, then enable the extension |
 | Helix     | [`languages.toml` snippet](https://github.com/otelery/otelcol-lang/tree/main/editors/helix) |
 | JetBrains | [LSP4IJ-based plugin](https://github.com/otelery/otelcol-lang/tree/main/editors/jetbrains) |
-| VS Code   | Use the [VS Code Marketplace extension](https://marketplace.visualstudio.com/items?itemName=otelery.otelcol-lang) — it bundles the server. |
+| VS Code   | Use the [VS Code Marketplace extension](https://marketplace.visualstudio.com/items?itemName=otelery.opentelemetry-collector-config) — it bundles the server. |
 
 ## Configuration
 

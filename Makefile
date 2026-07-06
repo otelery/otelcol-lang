@@ -338,13 +338,16 @@ $(DIST_PKG):
 package: package-vscode package-jetbrains package-zed package-helix ## Build every editor's distributable into dist/packages/
 
 package-vscode: bundle | $(DIST_PKG) ## VS Code .vsix → dist/packages/
-	# vsce reads README.md from the package root. Swap in the
-	# Marketplace-specific README.vscode.md for the duration of the
-	# packaging, then restore. `trap` guarantees restore on Ctrl-C / fail.
+	# vsce reads README.md and package.json from the repo root. Swap in:
+	#   - docs/dist/vscode-readme.md as README.md
+	#   - editors/vscode/package.json as package.json (VS Code manifest)
+	# `trap` guarantees restore on Ctrl-C or failure.
 	@set -e; \
 	  cp README.md .README.md.vsce-bak; \
-	  trap 'mv .README.md.vsce-bak README.md' EXIT INT TERM; \
+	  cp package.json .package.json.vsce-bak; \
+	  trap 'mv .README.md.vsce-bak README.md; mv .package.json.vsce-bak package.json' EXIT INT TERM; \
 	  cp docs/dist/vscode-readme.md README.md; \
+	  cp editors/vscode/package.json package.json; \
 	  $(VSCE) package --out $(DIST_PKG)/
 
 package-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) | $(DIST_PKG) ## JetBrains plugin .zip → dist/packages/
@@ -389,25 +392,23 @@ publish: release-guard publish-vscode publish-npm publish-jetbrains publish-zed-
 	@echo "==> Zed: otelery/zed-otelcol is up to date. Open a PR at zed-industries/extensions to bump the version."
 
 publish-vscode: release-guard check ## Publish current version to the VS Code Marketplace (requires VSCE_PAT or `vsce login otelery`)
-	# Same README swap as package-vscode — vsce publish re-packages internally.
+	# Same README + manifest swap as package-vscode — vsce publish re-packages internally.
 	@set -e; \
 	  cp README.md .README.md.vsce-bak; \
-	  trap 'mv .README.md.vsce-bak README.md' EXIT INT TERM; \
+	  cp package.json .package.json.vsce-bak; \
+	  trap 'mv .README.md.vsce-bak README.md; mv .package.json.vsce-bak package.json' EXIT INT TERM; \
 	  cp docs/dist/vscode-readme.md README.md; \
+	  cp editors/vscode/package.json package.json; \
 	  $(VSCE) publish
 
 publish-npm: release-guard check ## Publish the otelcol-language-server binary to npm (requires NPM_TOKEN or `npm login`)
-	# npm reads README.md and the "name" field from package.json.
-	# Swap both for the duration of the publish, then restore via trap.
-	# README: use the LSP-specific npm-readme.md instead of the repo root README.
-	# name: use the scoped @otelery/otelcol-lang instead of the bare otelcol-lang
-	# (bare name is required for vsce; scoped name is required for npm).
+	# npm always reads README.md from the package root. Swap in the LSP-
+	# specific README.npm.md for the duration of the publish, then restore.
+	# `trap` guarantees restore even on Ctrl-C or publish failure.
 	@set -e; \
 	  cp README.md .README.md.publish-bak; \
-	  cp package.json .package.json.publish-bak; \
-	  trap 'mv .README.md.publish-bak README.md; mv .package.json.publish-bak package.json' EXIT INT TERM; \
+	  trap 'mv .README.md.publish-bak README.md' EXIT INT TERM; \
 	  cp docs/dist/npm-readme.md README.md; \
-	  node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('package.json')); p.name='@otelery/otelcol-lang'; fs.writeFileSync('package.json', JSON.stringify(p, null, 2)+'\n')"; \
 	  $(NPM) publish --access public
 
 publish-jetbrains: release-guard bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Publish the JetBrains plugin to the Marketplace (requires JETBRAINS_MARKETPLACE_TOKEN)

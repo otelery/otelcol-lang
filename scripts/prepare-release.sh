@@ -114,13 +114,19 @@ if git diff --quiet -- CHANGELOG.md; then
   exit 1
 fi
 
-# Sync the single version source across registries: root package.json drives
-# the VS Code extension + npm package; editors/jetbrains/gradle.properties
-# drives the JetBrains plugin; editors/zed/{extension.toml,Cargo.toml,Cargo.lock}
-# drive the Zed extension (which also installs the npm server at this exact
-# version). They
-# MUST move in lockstep or `make publish` will ship mismatched artefacts.
+# Sync the single version source across registries:
+#   - root package.json / package-lock.json → npm server package (@otelery/otelcol-lang)
+#   - editors/vscode/package.json           → VS Code extension manifest (otelery.opentelemetry-collector-config)
+#   - editors/jetbrains/gradle.properties   → JetBrains plugin
+#   - editors/zed/{extension.toml,Cargo.toml,Cargo.lock} → Zed extension
+# They MUST move in lockstep or `make publish` will ship mismatched artefacts.
 npm version "$VERSION" --no-git-tag-version --allow-same-version >/dev/null
+node -e "
+  const fs = require('fs');
+  const p = JSON.parse(fs.readFileSync('editors/vscode/package.json'));
+  p.version = '$VERSION';
+  fs.writeFileSync('editors/vscode/package.json', JSON.stringify(p, null, 2) + '\n');
+"
 sed -i -E "s/^pluginVersion=.*/pluginVersion=${VERSION}/" editors/jetbrains/gradle.properties
 sed -i -E "s/^version = \".*\"/version = \"${VERSION}\"/" editors/zed/extension.toml
 sed -i -E "s/^version = \".*\"/version = \"${VERSION}\"/" editors/zed/Cargo.toml
@@ -133,8 +139,8 @@ if ! make check; then
   exit 1
 fi
 
-git add CHANGELOG.md package.json package-lock.json editors/jetbrains/gradle.properties \
-  editors/zed/extension.toml editors/zed/Cargo.toml editors/zed/Cargo.lock
+git add CHANGELOG.md package.json package-lock.json editors/vscode/package.json \
+  editors/jetbrains/gradle.properties editors/zed/extension.toml editors/zed/Cargo.toml editors/zed/Cargo.lock
 git commit -m "chore(release): ${VERSION}"
 git tag "v$VERSION"
 
