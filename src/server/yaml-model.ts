@@ -113,6 +113,40 @@ const CLASS_KEYS: Record<string, ComponentClass> = {
   extensions: "extension",
 };
 
+// Whole-scalar `${env:VAR}` / `${env:VAR:-default}` substitution. Only
+// matches when the ENTIRE ref string is one substitution (not embedded in
+// a larger value like "Bearer ${env:TOKEN}") — that's the only shape that
+// makes sense as a component-id reference. No default → left unresolved
+// (nothing to validate against, so the existing "not defined" diagnostic
+// is the correct, honest behavior).
+const ENV_DEFAULT_RE = /^\$\{env:[A-Za-z_][A-Za-z0-9_]*:-([\s\S]*)\}$/;
+
+function resolveRefId(raw: string): string {
+  const m = ENV_DEFAULT_RE.exec(raw);
+  return m ? m[1] : raw;
+}
+
+// When a ref is an `${env:VAR:-default}` substitution, narrow the range to
+// cover only the default value so that diagnostics, hover, and F12 point at
+// the component name rather than the whole substitution expression.
+function refRange(text: string, node: Node, raw: string): Range {
+  const m = ENV_DEFAULT_RE.exec(raw);
+  if (!m) return nodeRange(text, node);
+  if (!node || !(node as any).range) return nodeRange(text, node);
+
+  const [nodeStart] = (node as any).range as [number, number, number];
+  // Account for an opening quote character in the source.
+  const q = text[nodeStart];
+  const contentStart = q === '"' || q === "'" ? nodeStart + 1 : nodeStart;
+
+  // raw = `${env:NAME:-default}` — the default starts after ':-' and ends before '}'.
+  const colonDash = raw.indexOf(":-");
+  const defaultStart = contentStart + colonDash + 2;
+  const defaultEnd = contentStart + raw.length - 1; // exclude trailing '}'
+
+  return rangeFromOffsets(text, defaultStart, defaultEnd);
+}
+
 // Keys whose immediate sequence-of-strings is a list of OTTL statements/conditions.
 // Some (log_statements, trace_statements, …) carry a list of *maps* whose inner
 // `statements:` / `conditions:` sub-keys hold the actual OTTL — handled by the
@@ -289,9 +323,9 @@ function scrapeExtensionRefs(
         typeof (val as Scalar).value === "string"
       ) {
         out.push({
-          id: String((val as Scalar).value),
+          id: resolveRefId(String((val as Scalar).value)),
           sourceUri,
-          range: nodeRange(text, val),
+          range: refRange(text, val, String((val as Scalar).value)),
           fieldPath: childPath,
           strict: true,
         });
@@ -305,9 +339,9 @@ function scrapeExtensionRefs(
         typeof (val as Scalar).value === "string"
       ) {
         out.push({
-          id: String((val as Scalar).value),
+          id: resolveRefId(String((val as Scalar).value)),
           sourceUri,
-          range: nodeRange(text, val),
+          range: refRange(text, val, String((val as Scalar).value)),
           fieldPath: childPath,
           strict: DIRECT_EXT_REF_STRICT.has(key),
         });
@@ -318,9 +352,9 @@ function scrapeExtensionRefs(
         for (const item of (val as YAMLSeq).items) {
           if (isScalar(item) && typeof item.value === "string") {
             out.push({
-              id: String(item.value),
+              id: resolveRefId(String(item.value)),
               sourceUri,
-              range: nodeRange(text, item as Node),
+              range: refRange(text, item as Node, String(item.value)),
               fieldPath: `${childPath}[]`,
               strict: true,
             });
@@ -403,9 +437,9 @@ function pushSeq(
   for (const item of seq.items) {
     if (isScalar(item) && typeof item.value === "string") {
       out.push({
-        id: String(item.value),
+        id: resolveRefId(String(item.value)),
         sourceUri,
-        range: nodeRange(text, item as Node),
+        range: refRange(text, item as Node, String(item.value)),
         fieldPath,
       });
     }
@@ -420,9 +454,9 @@ function collectService(text: string, model: DocModel, svc: YAMLMap, sourceUri: 
       for (const item of pair.value.items) {
         if (!isScalar(item)) continue;
         model.serviceExtensions.push({
-          id: String(item.value),
+          id: resolveRefId(String(item.value)),
           sourceUri,
-          range: nodeRange(text, item as Node),
+          range: refRange(text, item as Node, String(item.value)),
         });
       }
       continue;
@@ -458,7 +492,11 @@ function collectService(text: string, model: DocModel, svc: YAMLMap, sourceUri: 
         if (!bucket) continue;
         for (const item of inner.value.items) {
           if (!isScalar(item)) continue;
-          bucket.push({ id: String(item.value), sourceUri, range: nodeRange(text, item as Node) });
+          bucket.push({
+            id: resolveRefId(String(item.value)),
+            sourceUri,
+            range: refRange(text, item as Node, String(item.value)),
+          });
         }
       }
       model.pipelines.push(entry);

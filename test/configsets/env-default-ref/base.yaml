@@ -1,0 +1,9 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+exporters:
+  otlp/dash0:
+    endpoint: ingest.dash0.com:4317

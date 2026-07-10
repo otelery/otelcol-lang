@@ -202,7 +202,7 @@ tasks.named("processResources") {
 // override at dist/server/server.js, and enables the dev watcher.
 //
 // Override IDE version: -PrunIdeVersion=2026.2
-// Override project:    -PsandboxProject=/abs/path
+// Override project:    -PsandboxProject=/abs/path (or via Makefile: SANDBOX_PROJECT=/path/to/project make runide-jetbrains)
 intellijPlatformTesting {
   runIde.register("runIdeDev") {
     // Starting with 2025.3 (253), JetBrains dropped the IC/IU split - there

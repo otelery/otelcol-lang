@@ -9,6 +9,14 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Pipeline `receivers`/`processors`/`exporters` entries (and
+  `service.extensions`, and other cross-file component/extension refs) that
+  are written as a whole-scalar `${env:VAR:-default}` substitution now
+  resolve to their default value for reference validation, hover, and
+  find-references — previously the literal substitution string was compared
+  against declared component ids, producing a false "not defined" error and
+  simultaneously flagging the real, only-referenced-via-default component as
+  unused.
 - The Zed extension now installs the language server automatically. On first
   use it fetches the `@otelery/otelcol-lang` npm package into its work
   directory and runs it with Zed's bundled Node — no manual `npm i -g` needed.

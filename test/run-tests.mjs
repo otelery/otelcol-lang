@@ -348,6 +348,32 @@ describe("SetModel build + validatePipelines", () => {
     assert.equal(span, "ghost", `range span = ${JSON.stringify(span)}; expected exactly 'ghost'`);
   });
 
+  it("env-default-ref: ${env:VAR:-default} resolves to the default for ref matching", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const outputExternal = diags.filter((d) => /output_external/.test(d.diagnostic.message));
+    assert.deepEqual(
+      outputExternal,
+      [],
+      "traces/output_external should validate clean once ${env:DASH0_EXPORTER_NAME:-otlp/dash0} resolves to the declared otlp/dash0 exporter",
+    );
+    const unusedDash0 = diags.find((d) => /otlp\/dash0/.test(d.diagnostic.message));
+    assert.equal(
+      unusedDash0,
+      undefined,
+      "otlp/dash0 is referenced (via the env-var default) and must not be flagged unused",
+    );
+  });
+
+  it("env-default-ref: an unresolvable default still surfaces a missing-ref error", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) =>
+      /exporter "nonexistent\/thing" is not defined/.test(d.diagnostic.message),
+    );
+    assert.ok(err, "expected an undefined-exporter error for the unresolvable default");
+  });
+
   // Issue #9: a pipeline split/overridden across config-set members must be
   // validated against the confmap-merged view, not each fragment in isolation.
   it("pipeline-split: no false 'has no receivers/exporters' on a merged/overridden pipeline", () => {

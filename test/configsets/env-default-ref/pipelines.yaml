@@ -1,0 +1,14 @@
+service:
+  pipelines:
+    # Positive case: the env var's default value resolves to the declared
+    # `otlp/dash0` exporter, so this must validate clean (no missing-ref,
+    # no unused).
+    traces/output_external:
+      receivers: [otlp]
+      exporters: ["${env:DASH0_EXPORTER_NAME:-otlp/dash0}"]
+    # Negative case: the default doesn't match anything declared, so this
+    # must still surface a missing-ref error — proves resolution doesn't
+    # silently swallow real mistakes.
+    traces/output_broken:
+      receivers: [otlp]
+      exporters: ["${env:MISSING:-nonexistent/thing}"]
