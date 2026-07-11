@@ -15,6 +15,7 @@ import {
 } from "yaml";
 import type { Position, Range } from "vscode-languageserver";
 import type { ComponentClass } from "./components";
+import { resolveRefId, defaultValueOffsets } from "./substitution";
 
 export interface DocModel {
   sourceUri: string;
@@ -113,38 +114,22 @@ const CLASS_KEYS: Record<string, ComponentClass> = {
   extensions: "extension",
 };
 
-// Whole-scalar `${env:VAR}` / `${env:VAR:-default}` substitution. Only
-// matches when the ENTIRE ref string is one substitution (not embedded in
-// a larger value like "Bearer ${env:TOKEN}") — that's the only shape that
-// makes sense as a component-id reference. No default → left unresolved
-// (nothing to validate against, so the existing "not defined" diagnostic
-// is the correct, honest behavior).
-const ENV_DEFAULT_RE = /^\$\{env:[A-Za-z_][A-Za-z0-9_]*:-([\s\S]*)\}$/;
-
-function resolveRefId(raw: string): string {
-  const m = ENV_DEFAULT_RE.exec(raw);
-  return m ? m[1] : raw;
-}
-
 // When a ref is an `${env:VAR:-default}` substitution, narrow the range to
 // cover only the default value so that diagnostics, hover, and F12 point at
 // the component name rather than the whole substitution expression.
-function refRange(text: string, node: Node, raw: string): Range {
-  const m = ENV_DEFAULT_RE.exec(raw);
-  if (!m) return nodeRange(text, node);
+// Offsets are computed from the source text slice (not Scalar.value) so that
+// quoted scalars with escape sequences produce correct byte positions.
+function refRange(text: string, node: Node): Range {
   if (!node || !(node as any).range) return nodeRange(text, node);
-
-  const [nodeStart] = (node as any).range as [number, number, number];
-  // Account for an opening quote character in the source.
+  const [nodeStart, nodeEnd] = (node as any).range as [number, number, number];
   const q = text[nodeStart];
   const contentStart = q === '"' || q === "'" ? nodeStart + 1 : nodeStart;
-
-  // raw = `${env:NAME:-default}` — the default starts after ':-' and ends before '}'.
-  const colonDash = raw.indexOf(":-");
-  const defaultStart = contentStart + colonDash + 2;
-  const defaultEnd = contentStart + raw.length - 1; // exclude trailing '}'
-
-  return rangeFromOffsets(text, defaultStart, defaultEnd);
+  const contentEnd = q === '"' || q === "'" ? nodeEnd - 1 : nodeEnd;
+  const sourceSlice = text.slice(contentStart, contentEnd);
+  const offsets = defaultValueOffsets(sourceSlice);
+  if (!offsets) return nodeRange(text, node);
+  const [relStart, relEnd] = offsets;
+  return rangeFromOffsets(text, contentStart + relStart, contentStart + relEnd);
 }
 
 // Keys whose immediate sequence-of-strings is a list of OTTL statements/conditions.
@@ -325,7 +310,7 @@ function scrapeExtensionRefs(
         out.push({
           id: resolveRefId(String((val as Scalar).value)),
           sourceUri,
-          range: refRange(text, val, String((val as Scalar).value)),
+          range: refRange(text, val),
           fieldPath: childPath,
           strict: true,
         });
@@ -341,7 +326,7 @@ function scrapeExtensionRefs(
         out.push({
           id: resolveRefId(String((val as Scalar).value)),
           sourceUri,
-          range: refRange(text, val, String((val as Scalar).value)),
+          range: refRange(text, val),
           fieldPath: childPath,
           strict: DIRECT_EXT_REF_STRICT.has(key),
         });
@@ -354,7 +339,7 @@ function scrapeExtensionRefs(
             out.push({
               id: resolveRefId(String(item.value)),
               sourceUri,
-              range: refRange(text, item as Node, String(item.value)),
+              range: refRange(text, item as Node),
               fieldPath: `${childPath}[]`,
               strict: true,
             });
@@ -439,7 +424,7 @@ function pushSeq(
       out.push({
         id: resolveRefId(String(item.value)),
         sourceUri,
-        range: refRange(text, item as Node, String(item.value)),
+        range: refRange(text, item as Node),
         fieldPath,
       });
     }
@@ -456,7 +441,7 @@ function collectService(text: string, model: DocModel, svc: YAMLMap, sourceUri: 
         model.serviceExtensions.push({
           id: resolveRefId(String(item.value)),
           sourceUri,
-          range: refRange(text, item as Node, String(item.value)),
+          range: refRange(text, item as Node),
         });
       }
       continue;
@@ -495,7 +480,7 @@ function collectService(text: string, model: DocModel, svc: YAMLMap, sourceUri: 
           bucket.push({
             id: resolveRefId(String(item.value)),
             sourceUri,
-            range: refRange(text, item as Node, String(item.value)),
+            range: refRange(text, item as Node),
           });
         }
       }
