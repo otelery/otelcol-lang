@@ -5,7 +5,7 @@ service:
     # no unused).
     traces/output_external:
       receivers: [otlp]
-      exporters: ["${env:DASH0_EXPORTER_NAME:-otlp/dash0}"]
+      exporters: ["${env:EXPORTER_NAME:-otlp/primary}"]
     # Negative case: the default doesn't match anything declared, so this
     # must still surface a missing-ref error — proves resolution doesn't
     # silently swallow real mistakes.

@@ -355,13 +355,13 @@ describe("SetModel build + validatePipelines", () => {
     assert.deepEqual(
       outputExternal,
       [],
-      "traces/output_external should validate clean once ${env:DASH0_EXPORTER_NAME:-otlp/dash0} resolves to the declared otlp/dash0 exporter",
+      "traces/output_external should validate clean once ${env:EXPORTER_NAME:-otlp/primary} resolves to the declared otlp/primary exporter",
     );
-    const unusedDash0 = diags.find((d) => /otlp\/dash0/.test(d.diagnostic.message));
+    const unusedPrimary = diags.find((d) => /otlp\/primary/.test(d.diagnostic.message));
     assert.equal(
-      unusedDash0,
+      unusedPrimary,
       undefined,
-      "otlp/dash0 is referenced (via the env-var default) and must not be flagged unused",
+      "otlp/primary is referenced (via the env-var default) and must not be flagged unused",
     );
   });
 

@@ -5,5 +5,5 @@ receivers:
         endpoint: 0.0.0.0:4317
 
 exporters:
-  otlp/dash0:
-    endpoint: ingest.dash0.com:4317
+  otlp/primary:
+    endpoint: ingest.example.com:4317
