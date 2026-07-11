@@ -374,6 +374,31 @@ describe("SetModel build + validatePipelines", () => {
     assert.ok(err, "expected an undefined-exporter error for the unresolvable default");
   });
 
+  it("env-default-ref: diagnostic range is narrowed to the default substring", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) =>
+      /exporter "nonexistent\/thing" is not defined/.test(d.diagnostic.message),
+    );
+    assert.ok(err, "expected an undefined-exporter error for the unresolvable default");
+    // The diagnostic must point at "nonexistent/thing", not the full "${env:MISSING:-nonexistent/thing}".
+    // Read the source line and extract the span covered by the diagnostic range.
+    const pipelinesUri = memberUri(set, "pipelines.yaml");
+    assert.ok(pipelinesUri, "expected pipelines.yaml member");
+    const pipelinesText = readFileSync(pipelinesUri.replace(/^file:\/\//, ""), "utf8");
+    const lines = pipelinesText.split("\n");
+    const line = lines[err.diagnostic.range.start.line];
+    const span = line.substring(
+      err.diagnostic.range.start.character,
+      err.diagnostic.range.end.character,
+    );
+    assert.equal(
+      span,
+      "nonexistent/thing",
+      `range span = ${JSON.stringify(span)}; expected exactly 'nonexistent/thing', not the whole substitution expression`,
+    );
+  });
+
   // Issue #9: a pipeline split/overridden across config-set members must be
   // validated against the confmap-merged view, not each fragment in isolation.
   it("pipeline-split: no false 'has no receivers/exporters' on a merged/overridden pipeline", () => {
