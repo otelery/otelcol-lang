@@ -282,7 +282,7 @@ build-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE
 	cd editors/jetbrains && $(GRADLEW) assemble
 
 runide-jetbrains: bundle .ci-tools/java-$(JAVA_VERSION) .ci-tools/gradle-$(GRADLE_VERSION) ## Launch sandbox IntelliJ with examples/ open (or override with SANDBOX_PROJECT=/path/to/project).
-	cd editors/jetbrains && $(GRADLEW) runIdeDev $(if $(SANDBOX_PROJECT),-PsandboxProject=$(SANDBOX_PROJECT))
+	cd editors/jetbrains && $(GRADLEW) runIdeDev $(if $(SANDBOX_PROJECT),-PsandboxProject="$(SANDBOX_PROJECT)")
 
 build-zed: .ci-tools/rust-wasm32-$(RUST_VERSION) ## Compile Zed extension to wasm32-wasip1
 	cd editors/zed && $(CARGO) build --target wasm32-wasip1
