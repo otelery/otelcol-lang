@@ -11,17 +11,25 @@
 
 // Modern env-provider form.
 const ENV_SCHEME_RE = /^\$\{env:([A-Za-z_][A-Za-z0-9_]*)(?::-([\s\S]*))?\}$/;
+// yaml: provider — the opaque value is passed verbatim to the YAML parser, so it IS the component name.
+const YAML_SCHEME_RE = /^\$\{yaml:([\s\S]*)\}$/;
 // Legacy bare form — deprecated but still accepted by the collector.
 const LEGACY_BARE_RE = /^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$/;
+// Any confmap provider substitution (scheme = [A-Za-z][A-Za-z0-9+.-]+, min 2 chars).
+// Used to detect unresolved substitutions whose value is only known at runtime (file:, http:, https:, …).
+const ANY_SCHEME_RE = /^\$\{[A-Za-z][A-Za-z0-9+.\-]+:[\s\S]*\}$/;
 
 /** Extract the component ID to look up from a raw scalar value.
  *
  * - `${env:VAR:-default}` → `"default"` (validate the default against declared components)
- * - `${env:VAR}` / `${VAR}` / anything else → `raw` (unresolvable; caller gets a diagnostic)
+ * - `${yaml:VALUE}`       → `"VALUE"`   (statically known; yaml: passes the opaque value to the parser)
+ * - `${env:VAR}` / `${VAR}` / `${file:…}` / anything else → `raw` (unresolvable; caller skips or gets a diagnostic)
  */
 export function resolveRefId(raw: string): string {
-  const m = ENV_SCHEME_RE.exec(raw);
-  if (m && m[2] !== undefined) return m[2];
+  const envM = ENV_SCHEME_RE.exec(raw);
+  if (envM && envM[2] !== undefined) return envM[2];
+  const yamlM = YAML_SCHEME_RE.exec(raw);
+  if (yamlM) return yamlM[1];
   return raw;
 }
 
@@ -43,7 +51,7 @@ export function defaultValueOffsets(sourceSlice: string): [number, number] | nul
   return [colonDash + 2, closingBrace];
 }
 
-/** True if the raw scalar is any recognized substitution form (modern or legacy). */
+/** True if the raw scalar is any recognized substitution form (modern, legacy, or any provider scheme). */
 export function isSubstitution(raw: string): boolean {
-  return ENV_SCHEME_RE.test(raw) || LEGACY_BARE_RE.test(raw);
+  return ANY_SCHEME_RE.test(raw) || LEGACY_BARE_RE.test(raw);
 }

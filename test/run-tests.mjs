@@ -399,6 +399,36 @@ describe("SetModel build + validatePipelines", () => {
     );
   });
 
+  it("env-default-ref: ${env:VAR} no-default produces no diagnostic", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) => /\$\{env:EXPORTER_NAME\}/.test(d.diagnostic.message));
+    assert.equal(err, undefined, "expected no diagnostic for a no-default env substitution");
+  });
+
+  it("env-default-ref: ${VAR} legacy form produces no diagnostic", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) => /\$\{EXPORTER_NAME\}/.test(d.diagnostic.message));
+    assert.equal(err, undefined, "expected no diagnostic for a legacy bare substitution");
+  });
+
+  it("env-default-ref: ${yaml:VALUE} resolves to the declared component", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) => /output_yaml/.test(d.diagnostic.message));
+    assert.equal(err, undefined, "expected no diagnostic: ${yaml:otlp/primary} should resolve to the declared otlp/primary exporter");
+    const unusedPrimary = diags.find((d) => /otlp\/primary.*unused/.test(d.diagnostic.message));
+    assert.equal(unusedPrimary, undefined, "otlp/primary is referenced via yaml: and must not be flagged unused");
+  });
+
+  it("env-default-ref: ${file:...} produces no diagnostic", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) => /\$\{file:/.test(d.diagnostic.message));
+    assert.equal(err, undefined, "expected no diagnostic for a file: substitution (runtime-resolved)");
+  });
+
   // Issue #9: a pipeline split/overridden across config-set members must be
   // validated against the confmap-merged view, not each fragment in isolation.
   it("pipeline-split: no false 'has no receivers/exporters' on a merged/overridden pipeline", () => {

@@ -17,6 +17,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   against declared component ids, producing a false "not defined" error and
   simultaneously flagging the real, only-referenced-via-default component as
   unused.
+- Component/extension refs written via the `${yaml:VALUE}` provider now
+  resolve statically (the provider passes its value straight through to the
+  YAML parser, so `VALUE` is the component id); refs via any other confmap
+  provider scheme (`${file:...}`, `${http:...}`, etc.) are recognized as
+  runtime-resolved and no longer produce a false "not defined" diagnostic.
 - The Zed extension now installs the language server automatically. On first
   use it fetches the `@otelery/otelcol-lang` npm package into its work
   directory and runs it with Zed's bundled Node — no manual `npm i -g` needed.
