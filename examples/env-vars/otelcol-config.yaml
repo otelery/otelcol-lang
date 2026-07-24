@@ -30,6 +30,8 @@ exporters:
     headers:
       # The file: provider reads a secret from disk at startup.
       authorization: "Bearer ${file:/etc/otel/token}"
+  otlp/secondary:
+    endpoint: otelcol.example.com:4317
 
 extensions:
   # Legacy bare ${VAR} form — still accepted by the Collector but deprecated.
@@ -45,3 +47,10 @@ service:
       receivers: [otlp]
       processors: [attributes]
       exporters: [otlphttp]
+    # A pipeline reference can itself be an `${env:VAR:-default}`
+    # substitution: the language server resolves it to its default value
+    # (`otlp/secondary` here) to validate/find the referenced component — this
+    # isn't just syntax highlighting, hover and F12 work on it too.
+    traces/output_external:
+      receivers: [otlp]
+      exporters: ["${env:SECONDARY_EXPORTER_NAME:-otlp/secondary}"]

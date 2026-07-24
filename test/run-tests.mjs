@@ -348,6 +348,87 @@ describe("SetModel build + validatePipelines", () => {
     assert.equal(span, "ghost", `range span = ${JSON.stringify(span)}; expected exactly 'ghost'`);
   });
 
+  it("env-default-ref: ${env:VAR:-default} resolves to the default for ref matching", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const outputExternal = diags.filter((d) => /output_external/.test(d.diagnostic.message));
+    assert.deepEqual(
+      outputExternal,
+      [],
+      "traces/output_external should validate clean once ${env:EXPORTER_NAME:-otlp/primary} resolves to the declared otlp/primary exporter",
+    );
+    const unusedPrimary = diags.find((d) => /otlp\/primary/.test(d.diagnostic.message));
+    assert.equal(
+      unusedPrimary,
+      undefined,
+      "otlp/primary is referenced (via the env-var default) and must not be flagged unused",
+    );
+  });
+
+  it("env-default-ref: an unresolvable default still surfaces a missing-ref error", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) =>
+      /exporter "nonexistent\/thing" is not defined/.test(d.diagnostic.message),
+    );
+    assert.ok(err, "expected an undefined-exporter error for the unresolvable default");
+  });
+
+  it("env-default-ref: diagnostic range is narrowed to the default substring", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) =>
+      /exporter "nonexistent\/thing" is not defined/.test(d.diagnostic.message),
+    );
+    assert.ok(err, "expected an undefined-exporter error for the unresolvable default");
+    // The diagnostic must point at "nonexistent/thing", not the full "${env:MISSING:-nonexistent/thing}".
+    // Read the source line and extract the span covered by the diagnostic range.
+    const pipelinesUri = memberUri(set, "pipelines.yaml");
+    assert.ok(pipelinesUri, "expected pipelines.yaml member");
+    const pipelinesText = readFileSync(pipelinesUri.replace(/^file:\/\//, ""), "utf8");
+    const lines = pipelinesText.split("\n");
+    const line = lines[err.diagnostic.range.start.line];
+    const span = line.substring(
+      err.diagnostic.range.start.character,
+      err.diagnostic.range.end.character,
+    );
+    assert.equal(
+      span,
+      "nonexistent/thing",
+      `range span = ${JSON.stringify(span)}; expected exactly 'nonexistent/thing', not the whole substitution expression`,
+    );
+  });
+
+  it("env-default-ref: ${env:VAR} no-default produces no diagnostic", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) => /\$\{env:EXPORTER_NAME\}/.test(d.diagnostic.message));
+    assert.equal(err, undefined, "expected no diagnostic for a no-default env substitution");
+  });
+
+  it("env-default-ref: ${VAR} legacy form produces no diagnostic", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) => /\$\{EXPORTER_NAME\}/.test(d.diagnostic.message));
+    assert.equal(err, undefined, "expected no diagnostic for a legacy bare substitution");
+  });
+
+  it("env-default-ref: ${yaml:VALUE} resolves to the declared component", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) => /output_yaml/.test(d.diagnostic.message));
+    assert.equal(err, undefined, "expected no diagnostic: ${yaml:otlp/primary} should resolve to the declared otlp/primary exporter");
+    const unusedPrimary = diags.find((d) => /otlp\/primary.*unused/.test(d.diagnostic.message));
+    assert.equal(unusedPrimary, undefined, "otlp/primary is referenced via yaml: and must not be flagged unused");
+  });
+
+  it("env-default-ref: ${file:...} produces no diagnostic", () => {
+    const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
+    const diags = validatePipelines(buildFor(set), idx);
+    const err = diags.find((d) => /\$\{file:/.test(d.diagnostic.message));
+    assert.equal(err, undefined, "expected no diagnostic for a file: substitution (runtime-resolved)");
+  });
+
   // Issue #9: a pipeline split/overridden across config-set members must be
   // validated against the confmap-merged view, not each fragment in isolation.
   it("pipeline-split: no false 'has no receivers/exporters' on a merged/overridden pipeline", () => {
