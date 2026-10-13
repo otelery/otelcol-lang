@@ -82,6 +82,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Security
 
 - Updated anyhow in zed/Cargo.lock due to security finding
+- Bumped the transitive npm dependencies `brace-expansion` (2.1.2 → 2.1.7,
+  5.0.7 → 5.0.12) and `js-yaml` (4.3.0 → 4.3.2) in `package-lock.json` to
+  resolve 12 OSV advisories (10 high, 2 medium) reported by `make audit`. Both
+  are only reachable through the `@vscode/test-cli` dev dependency and are not
+  bundled into the shipped extension or server.
 
 ## [0.5.1] - 2026-06-26
 
