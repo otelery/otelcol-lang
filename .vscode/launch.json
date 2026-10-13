@@ -6,7 +6,7 @@
       "type": "extensionHost",
       "request": "launch",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--extensionDevelopmentPath=${workspaceFolder}/editors/vscode",
         "${workspaceFolder}/test",
         "${workspaceFolder}/examples",
         "${workspaceFolder}/repro"
@@ -14,7 +14,7 @@
       "env": {
         "OTELCOL_DEV_WATCH": "1"
       },
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "outFiles": ["${workspaceFolder}/editors/vscode/dist/**/*.js"],
       "preLaunchTask": "npm: compile"
     },
     {
@@ -23,7 +23,7 @@
       "request": "attach",
       "port": 6099,
       "restart": true,
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+      "outFiles": ["${workspaceFolder}/editors/vscode/dist/**/*.js"]
     },
     {
       "name": "Run JetBrains Sandbox",
