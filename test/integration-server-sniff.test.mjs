@@ -20,7 +20,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 const serverEntry = resolve(root, "editors", "vscode", "dist", "server", "server.js");
 
-if (!existsSync(serverEntry)) {
+if (!existsSync(serverEntry) && process.env.CI) {
+  // A silent skip let a stale server path go unnoticed in CI; fail loudly instead.
+  describe("server-side sniffer (server bundle missing)", () => {
+    it("requires editors/vscode/dist/server/server.js in CI", () => {
+      assert.fail(`missing ${serverEntry} - run \`make bundle\` before this suite`);
+    });
+  });
+} else if (!existsSync(serverEntry)) {
   describe("server-side sniffer (skipped — editors/vscode/dist/server/server.js missing)", () => {
     it.skip("requires `make bundle` (or `node esbuild.js`) before running");
   });

@@ -227,7 +227,7 @@ bundle: $(NPM_INSTALL_STAMP) ## Bundle extension + server with esbuild to editor
 
 test: test-unit test-editors ## Run unit + per-editor tests (all editors: VS Code, JetBrains, Helix, Zed)
 
-test-unit: build ## LSP modules in isolation (node --test, fast)
+test-unit: build bundle ## LSP modules in isolation (node --test, fast); bundle is needed by the stdio integration suites
 	$(NODE) scripts/check-runtime-paths.mjs
 	$(NODE) --test test/run-tests.mjs test/*.test.mjs
 
