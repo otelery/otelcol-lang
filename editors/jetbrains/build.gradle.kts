@@ -151,10 +151,10 @@ val copyLanguageServer by tasks.registering(Copy::class) {
   description = "Stage bundled otelcol-language-server (esbuild output) + JSON schemas into plugin resources"
   doFirst {
     require(file("$languageServerSource/server.js").exists()) {
-      "Missing dist/server/server.js - run `make bundle` from the repo root first."
+      "Missing editors/vscode/dist/server/server.js - run `make bundle` from the repo root first."
     }
     require(schemasSource.exists()) {
-      "Missing dist/schemas/ - run `make bundle` from the repo root first."
+      "Missing editors/vscode/dist/schemas/ - run `make bundle` from the repo root first."
     }
   }
   from(languageServerSource) {
@@ -199,7 +199,7 @@ tasks.named("processResources") {
 // as a compile-time floor) by registering a separate runIde task pinned to
 // `runIdeVersion` from gradle.properties. Mirrors VS Code's F5 setup: opens
 // the repo's examples/ as the sandbox project, points the LSP server
-// override at dist/server/server.js, and enables the dev watcher.
+// override at editors/vscode/dist/server/server.js, and enables the dev watcher.
 //
 // Override IDE version: -PrunIdeVersion=2026.2
 // Override project:    -PsandboxProject=/abs/path (or via Makefile: SANDBOX_PROJECT=/path/to/project make runide-jetbrains)
@@ -223,7 +223,7 @@ intellijPlatformTesting {
       setArgs(listOf(sandboxProject))
       systemProperty(
         "otelcol.lsp.server",
-        File(repoRoot, "dist/server/server.js").absolutePath,
+        File(repoRoot, "editors/vscode/dist/server/server.js").absolutePath,
       )
       // Same env var the VS Code extension checks; unified opt-in. Defaults
       // to "1" but respects the shell value, so `OTELCOL_DEV_WATCH=0 make

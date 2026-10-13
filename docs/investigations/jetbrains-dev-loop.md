@@ -22,7 +22,7 @@ instance with:
 
 - the repo's `examples/` directory opened as the project (override with
   `./gradlew runIdeDev -PsandboxProject=/abs/path` from `editors/jetbrains/`);
-- `-Dotelcol.lsp.server=…/dist/server/server.js` so the source-tree bundle is
+- `-Dotelcol.lsp.server=…/editors/vscode/dist/server/server.js` so the source-tree bundle is
   used in place of the extracted one.
 
 After editing TypeScript and re-running `make bundle`: in the sandbox IDE,
@@ -38,14 +38,14 @@ sets this var already. The same variable name controls the VS Code
 extension's auto-restart, so the opt-in is unified across editors.
 
 Pair with a long-running `npm run watch` so esbuild rewrites
-`dist/server/server.js` on every save — the watcher then bounces the
+`editors/vscode/dist/server/server.js` on every save — the watcher then bounces the
 LSP server within ~1 second of the bundle landing.
 
 The raw equivalent (no Make):
 
 ```sh
 cd editors/jetbrains
-./gradlew runIdeDev -Dotelcol.lsp.server="$(realpath ../../dist/server/server.js)"
+./gradlew runIdeDev -Dotelcol.lsp.server="$(realpath ../vscode/dist/server/server.js)"
 ```
 
 ## Persistent override (any IDE)

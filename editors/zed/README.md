@@ -225,7 +225,7 @@ If you're developing the language server out of a checkout, set
 > `Connection input stream is not set`.
 
 Run `npm run compile` (in the repo root) once so
-`dist/server/server.js` exists; re-run on server changes.
+`editors/vscode/dist/server/server.js` exists; re-run on server changes.
 
 ## Dev install
 

@@ -14,10 +14,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
-const serverEntry = resolve(root, "dist", "server", "server.js");
+const serverEntry = resolve(root, "editors", "vscode", "dist", "server", "server.js");
 
 if (!existsSync(serverEntry)) {
-  describe("completion integration (skipped — dist/server/server.js missing)", () => {
+  describe("completion integration (skipped — editors/vscode/dist/server/server.js missing)", () => {
     it.skip("requires `make bundle` (or `node esbuild.js`) before running");
   });
 } else {

@@ -21,7 +21,7 @@ import java.nio.file.StandardWatchEventKinds
 
 // Dev convenience: when OTELCOL_DEV_WATCH=1 is set in the IDE process env,
 // watch the configured server.js and restart the LSP server on change. Pairs
-// with `npm run watch` so editing TS source rebuilds dist/server/server.js
+// with `npm run watch` so editing TS source rebuilds editors/vscode/dist/server/server.js
 // and the sandbox IDE picks it up automatically. The watched path is the
 // resolved server path the factory would launch — either the override
 // (-Dotelcol.lsp.server / otelcol.lsp.server.path) or the bundled extraction.
