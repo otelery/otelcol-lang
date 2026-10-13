@@ -609,26 +609,25 @@ export function pathAtOffset(text: string, offset: number): string[] {
 // Strategy when the cursor sits on a blank line: take the cursor's indent
 // column, then walk earlier non-blank lines, popping anything at >= indent
 // and pushing the key of each strictly-less-indented `key:` ancestor.
-export function pathAtPosition(text: string, position: Position): string[] {
+// Effective indent column for a cursor on a blank line, or null when the line
+// has content. Clients disagree about what they report here:
+//  - VS Code reports `position.character` as the cursor's visual column, which
+//    equals the line's leading whitespace length. Trust it.
+//  - IntelliJ via LSP4IJ often reports 0 even when the user has clearly
+//    pressed Enter under a `key:` line (the indent is "virtual" / not yet
+//    in the document text), and Zed doesn't auto-indent after `key:` at all.
+//    Only in that case do we fall back to: previous non-blank line's indent
+//    plus 2 if that line ends with `:` (we're adding a child) else its indent.
+//
+// Critically, when char > 0 the user has committed to an indent — we must
+// honour it. Otherwise a cursor at col 4 sitting two lines below a
+// `      - item` array element gets incorrectly pulled to col 6,
+// resolving the parent path inside the array (no properties → empty
+// completion).
+export function blankLineIndent(text: string, position: Position): number | null {
   const lines = text.split("\n");
   const cur = lines[position.line] ?? "";
-  if (cur.trim() !== "") {
-    return pathAtOffset(text, offsetFromPos(text, position));
-  }
-  // Effective indent on a blank line:
-  //  - VS Code reports `position.character` as the cursor's visual column,
-  //    which equals the line's leading whitespace length. Trust it.
-  //  - IntelliJ via LSP4IJ often reports 0 even when the user has clearly
-  //    pressed Enter under a `key:` line (the indent is "virtual" / not yet
-  //    in the document text). Only in that case do we fall back to: previous
-  //    non-blank line's indent plus 2 if that line ends with `:` (we're
-  //    adding a child) else its indent.
-  //
-  // Critically, when char > 0 the user has committed to an indent — we must
-  // honour it. Otherwise a cursor at col 4 sitting two lines below a
-  // `      - item` array element gets incorrectly pulled to col 6,
-  // resolving the parent path inside the array (no properties → empty
-  // completion).
+  if (cur.trim() !== "") return null;
   let cursorIndent = position.character;
   const lineLeading = cur.match(/^\s*/)?.[0].length ?? 0;
   if (cursorIndent === 0 && lineLeading === 0) {
@@ -640,6 +639,15 @@ export function pathAtPosition(text: string, position: Position): string[] {
       cursorIndent = endsWithColon ? indent + 2 : indent;
       break;
     }
+  }
+  return cursorIndent;
+}
+
+export function pathAtPosition(text: string, position: Position): string[] {
+  const lines = text.split("\n");
+  const cursorIndent = blankLineIndent(text, position);
+  if (cursorIndent === null) {
+    return pathAtOffset(text, offsetFromPos(text, position));
   }
   const chain: { indent: number; key: string }[] = [];
   for (let i = position.line - 1; i >= 0; i--) {

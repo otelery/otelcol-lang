@@ -778,3 +778,57 @@ service:
     }
   });
 });
+
+const byLabel = (items, label) => items.find((i) => i.label === label);
+
+// ─── (1a'') blank line at column 0: re-apply the inferred child indent ──
+
+describe("completion: indent is re-applied on a blank line reported at column 0", () => {
+  // Zed doesn't auto-indent after `key:`, and IntelliJ's indent is virtual, so
+  // the cursor sits on a column-0 blank line. The parent is inferred from the
+  // previous line's indent (+2 after a `key:`), but the document has no
+  // whitespace there — the inserted text must carry it, or the key lands at 0.
+
+  it("component type under `receivers:` is inserted at the child indent", () => {
+    const otlp = byLabel(complete("receivers:\n\n", 1, 0), "otlp");
+    assert.ok(otlp);
+    assert.equal(otlp.textEdit.newText, "  otlp");
+    assert.equal(otlp.insertText, "  otlp");
+  });
+
+  it("scalar property under `exporters.otlp:` is inserted at the child indent", () => {
+    const endpoint = byLabel(complete("exporters:\n  otlp:\n\n", 2, 0), "endpoint");
+    assert.ok(endpoint);
+    assert.equal(endpoint.textEdit.newText, "    endpoint: $0");
+    // The edit still only covers the typed prefix (nothing here), at the cursor.
+    assert.deepEqual(endpoint.textEdit.range, {
+      start: { line: 2, character: 0 },
+      end: { line: 2, character: 0 },
+    });
+  });
+
+  it("multi-line snippet carries the missing indent on every continuation line", () => {
+    // Client re-adds only the real line indent (0 here), so continuation lines
+    // need the full child indent (4) plus the snippet's own relative indent (2).
+    const protocols = byLabel(complete("receivers:\n  otlp:\n\n", 2, 0), "protocols");
+    assert.ok(protocols);
+    assert.equal(protocols.insertText, "    protocols:\n      $0");
+    assert.equal(protocols.textEdit.newText, protocols.insertText);
+  });
+
+  it("pipeline signal scaffold is indented under `service.pipelines:`", () => {
+    const traces = byLabel(complete("service:\n  pipelines:\n\n", 2, 0), "traces");
+    assert.ok(traces);
+    assert.equal(
+      traces.insertText,
+      "    traces/${1:name}:\n      receivers: [$2]\n      processors: [$3]\n      exporters: [$0]",
+    );
+  });
+
+  it("a real indent in the document is left alone (nothing is added twice)", () => {
+    const exp = byLabel(complete("exporters:\n  otlp:\n    \n", 2, 4), "endpoint");
+    assert.equal(exp.textEdit.newText, "endpoint: $0");
+    const rec = byLabel(complete("receivers:\n  otlp:\n    \n", 2, 4), "protocols");
+    assert.equal(rec.insertText, "protocols:\n  $0");
+  });
+});
