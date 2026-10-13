@@ -229,6 +229,25 @@ Run `npm run compile` (in the repo root) once so
 
 ## Dev install
 
+**Prerequisites.** Zed compiles the extension itself, so the machine needs a
+Rust toolchain managed by [`rustup`](https://rustup.rs/) (it provides `rustc`,
+`cargo` and the ability to add targets):
+
+```sh
+rustup target add wasm32-wasip2   # Zed builds extensions for this target
+```
+
+Zed also downloads the WASI SDK and the YAML grammar on first install, so it
+needs network access once.
+
+> **Use rustup's `rustc`/`cargo`, not a standalone one.** A `rustc` from
+> Homebrew or a distro package has no `wasm32-wasip2` standard library, so the
+> build fails with "can't find crate for `core`" and a hint that the
+> `wasm32-wasip2` target may not be installed, even after
+> `rustup target add`. Make sure `~/.cargo/bin` comes before such a `rustc` on
+> `PATH` (check with `which -a rustc`) and start Zed from that environment.
+> Build errors are logged to `~/.local/share/zed/logs/Zed.log`.
+
 1. Open Zed.
 2. `Extensions` (`cmd-shift-x` / `ctrl-shift-x`) →
    `Install Dev Extension` → pick the `editors/zed/` directory.
