@@ -71,6 +71,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The Zed extension failed to start its auto-installed language server with
+  `Cannot find module '<project>/node_modules/@otelery/otelcol-lang/…'`: the
+  server entry was passed to Node as a relative path, which Zed resolves against
+  the project instead of the extension work directory. The path is now
+  absolute.
 - `make runide-jetbrains` crashed the sandbox language server with
   `Cannot find module '…/dist/server/server.js'`: `runIdeDev` still pointed at
   the repo-root `dist/` instead of `editors/vscode/dist/` after the extension

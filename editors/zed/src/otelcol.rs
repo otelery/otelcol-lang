@@ -15,8 +15,11 @@ const SERVER_ID: &str = "otelcol";
 const NPM_PACKAGE: &str = "@otelery/otelcol-lang";
 
 // Path to the server's bin shim inside the installed package, relative to the
-// extension's working directory (where Zed runs `npm install`). The shim is a
-// `#!/usr/bin/env node` script that boots the stdio language server.
+// extension's working directory (where Zed runs `npm install`). It must be made
+// absolute before it is handed to Node: Zed spawns the server with the
+// *project* as its cwd, so a relative path resolves against the user's project
+// and fails with MODULE_NOT_FOUND. The shim is a `#!/usr/bin/env node` script
+// that boots the stdio language server.
 const SERVER_ENTRY: &str = "node_modules/@otelery/otelcol-lang/bin/otelcol-language-server.js";
 
 // Install the npm package version that matches this extension (the repo keeps
@@ -30,6 +33,12 @@ const SERVER_VERSION: &str = env!("CARGO_PKG_VERSION");
 // target without the wasm-only `zed_extension_api`.
 fn needs_node_wrapper(path: &str) -> bool {
     path.ends_with(".js")
+}
+
+// Absolute path to the bin shim under the extension work dir `base`. Pure so it
+// can be unit-tested off-wasm; the caller supplies `std::env::current_dir()`.
+fn absolute_server_entry(base: &std::path::Path) -> String {
+    base.join(SERVER_ENTRY).to_string_lossy().into_owned()
 }
 
 struct OtelcolExtension;
@@ -107,7 +116,9 @@ impl OtelcolExtension {
             language_server_id,
             &LanguageServerInstallationStatus::None,
         );
-        Ok(SERVER_ENTRY.to_string())
+        let work_dir = std::env::current_dir()
+            .map_err(|e| format!("cannot resolve the extension work directory: {e}"))?;
+        Ok(absolute_server_entry(&work_dir))
     }
 }
 
@@ -179,7 +190,7 @@ zed::register_extension!(OtelcolExtension);
 
 #[cfg(test)]
 mod tests {
-    use super::{needs_node_wrapper, OtelcolExtension};
+    use super::{absolute_server_entry, needs_node_wrapper, OtelcolExtension};
 
     // The wrap decision, at the boundaries that matter. Note the npm bin shim
     // installed on PATH is named `otelcol-language-server` (no extension), so
@@ -201,6 +212,19 @@ mod tests {
         assert!(!needs_node_wrapper("/x/server.cjs"));
         // `.js` must be the final segment, not merely present in the path.
         assert!(!needs_node_wrapper("/x/js/otelcol-language-server"));
+    }
+
+    // Regression: the entry handed to Node must be absolute and rooted in the
+    // extension work dir, never relative (a relative path resolves against the
+    // user's project, where Zed starts the server).
+    #[test]
+    fn server_entry_is_absolute_under_work_dir() {
+        let entry = absolute_server_entry(std::path::Path::new("/zed/work/otelcol"));
+        assert_eq!(
+            entry,
+            "/zed/work/otelcol/node_modules/@otelery/otelcol-lang/bin/otelcol-language-server.js"
+        );
+        assert!(std::path::Path::new(&entry).is_absolute());
     }
 
     // Behavioural test on the branch that is reachable off-wasm: a native
