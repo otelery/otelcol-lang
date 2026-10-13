@@ -1,0 +1,30 @@
+service:
+  pipelines:
+    # Positive case: the env var's default value resolves to the declared
+    # `otlp/dash0` exporter, so this must validate clean (no missing-ref,
+    # no unused).
+    traces/output_external:
+      receivers: [otlp]
+      exporters: ["${env:EXPORTER_NAME:-otlp/primary}"]
+    # Negative case: the default doesn't match anything declared, so this
+    # must still surface a missing-ref error — proves resolution doesn't
+    # silently swallow real mistakes.
+    traces/output_broken:
+      receivers: [otlp]
+      exporters: ["${env:MISSING:-nonexistent/thing}"]
+    # No-default env: component ID only known at runtime — must produce no diagnostic.
+    traces/output_runtime:
+      receivers: [otlp]
+      exporters: ["${env:EXPORTER_NAME}"]
+    # Legacy bare form: deprecated but still accepted by the collector, also runtime-resolved.
+    traces/output_legacy:
+      receivers: [otlp]
+      exporters: ["${EXPORTER_NAME}"]
+    # yaml: provider: value is statically known — resolves to "otlp/primary".
+    traces/output_yaml:
+      receivers: [otlp]
+      exporters: ["${yaml:otlp/primary}"]
+    # file: provider: content only known at runtime — must produce no diagnostic.
+    traces/output_file:
+      receivers: [otlp]
+      exporters: ["${file:/etc/otel/exporter-name.txt}"]

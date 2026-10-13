@@ -12,6 +12,7 @@ import type { ComponentClass, ComponentsIndex, Signal } from "./components";
 import { findComponent } from "./components";
 import type { SetModel } from "./set-model";
 import { isDuplicate, isSuppressed } from "./set-model";
+import { isSubstitution } from "./substitution";
 
 // Rule code carried on the duplicate-override diagnostic, matched by inline
 // `# otelcol-disable-(next-)line <rule>` directives to suppress it.
@@ -117,6 +118,7 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
           const inOwn = model.components[cls].has(ref.id);
           const inConn = model.components.connector.has(ref.id);
           if (!inOwn && !inConn) {
+            if (isSubstitution(ref.id)) continue; // runtime-resolved, can't validate statically
             diags.push(
               emit(
                 ref.sourceUri,
@@ -168,6 +170,7 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
       continue;
     }
     if (ref.strict) {
+      if (isSubstitution(ref.id)) continue; // runtime-resolved, can't validate statically
       diags.push(
         emit(
           ref.sourceUri,
@@ -182,6 +185,7 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
   // Pipeline-id refs from routing/failover-style connectors.
   for (const ref of model.pipelineIdRefs) {
     if (!model.pipelinesById.has(ref.id)) {
+      if (isSubstitution(ref.id)) continue; // runtime-resolved, can't validate statically
       diags.push(
         emit(
           ref.sourceUri,
@@ -202,6 +206,7 @@ export function validatePipelines(model: SetModel, idx: ComponentsIndex): SetDia
       continue;
     }
     if (!model.components.extension.has(ref.id)) {
+      if (isSubstitution(ref.id)) continue; // runtime-resolved, can't validate statically
       diags.push(
         emit(
           ref.sourceUri,
