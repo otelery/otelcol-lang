@@ -7,7 +7,12 @@ import {
 } from "vscode-languageserver";
 import type { ComponentsIndex, ComponentClass } from "./components";
 import { findComponent } from "./components";
-import { pathAtPosition, siblingKeysAt, valueContextAtPosition } from "./yaml-model";
+import {
+  blankLineIndent,
+  pathAtPosition,
+  siblingKeysAt,
+  valueContextAtPosition,
+} from "./yaml-model";
 import {
   resolveRef,
   lookupProperty,
@@ -68,6 +73,18 @@ export function completion(
     end: pos,
   };
 
+  // On a blank line the client may report column 0 although the cursor belongs
+  // at a child indent (Zed doesn't auto-indent after `key:`; JetBrains' indent
+  // is virtual). `pathAtPosition` already infers that indent to find the parent;
+  // re-apply the part the document doesn't have to what we insert, on the first
+  // line and — because the client only re-adds the *real* line indent — on every
+  // continuation line of a multi-line snippet.
+  const missingIndent = " ".repeat(
+    Math.max(0, (blankLineIndent(doc.text, pos) ?? 0) - pos.character),
+  );
+  const withIndent = (body: string): string =>
+    missingIndent ? missingIndent + body.replace(/\n/g, `\n${missingIndent}`) : body;
+
   // Inside one of the top-level component maps: suggest known types.
   const top = segs[0];
   const cls = PARENT_TO_CLASS[top];
@@ -79,8 +96,8 @@ export function completion(
       documentation: c.description
         ? { kind: "markdown" as const, value: c.description }
         : undefined,
-      textEdit: { range: editRange, newText: c.type },
-      insertText: c.type,
+      textEdit: { range: editRange, newText: withIndent(c.type) },
+      insertText: withIndent(c.type),
     }));
   }
 
@@ -130,8 +147,8 @@ export function completion(
             },
             // textEdit pins the replacement to the typed identifier prefix.
             // insertText kept as a fallback for clients that ignore textEdit.
-            textEdit: { range: editRange, newText: body },
-            insertText: body,
+            textEdit: { range: editRange, newText: withIndent(body) },
+            insertText: withIndent(body),
             insertTextFormat: InsertTextFormat.Snippet,
             // AsIs: take the snippet verbatim. We bake the cursor line's
             // indent into multi-line snippets ourselves, so we don't want
@@ -158,8 +175,8 @@ export function completion(
         label: sig,
         kind: CompletionItemKind.Module,
         detail: `${sig.replace(/s$/, "")} pipeline`,
-        textEdit: { range: editRange, newText: body },
-        insertText: body,
+        textEdit: { range: editRange, newText: withIndent(body) },
+        insertText: withIndent(body),
         insertTextFormat: InsertTextFormat.Snippet,
         insertTextMode: InsertTextMode.asIs,
       };
@@ -184,8 +201,8 @@ export function completion(
           label: k,
           kind: CompletionItemKind.Property,
           detail: bucketDetails[k],
-          textEdit: { range: editRange, newText: body },
-          insertText: body,
+          textEdit: { range: editRange, newText: withIndent(body) },
+          insertText: withIndent(body),
           insertTextFormat: InsertTextFormat.Snippet,
           insertTextMode: InsertTextMode.asIs,
         };
@@ -240,8 +257,8 @@ export function completion(
       label: k,
       kind: CompletionItemKind.Module,
       detail,
-      textEdit: { range: editRange, newText: k },
-      insertText: k,
+      textEdit: { range: editRange, newText: withIndent(k) },
+      insertText: withIndent(k),
     }));
   }
 

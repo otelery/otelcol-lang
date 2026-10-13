@@ -71,6 +71,11 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Completion on a blank line right after a `key:` now inserts the suggestion at
+  the child indent. Editors that report column 0 there (Zed, which doesn't
+  auto-indent after `key:`, and JetBrains' virtual indent) previously got the
+  correct child suggestions inserted unindented; the missing indent is now added
+  to the edit, including the continuation lines of multi-line snippets.
 - The Zed "server not found" error referenced the wrong npm package
   (`vscode-otelcol`); the auto-install rewrite removes that path and the stale
   message.
