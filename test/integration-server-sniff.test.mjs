@@ -3,7 +3,7 @@
 // server over stdio with hand-rolled LSP messages and asserts the
 // correct opt-in / opt-out behaviour.
 //
-// Skipped when dist/server/server.js doesn't exist — production
+// Skipped when editors/vscode/dist/server/server.js doesn't exist — production
 // build is required (`make bundle` or `node esbuild.js`). The
 // test/run-tests.mjs unit suite doesn't depend on bundling and
 // must not break in that case.
@@ -18,10 +18,17 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
-const serverEntry = resolve(root, "dist", "server", "server.js");
+const serverEntry = resolve(root, "editors", "vscode", "dist", "server", "server.js");
 
-if (!existsSync(serverEntry)) {
-  describe("server-side sniffer (skipped — dist/server/server.js missing)", () => {
+if (!existsSync(serverEntry) && process.env.CI) {
+  // A silent skip let a stale server path go unnoticed in CI; fail loudly instead.
+  describe("server-side sniffer (server bundle missing)", () => {
+    it("requires editors/vscode/dist/server/server.js in CI", () => {
+      assert.fail(`missing ${serverEntry} - run \`make bundle\` before this suite`);
+    });
+  });
+} else if (!existsSync(serverEntry)) {
+  describe("server-side sniffer (skipped — editors/vscode/dist/server/server.js missing)", () => {
     it.skip("requires `make bundle` (or `node esbuild.js`) before running");
   });
 } else {

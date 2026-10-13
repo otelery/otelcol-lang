@@ -123,9 +123,9 @@ Install in the IDE: `Settings → Plugins → ⚙ → Install Plugin from Disk�
 make runide-jetbrains
 ```
 
-Bundles the server and launches a sandbox IntelliJ with `examples/` opened as the project and `-Dotelcol.lsp.server=…/dist/server/server.js` pre-wired. Override the project folder with `./gradlew -p editors/jetbrains runIde -PsandboxProject=$(realpath test)`.
+Bundles the server and launches a sandbox IntelliJ with `examples/` opened as the project and `-Dotelcol.lsp.server=…/editors/vscode/dist/server/server.js` pre-wired. Override the project folder with `./gradlew -p editors/jetbrains runIde -PsandboxProject=$(realpath test)`.
 
-**Auto-restart on rebuild.** Set the unified environment variable `OTELCOL_DEV_WATCH=1` to enable a file watcher on the active `server.js`. The JetBrains plugin's `OtelcolDevWatcher` `ProjectActivity` uses a NIO `WatchService` (300 ms debounce) and calls `LanguageServerManager.stop + start` on change; the VS Code extension uses `fs.watch` and calls `client.restart()`. Combined with `npm run watch` (esbuild `--watch` rebuilds `dist/server/server.js` on save), editing TS source automatically restarts the LSP process. Same flag works in both editors; no editor auto-enables it via dev-mode detection. The `make runide-jetbrains` target and the VS Code "Run Extension" launch config both set `OTELCOL_DEV_WATCH=1` already; production installs are unaffected.
+**Auto-restart on rebuild.** Set the unified environment variable `OTELCOL_DEV_WATCH=1` to enable a file watcher on the active `server.js`. The JetBrains plugin's `OtelcolDevWatcher` `ProjectActivity` uses a NIO `WatchService` (300 ms debounce) and calls `LanguageServerManager.stop + start` on change; the VS Code extension uses `fs.watch` and calls `client.restart()`. Combined with `npm run watch` (esbuild `--watch` rebuilds `editors/vscode/dist/server/server.js` on save), editing TS source automatically restarts the LSP process. Same flag works in both editors; no editor auto-enables it via dev-mode detection. The `make runide-jetbrains` target and the VS Code "Run Extension" launch config both set `OTELCOL_DEV_WATCH=1` already; production installs are unaffected.
 
 Manual restart fallback: **Tools → Restart otelcol Language Server** (also available via _Find Action_).
 
@@ -137,7 +137,7 @@ After installing in any editor, the same smoke applies: open `examples/simple/ot
 
 ## Schema source
 
-The schemas under `schemas/` are **vendored** from [otelery/otelcol-schemas](https://github.com/otelery/otelcol-schemas) and committed to this repo. Clone-and-build works with no external checkout. The build step (`scripts/copy-schemas.mjs`) copies them into `./out/schemas/` (for unit tests) and `./dist/schemas/` (for the bundled `.vsix`) so the LSP finds them next to the compiled server.
+The schemas under `schemas/` are **vendored** from [otelery/otelcol-schemas](https://github.com/otelery/otelcol-schemas) and committed to this repo. Clone-and-build works with no external checkout. The build step (`scripts/copy-schemas.mjs`) copies them into `./out/schemas/` (for unit tests) and `./editors/vscode/dist/schemas/` (for the bundled `.vsix`) so the LSP finds them next to the compiled server.
 
 Refreshing the vendored schemas (when upstream OTel distributions release new versions):
 
