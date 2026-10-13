@@ -10,7 +10,7 @@
 // nothing in the dev loop refreshes - exactly the bug we hit while wiring
 // semantic tokens. This script catches it before it ships.
 
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -24,6 +24,24 @@ const FORBIDDEN = /(?:path\.join|asAbsolutePath|require|import)\s*\([^)]*?["']ou
 
 const offenders = [];
 for (const dir of targets) walk(dir);
+
+// Dev-sandbox server paths hard-coded in build scripts must point at a file
+// that exists in the repo. A stale path (e.g. after the extension root moved
+// to editors/vscode/) otherwise only surfaces when someone launches the IDE.
+// Requires the bundle, so `make test-unit` builds it first.
+const missing = [];
+const gradleFile = join(root, "editors", "jetbrains", "build.gradle.kts");
+for (const [, rel] of readFileSync(gradleFile, "utf8").matchAll(
+  /File\(repoRoot,\s*"([^"]+\.js)"\)/g,
+)) {
+  if (!existsSync(join(root, rel))) missing.push(`${relative(root, gradleFile)}: ${rel}`);
+}
+if (missing.length) {
+  console.error("check-runtime-paths: build script references server files that do not exist:");
+  for (const m of missing) console.error(`  ${m}`);
+  console.error("\nRun `make bundle`, or fix the path (the bundle lives in editors/vscode/dist/).");
+  process.exit(1);
+}
 
 if (offenders.length) {
   console.error("check-runtime-paths: runtime source references `out/` - must use `dist/`:");

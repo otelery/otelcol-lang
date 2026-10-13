@@ -221,10 +221,15 @@ intellijPlatformTesting {
       val sandboxProject = (project.findProperty("sandboxProject") as String?)
         ?: File(repoRoot, "examples").absolutePath
       setArgs(listOf(sandboxProject))
-      systemProperty(
-        "otelcol.lsp.server",
-        File(repoRoot, "editors/vscode/dist/server/server.js").absolutePath,
-      )
+      val devServer = File(repoRoot, "editors/vscode/dist/server/server.js")
+      // Fail here with an actionable message instead of letting the sandbox
+      // IDE start and the language server crash with MODULE_NOT_FOUND.
+      doFirst {
+        require(devServer.exists()) {
+          "Missing $devServer - run `make bundle` from the repo root first."
+        }
+      }
+      systemProperty("otelcol.lsp.server", devServer.absolutePath)
       // Same env var the VS Code extension checks; unified opt-in. Defaults
       // to "1" but respects the shell value, so `OTELCOL_DEV_WATCH=0 make
       // runide-jetbrains` disables the watcher without editing the script.
