@@ -417,16 +417,28 @@ describe("SetModel build + validatePipelines", () => {
     const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
     const diags = validatePipelines(buildFor(set), idx);
     const err = diags.find((d) => /output_yaml/.test(d.diagnostic.message));
-    assert.equal(err, undefined, "expected no diagnostic: ${yaml:otlp/primary} should resolve to the declared otlp/primary exporter");
+    assert.equal(
+      err,
+      undefined,
+      "expected no diagnostic: ${yaml:otlp/primary} should resolve to the declared otlp/primary exporter",
+    );
     const unusedPrimary = diags.find((d) => /otlp\/primary.*unused/.test(d.diagnostic.message));
-    assert.equal(unusedPrimary, undefined, "otlp/primary is referenced via yaml: and must not be flagged unused");
+    assert.equal(
+      unusedPrimary,
+      undefined,
+      "otlp/primary is referenced via yaml: and must not be flagged unused",
+    );
   });
 
   it("env-default-ref: ${file:...} produces no diagnostic", () => {
     const set = discoverSets("test/configsets/env-default-ref").allSets()[0];
     const diags = validatePipelines(buildFor(set), idx);
     const err = diags.find((d) => /\$\{file:/.test(d.diagnostic.message));
-    assert.equal(err, undefined, "expected no diagnostic for a file: substitution (runtime-resolved)");
+    assert.equal(
+      err,
+      undefined,
+      "expected no diagnostic for a file: substitution (runtime-resolved)",
+    );
   });
 
   // Issue #9: a pipeline split/overridden across config-set members must be

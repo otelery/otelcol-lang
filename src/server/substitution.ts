@@ -17,7 +17,7 @@ const YAML_SCHEME_RE = /^\$\{yaml:([\s\S]*)\}$/;
 const LEGACY_BARE_RE = /^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$/;
 // Any confmap provider substitution (scheme = [A-Za-z][A-Za-z0-9+.-]+, min 2 chars).
 // Used to detect unresolved substitutions whose value is only known at runtime (file:, http:, https:, …).
-const ANY_SCHEME_RE = /^\$\{[A-Za-z][A-Za-z0-9+.\-]+:[\s\S]*\}$/;
+const ANY_SCHEME_RE = /^\$\{[A-Za-z][A-Za-z0-9+.-]+:[\s\S]*\}$/;
 
 /** Extract the component ID to look up from a raw scalar value.
  *
